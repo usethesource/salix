@@ -66,7 +66,7 @@ function dec2handler(decoder) {
 			
 		case 'oneKeyCode':
 			return function (event) {	
-				if (event.keyCode == decoder.keyCode) {
+				if (event.keyCode == decoder.oneKeyCode.keyCode) {
 					schedule(decoder, event.keyCode);
 				}		
 			};

@@ -125,7 +125,7 @@ void viewInput(str task) {
 }
 
 Attr onEnter(Msg msg) 
-  = event("keydown", keyCodes([13], Msg(int code) { return msg; }));
+  = event("keydown", oneKeyCode(13, Msg(int code) { return msg; }));
 
 // VIEW ALL ENTRIES
 

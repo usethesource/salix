@@ -66,8 +66,8 @@ Decoder succeed(Msg msg) = succeed(_encode(msg, currentPath(), mappers));
 Decoder targetValue(Msg(str) str2msg) = targetValue(_encode(str2msg, currentPath(), mappers));
 Decoder targetChecked(Msg(bool) bool2msg) = targetChecked(_encode(bool2msg, currentPath(), mappers));
 Decoder keyCode(Msg(int) int2msg) = keyCode(_encode(int2msg, currentPath(), mappers)); 
-Decoder keyCodes(list[int] keyCodes, Msg(int) int2msg) 
-  = keyCodes(keyCodes, _encode(int2msg, currentPath(), mappers)); 
+Decoder oneKeyCode(int keyCode, Msg(int) int2msg) 
+  = oneKeyCode(_encode(int2msg, currentPath(), mappers), keyCode = keyCode); 
 
 
 data Html

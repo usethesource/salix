@@ -26,7 +26,7 @@ Msg toMsg(targetValue(Handle h), str d, &T(int,type[&T]) dec)
 Msg toMsg(targetChecked(Handle h), str d, &T(int,type[&T]) dec) 
   = dec(h.id, #Msg(bool))(d == "true");
 
-Msg toMsg(oneKeyCode(Handler h), str d, &T(int,type[&T]) dec) 
+Msg toMsg(oneKeyCode(Handle h), str d, &T(int,type[&T]) dec) 
   = dec(h.id, #Msg(int))(toInt(d));
   
 // todo: remove duplication with params[path]
@@ -74,7 +74,6 @@ App app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
     }
     
     if (get("/msg") := req) {
-      iprintln(req.parameters);
       Msg msg = params2msg(req.parameters, mapEm, decode);
       println("Processing: <msg>");
       model = update(msg, model);
