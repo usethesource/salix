@@ -9,21 +9,25 @@ import IO;
 import String;
 import Map;
 import List;
+import Type;
+
+Handle toHandle(map[str, str] params)
+  = handle(params["path"], toInt(params["id"]));
 
 Decoder toDecoder(map[str, str] params)
-  = decoder(params["type"], params["path"], toInt(params["id"]));
+  = make(#Decoder, params["type"], [toHandle(params)], ());
 
-Msg toMsg(decoder("succeed", _, int id), str _, &T(int,type[&T]) dec) 
-  = dec(id, #Msg);
+Msg toMsg(succeed(Handle h), str _, &T(int,type[&T]) dec) 
+  = dec(h.id, #Msg);
 
-Msg toMsg(decoder("targetValue", _, int id), str d, &T(int,type[&T]) dec) 
-  =  dec(id, #Msg(str))(d);
+Msg toMsg(targetValue(Handle h), str d, &T(int,type[&T]) dec) 
+  =  dec(h.id, #Msg(str))(d);
 
-Msg toMsg(decoder("targetChecked", _, int id), str d, &T(int,type[&T]) dec) 
-  = dec(id, #Msg(bool))(d == "true");
+Msg toMsg(targetChecked(Handle h), str d, &T(int,type[&T]) dec) 
+  = dec(h.id, #Msg(bool))(d == "true");
 
-Msg toMsg(decoder("keyCode", _, int id), str d, &T(int,type[&T]) dec) 
-  = dec(id, #Msg(int))(toInt(d));
+Msg toMsg(oneKeyCode(Handler h), str d, &T(int,type[&T]) dec) 
+  = dec(h.id, #Msg(int))(toInt(d));
   
 // todo: remove duplication with params[path]
 Msg params2msg(map[str, str] params, Msg(str, Msg) f, &T(int,type[&T]) dec) 
@@ -39,14 +43,14 @@ App app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
   map[value, int] _to = ();
   map[str, list[Msg(Msg)]] _mappers = ();
   
-  Decoder myEncode(str typ, value x, str path, list[Msg(Msg)] mappers) {
+  Handle myEncode(value x, str path, list[Msg(Msg)] mappers) {
     if (x notin _to) {
       id += 1;
       _from[id] = x;
       _to[x] = id;
     }
     _mappers[path] = mappers;
-    return decoder(typ, path, _to[x]);
+    return handle(path, _to[x]);
   }
   
   &U decode(int id, type[&U] t) = d
@@ -57,7 +61,8 @@ App app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
 
   Html current;
 
-  Response handle(Request req) {
+  // mixes with constructors that are in scope!!!
+  Response _handle(Request req) {
     //withEncode(myEncode); ?? does not work!?!?!
     gui::HTML::_encode = myEncode;
 
@@ -69,6 +74,7 @@ App app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
     }
     
     if (get("/msg") := req) {
+      iprintln(req.parameters);
       Msg msg = params2msg(req.parameters, mapEm, decode);
       println("Processing: <msg>");
       model = update(msg, model);
@@ -85,5 +91,5 @@ App app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
     return response(notFound(), "not handled: <req.path>");
   }
 
-  return <() { serve(http, handle); }, () { shutdown(http); }>;
+  return <() { serve(http, _handle); }, () { shutdown(http); }>;
 }

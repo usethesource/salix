@@ -34,20 +34,18 @@ data Attr
 // TODO: don't encode type with str
 // just use constructors and use make from Type
 
-alias Handle
-  = tuple[str path, int id];
+data Handle
+  = handle(str path, int id);
 
 data Decoder
-  = decoder(str \type, str path, int id)
-  | succeed(Handle handle)
+  = succeed(Handle handle)
   | targetValue(Handle handle)
   | targetChecked(Handle handle)
-  | keyCode(Handle handle)
-  | theKeyCode(int keyCode, Handle handle)
+  | oneKeyCode(Handle handle, int keyCode = -1)
   ;
 
 // To be set by an "app" during rendering. 
-public Decoder(str, value, str, list[Msg(Msg)]) _encode;
+public Handle(str, value, str, list[Msg(Msg)]) _encode;
 // should be:
 // Handle(str, value, str, list[Msg(Msg)]) _encode;
 
@@ -64,10 +62,12 @@ private str currentPath() = intercalate("_", [ size(l) | list[Html] l <- parent 
 //}
   
 // maybe use Msg() for succeed (consistency?)
-Decoder succeed(Msg msg) = _encode("succeed", msg, currentPath(), mappers);
-Decoder targetValue(Msg(str) str2msg) = _encode("targetValue", str2msg, currentPath(), mappers);
-Decoder targetChecked(Msg(bool) bool2msg) = _encode("targetChecked", bool2msg, currentPath(), mappers);
-Decoder keyCode(Msg(int) int2msg) = _encode("keyCode", int2msg, currentPath(), mappers); 
+Decoder succeed(Msg msg) = succeed(_encode(msg, currentPath(), mappers));
+Decoder targetValue(Msg(str) str2msg) = targetValue(_encode(str2msg, currentPath(), mappers));
+Decoder targetChecked(Msg(bool) bool2msg) = targetChecked(_encode(bool2msg, currentPath(), mappers));
+Decoder keyCode(Msg(int) int2msg) = keyCode(_encode(int2msg, currentPath(), mappers)); 
+Decoder keyCodes(list[int] keyCodes, Msg(int) int2msg) 
+  = keyCodes(keyCodes, _encode(int2msg, currentPath(), mappers)); 
 
 
 data Html
@@ -447,4 +447,3 @@ Attr onBlur(Msg msg) = event("blur", succeed(msg));
 Attr onSubmit(Msg msg) = event("focus", succeed(msg));
 Attr onInput(Msg(str) f) = event("input", targetValue(f)); 
 Attr onCheck(Msg(bool) f) = event("check", targetChecked(f));
-Attr onKeyUp(Msg(int) f) = event("keyup", keyCode(f));

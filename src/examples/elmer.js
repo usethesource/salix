@@ -33,34 +33,47 @@ function replace(dom, newDom) {
 	dom.parentNode.replaceChild(newDom, dom);
 }
 
+function schedule(dec, data) {
+	for (var type in dec) { break; }
+	var ret = dec[type].handle.handle;
+	ret.type = type;
+	if (data) {
+		ret.data = data;
+	}
+	__queue.push(ret);
+}
+
 // this needs adaptation if new kinds of data are required. 
-function dec2handler(key) {
-	if (key.decoder.type === 'succeed') {
-		return function (event) {	
-			__queue.push(key.decoder);
-		};
-	}	
-	if (key.decoder.type === 'targetValue') {
-		return function (event) {
-			var msg = key.decoder;
-			msg.data = event.target.value;
-			__queue.push(msg);
-		};
-	}	
-	if (key.decoder.type === 'targetChecked') {
-		return function (event) {	
-			var msg = key.decoder;
-			msg.data = event.target.checked;
-			__queue.push(msg);
-		};
-	}	
-	if (key.decoder.type === 'keyCode') {
-		return function (event) {	
-			var msg = key.decoder;
-			msg.data = event.keyCode;
-			__queue.push(msg);
-		};
-	}	
+function dec2handler(decoder) {
+	for (var cons in decoder) {
+
+		switch (cons) {
+		
+		case 'succeed':
+			return function (event) {	
+				schedule(decoder);
+			};
+			
+		case 'targetValue':
+			return function (event) {
+				schedule(decoder, event.target.value);
+			};
+			
+		case 'targetChecked':
+			return function (event) {	
+				schedule(decoder, event.target.checked);
+			};
+			
+		case 'oneKeyCode':
+			return function (event) {	
+				if (event.keyCode == decoder.keyCode) {
+					schedule(decoder, event.keyCode);
+				}		
+			};
+			
+		}
+		break;
+	}
 }
 
 function patchThis(dom, edits) {
