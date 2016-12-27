@@ -33,51 +33,19 @@ Source update(changeText(str x), Source s) {
   catch ParseError(loc l): {
     // compute string diff, futz the insert elements into e
     // to be able to highlight.
-    return s;
+    return appl(prod(sort("Source"), [], {}), [ char(c) | int c <- chars(x)]);
   }
 }
 
 Source update(doChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed),
    Source s) {
   str src = "<s>";
-  list[str] lines = src == "\n" ? ["", ""] : split("\n", src);
-  list[str] inserted = text == "\n" ? ["", ""] : split("\n", text);
-  
-  println("INSERTED: <inserted>");
-  
-  list[str] newLines = [];
-   
-  newLines += lines[0..fromLine];
-  
-  if (size(inserted) == 1) {
-    newLines += [lines[fromLine][..fromCol] + inserted[0] + lines[toLine][toCol..]];
-  }
-  else {
-    newLines += [lines[fromLine][..fromCol] + inserted[0]]
-              + inserted[1..-1]
-              + [inserted[-1] + lines[toLine][toCol..]];
-  }
-  
-  newLines += lines[toLine+1..];
-    
-    
-  
-  //list[str] pre = lines[0..fromLine];
-  //list[str] post = lines[toLine+1..];
-  //str preOld = lines[fromLine][0..fromCol];
-  //str postOld = lines[toLine][toCol..];
-  //str preNew = inserted[0];
-  //str postNew = size(inserted) > 1 ? inserted[-1] : "";
-  //list[str] newLines = inserted[1..-1];
-  //str newSrc = size(newLines) > 0 
-  //  ? intercalate("\n", pre + [preOld + preNew] + newLines + [postNew + postOld] + post)
-  //  : intercalate("\n", pre + [preOld + preNew + postNew + postOld] + post);
-  
-  newSrc = intercalate("\n", newLines);
-  println("NEW: <newSrc>"); 
+  list[str] lines = split("\n", src);
+  int from = ( 0 | it + size(l) + 1 | str l <- lines[..fromLine] ) + fromCol;
+  int to = ( 0 | it + size(l) + 1 | str l <- lines[..toLine] ) + toCol;
+  str newSrc = src[..from] + text + src[to..];
   return update(changeText(newSrc), s);  
 }
-
 
 void codeMirror(value vals...) = build(vals, _codeMirror);
 Html _codeMirror(list[Html] _, list[Attr] attrs)
