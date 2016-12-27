@@ -38,8 +38,7 @@ data Attr
  *
  */
 
-// TODO: don't encode type with str
-// just use constructors and use make from Type
+// TODO: keyed elements 
 
 data Handle
   = handle(str path, int id);
@@ -49,6 +48,8 @@ data Decoder
   | targetValue(Handle handle)
   | targetChecked(Handle handle)
   | oneKeyCode(Handle handle, int keyCode = -1)
+  | cursorActivity(Handle handle)
+  | change(Handle handle)
   ;
 
 // To be set by an "app" during rendering. 
@@ -71,16 +72,15 @@ private str currentPath() = intercalate("_", [ size(l) | list[Html] l <- parent 
 // maybe use Msg() for succeed (consistency?)
 // TODO: remove this indirection, do it directly at event?
 Decoder succeed(Msg msg) = succeed(_encode(msg, currentPath(), mappers));
+
 Decoder targetValue(Msg(str) str2msg) = targetValue(_encode(str2msg, currentPath(), mappers));
+
 Decoder targetChecked(Msg(bool) bool2msg) = targetChecked(_encode(bool2msg, currentPath(), mappers));
+
 Decoder keyCode(Msg(int) int2msg) = keyCode(_encode(int2msg, currentPath(), mappers)); 
+
 Decoder oneKeyCode(int keyCode, Msg(int) int2msg) 
   = oneKeyCode(_encode(int2msg, currentPath(), mappers), keyCode = keyCode); 
-
-data Decoder
-  = cursorActivity(Handle handle)
-  | change(Handle handle)
-  ;
   
 Decoder cursorActivity(Msg(int, int, int, str, str) token2msg) 
   = cursorActivity(_encode(token2msg, currentPath(), mappers));
@@ -97,10 +97,29 @@ map[str,Decoder] eventsOf(list[Attr] attrs) = ( k: v | event(str k, Decoder v) <
 
 private Html asRoot(Html h) = h[attrs=h.attrs + ("id": "root")];
   
+  
+private void add(Html h) {
+  push(pop() + [h]);
+}
+
+private void push(list[Html] l) {
+  parent += [l];
+}
+
+private list[Html] top() {
+  return parent[-1];
+}
+
+private list[Html] pop() {
+  list[Html] elts = top();
+  parent = parent[..-1];
+  return elts;
+}
+  
 Html render(&T model, void(&T) block) {
-  parent = [[]];
+  push([]); 
   block(model);
-  return asRoot(parent[0][0]);
+  return asRoot(pop()[0]);
 }
 
 @doc{
@@ -123,7 +142,7 @@ void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
       block();
     }
     else if (Html h := vals[-1]) {
-      push(h);
+      add(h);
     }
     else if (Attr _ !:= vals[-1]) {
       text(vals[-1]);
@@ -133,13 +152,10 @@ void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
   parent = parent[..-2] + [parent[-2] + [elt(parent[-1], attrs)]];
 }
 
-private void push(Html h) {
-  parent = parent[..-1] + [parent[-1] + [h]];
-}
 
 void text(value v) {
   // todo (?): html encode.
-  push(txt("<v>"));
+  add(txt("<v>"));
 }
 
 void h1(value vals...) = build(vals, _h1);

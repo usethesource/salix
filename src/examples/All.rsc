@@ -2,8 +2,8 @@ module examples::All
 
 import gui::HTML;
 import gui::App;
-import gui::List;
-import gui::Debug;
+import lib::List;
+import lib::Debug;
 import examples::Celsius;
 import examples::Counter;
 import examples::ListDemo;

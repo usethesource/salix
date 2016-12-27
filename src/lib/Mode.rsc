@@ -1,4 +1,4 @@
-module gui::Mode
+module lib::Mode
 
 import Type;
 import ParseTree;

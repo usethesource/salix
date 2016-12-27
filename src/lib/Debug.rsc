@@ -1,4 +1,4 @@
-module gui::Debug
+module lib::Debug
 
 import gui::HTML;
 import gui::App;

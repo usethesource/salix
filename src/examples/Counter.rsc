@@ -2,7 +2,7 @@ module examples::Counter
 
 import gui::HTML;
 import gui::App;
-import gui::Debug;
+import lib::Debug;
 
 import String;
 

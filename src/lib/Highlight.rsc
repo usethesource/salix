@@ -1,4 +1,4 @@
-module gui::Highlight
+module lib::Highlight
 
 import gui::HTML;
 import gui::App;
@@ -42,7 +42,7 @@ str highlightRec(Tree t, str current, Cat2Css cats, int tabSize) {
     }
   }
   
-  void doText() {
+  void commitPending() {
     if (current != "") {
       text(current);
     }
@@ -51,16 +51,16 @@ str highlightRec(Tree t, str current, Cat2Css cats, int tabSize) {
   
   switch (t) {
     case appl(prod(lit(/^<s:[a-zA-Z_0-9]+>$/), _, _), list[Tree] args): {
-      doText();
+      commitPending();
       span(class("MetaKeyword"), style(cats["MetaKeyword"]), s);
     }
 
     case appl(prod(Symbol d, list[Symbol] ss, set[Attr] as), list[Tree] args): {
       if (\tag("category"(str cat)) <- as) {
-        doText();
+        commitPending();
         span(class(cat), style(cats[cat]), () {
           highlightArgs(args);
-          doText();
+          commitPending();
         });  
       }
       else {
@@ -73,7 +73,7 @@ str highlightRec(Tree t, str current, Cat2Css cats, int tabSize) {
     
     case char(int c): {
       str s = stringChar(c);
-      current += s == "\t" ? ("" | it + " " | _ <- [0..tabSzie]) : s;
+      current += s == "\t" ? ("" | it + " " | _ <- [0..tabSize]) : s;
     }
     
     case amb(set[Tree] alts): {

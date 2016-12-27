@@ -2,11 +2,12 @@ module examples::Editor
 
 import gui::HTML;
 import gui::App;
+import lib::Highlight;
+
 import ParseTree;
 import IO;
 import String;
 import List;
-import gui::Highlight;
 import lang::javascript::saner::Syntax;
 
 //
@@ -64,9 +65,7 @@ void editor(Source t) {
   div(() {
     h2("Editor example");
     codeMirror(\value("<t>"), onChange(doChange)/*, onCursorActivity(currentToken)*/);
-    div(() {
-      textarea(onInput(changeText), \value("<t>"));
-    });
+    h2("Generic highlighting");
     highlight(t);
   });
 }

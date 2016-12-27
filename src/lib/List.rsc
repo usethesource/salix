@@ -1,4 +1,4 @@
-module gui::List
+module lib::List
 
 import gui::HTML;
 import gui::App;

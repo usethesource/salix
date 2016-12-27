@@ -2,6 +2,7 @@ module examples::TodoMVC
 
 import gui::HTML;
 import gui::App;
+
 import util::Maybe;
 import List;
 
@@ -10,6 +11,7 @@ import List;
  * - focus (cmds)
  * - persistence
  * - routing?
+ * - keyed elements
  */
 
 // The full application state of our todo app.
@@ -232,9 +234,10 @@ void infoFooter() {
     p(() {
       text("Written by ");
       a(href("http://www.cwi.nl~/storm"), "Tijs van der Storm");
+      text(", inspired by Evan\'s version in Elm");
     });
     p(() {
-      text("To be part of ");
+      text("Based ");
       a(href("http://todomvc.com"), "TodoMVC");
     });
   });

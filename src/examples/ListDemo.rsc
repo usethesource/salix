@@ -2,7 +2,7 @@ module examples::ListDemo
 
 import gui::HTML;
 import gui::App;
-import gui::List;
+import lib::List;
 
 App[ListModel[str]] listApp() 
   = app(<["hello", "world!"], editStr, initStr>, view, editList, 
