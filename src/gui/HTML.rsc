@@ -8,6 +8,12 @@ import IO;
 // to be extended by clients
 data Msg;
 
+data Html
+  = element(str tagName, list[Html] kids, map[str, str] attrs, map[str, str] props, map[str, Decoder] events)
+  | native(str kind, str key, map[str, str] attrs, map[str, str] props, map[str, Decoder] events)
+  | txt(str contents)
+  ;  
+
 data Attr
   = attr(str name, str val)
   | prop(str name, str val)
@@ -69,17 +75,18 @@ Decoder keyCode(Msg(int) int2msg) = keyCode(_encode(int2msg, currentPath(), mapp
 Decoder oneKeyCode(int keyCode, Msg(int) int2msg) 
   = oneKeyCode(_encode(int2msg, currentPath(), mappers), keyCode = keyCode); 
 
+data Decoder
+  = cursorActivity(Handle handle);
+  
+Decoder cursorActivity(Msg(int, int, int, str, str) token2msg) 
+  = cursorActivity(_encode(token2msg, currentPath(), mappers));
 
-data Html
-  = element(str tagName, list[Html] kids, map[str, str] attrs, map[str, str] props, map[str, Decoder] events)
-  | txt(str contents)
-  ;  
 
-private map[str,str] attrsOf(list[Attr] attrs) = ( k: v | attr(str k, str v) <- attrs );
+map[str,str] attrsOf(list[Attr] attrs) = ( k: v | attr(str k, str v) <- attrs );
 
-private map[str,str] propsOf(list[Attr] attrs) = ( k: v | prop(str k, str v) <- attrs );
+map[str,str] propsOf(list[Attr] attrs) = ( k: v | prop(str k, str v) <- attrs );
 
-private map[str,Decoder] eventsOf(list[Attr] attrs) = ( k: v | event(str k, Decoder v) <- attrs );
+map[str,Decoder] eventsOf(list[Attr] attrs) = ( k: v | event(str k, Decoder v) <- attrs );
 
 private Html asRoot(Html h) = h[attrs=h.attrs + ("id": "root")];
   
@@ -101,17 +108,19 @@ void mapped(Msg(Msg) f, void() block) {
   mappers = mappers[..-1];
 }
 
-private void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
+void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
   list[Attr] attrs = [ a | Attr a <- vals ];
-  parent += [[]]; 
-  if (void() block := vals[-1]) {
-    block();
-  }
-  else if (Html h := vals[-1]) {
-    push(h);
-  }
-  else if (Attr _ !:= vals[-1]) {
-    text(vals[-1]);
+  parent += [[]];
+  if (vals != []) { 
+    if (void() block := vals[-1]) {
+      block();
+    }
+    else if (Html h := vals[-1]) {
+      push(h);
+    }
+    else if (Attr _ !:= vals[-1]) {
+      text(vals[-1]);
+    }
   }
   // asignables don't work on negative slices...
   parent = parent[..-2] + [parent[-2] + [elt(parent[-1], attrs)]];
@@ -447,3 +456,5 @@ Attr onBlur(Msg msg) = event("blur", succeed(msg));
 Attr onSubmit(Msg msg) = event("focus", succeed(msg));
 Attr onInput(Msg(str) f) = event("input", targetValue(f)); 
 Attr onCheck(Msg(bool) f) = event("check", targetChecked(f));
+Attr onCursorActivity(Msg(int, int, int, str, str) f) 
+  = event("cursorActivity", cursorActivity(f));

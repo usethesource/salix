@@ -10,13 +10,12 @@ extend lang::std::Layout;
 
 syntax Expr
   = ifThen: "if" Expr "then" Expr "fi"
-  | @category="Variable" var: Var 
+  | @category="Variable" var: Var
+  | @category="StringLiteral" Str 
   ;
   
-lexical Var
-  = [a-z]+
-  ;
-
+lexical Str = [\"]![\"]*[\"];
+lexical Var = [a-z]+;
 
 alias Cat2Css = map[str, lrel[str, str]]; 
 
@@ -33,16 +32,59 @@ Cat2Css _category2styles = (
   "StringLiteral": [<"color", "#2AA198">]
 );
 
-void highlight(Tree t, Cat2Css cats = _category2styles) {
-  span(id("<t@\loc>"), () {
-    highlightRec(t, "", cats);
+
+App highlightApp()
+  = app(exampleTerm(), editor, update, |http://localhost:9181|, |project://elmer/src/examples|);
+
+Expr exampleTerm() = parse(#Expr, "if \"x\" // bla \n then \t\t if y then z fi fi");
+
+data Msg
+  = changeText(str txt)
+  | currentToken(int line, int \start, int end, str string, str tokenType)
+  ;
+
+Expr update(currentToken(int line, int \start, int end, str string, str tokenType), Expr e) = e;
+
+Expr update(changeText(str x), Expr e) {
+  try {
+    return parse(#Expr, x);
+  }
+  catch ParseError(loc l): {
+    // compute string diff, futs the insert elements into e
+    // to be able to highlight.
+    return e;
+  }
+}
+
+
+void codeMirror(value vals...) = build(vals, _codeMirror);
+Html _codeMirror(list[Html] _, list[Attr] attrs)
+  = native("codeMirror", "\<codeMirror\>", 
+      attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
+
+
+
+void editor(Tree t) {
+  // style(<"overflow", "hidden">, <"height", "0">)
+  div(() {
+    h2("Editor example");
+    codeMirror(onCursorActivity(currentToken));
+    div(() {
+      textarea(onInput(changeText), "<t>");
+    });
+    highlight(t);
   });
 }
 
 
+void highlight(Tree t, void(list[value]) container = pre, Cat2Css cats = _category2styles) {
+  container([() {
+    highlightRec(t, "", cats);
+  }]);
+}
+
+
 str highlightRec(Tree t, str current, Cat2Css cats) {
-  //prod(Symbol def, list[Symbol] symbols, set[Attr] attributes
-  
   
   void highlightArgs(list[Tree] args) {
     for (Tree a <- args) {
@@ -50,34 +92,21 @@ str highlightRec(Tree t, str current, Cat2Css cats) {
     }
   }
   
-  
   void doText() {
-    println("CURRENT: `<current>`");
     if (current != "") {
       text(current);
     }
     current = "";
   }
   
-  println("highlighting: `<t>`");
-  
   switch (t) {
     case appl(prod(lit(/^<s:[a-zA-Z_0-9]+>$/), _, _), list[Tree] args): {
-      println("Lit: <s>");
-      println("Current at lit: `<current>`");
       doText();
       span(class("MetaKeyword"), style(cats["MetaKeyword"]), s);
     }
 
-    //case appl(prod(layouts(_), _, _), list[Tree] args): {
-    //  println("Layout: `<t>`");
-    //  current += "<t>";
-    //}
-    
-  
     case appl(prod(Symbol d, list[Symbol] ss, set[Attr] as), list[Tree] args): {
       if (\tag("category"(str cat)) <- as) {
-        println("  Cat: <cat>");
         doText();
         span(class(cat), style(cats[cat]), () {
           highlightArgs(args);
@@ -94,14 +123,14 @@ str highlightRec(Tree t, str current, Cat2Css cats) {
     
     case char(int c): {
       current += stringChar(c);
-      println("CURRENT at char: `<current>`");
+    }
+    
+    case amb(set[Tree] alts): {
+      if (Tree a <- alts) {
+        current = highlightRec(a, current, cats);
+      }
     }
   
-    default: {
-      println("MISSED: ");
-      rprintln(t); 
-    }
-      
   }
   
   return current;

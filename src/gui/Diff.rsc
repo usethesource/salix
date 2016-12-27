@@ -15,11 +15,18 @@ Patch diff(Html old, Html new, int idx) {
     return patch(idx, [], [replace(new)]);
   }
   
-  if (old is txt) {
+  if (old is txt, new is txt) {
     if (old.contents != new.contents) {
       return patch(idx, [], [setText(new.contents)]);
     }
     return patch(idx, [], []);
+  }
+  
+  if (old is native, new is native) {
+    edits = diffMap(old.attrs, new.attrs, setAttr, removeAttr)
+      + diffMap(old.props, new.props, setProp, removeProp)
+      + diffMap(old.events, new.events, setEvent, removeEvent);
+    return patch(idx, [], edits);  
   }
   
   if (old is element, old.tagName != new.tagName) {

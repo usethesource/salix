@@ -17,21 +17,25 @@ Handle toHandle(map[str, str] params)
 Decoder toDecoder(map[str, str] params)
   = make(#Decoder, params["type"], [toHandle(params)], ());
 
-Msg toMsg(succeed(Handle h), str _, &T(int,type[&T]) dec) 
+Msg toMsg(succeed(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
   = dec(h.id, #Msg);
 
-Msg toMsg(targetValue(Handle h), str d, &T(int,type[&T]) dec) 
-  =  dec(h.id, #Msg(str))(d);
+Msg toMsg(targetValue(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
+  =  dec(h.id, #Msg(str))(p["data"]);
 
-Msg toMsg(targetChecked(Handle h), str d, &T(int,type[&T]) dec) 
-  = dec(h.id, #Msg(bool))(d == "true");
+Msg toMsg(targetChecked(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
+  = dec(h.id, #Msg(bool))(p["data"] == "true");
 
-Msg toMsg(oneKeyCode(Handle h), str d, &T(int,type[&T]) dec) 
-  = dec(h.id, #Msg(int))(toInt(d));
+Msg toMsg(oneKeyCode(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
+  = dec(h.id, #Msg(int))(toInt(p["data"]));
+
+Msg toMsg(cursorActivity(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
+  = dec(h.id, #Msg(int, int, int, str, str))(
+           toInt(p["line"]), toInt(p["start"]), toInt(p["end"]), p["string"], p["tokenType"]);
   
 // todo: remove duplication with params[path]
 Msg params2msg(map[str, str] params, Msg(str, Msg) f, &T(int,type[&T]) dec) 
-  = f(params["path"], toMsg(toDecoder(params), params["data"] ? "", dec));
+  = f(params["path"], toMsg(toDecoder(params), params, dec));
 
 alias App = tuple[void() serve, void() stop];
 
@@ -68,12 +72,13 @@ App app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
 
     if (get("/init") := req) {
       current = render(model, view);
-      println("Initial:");
-      iprintln(current);
+      //println("Initial:");
+      //iprintln(current);
       return response(current);
     }
     
     if (get("/msg") := req) {
+      //println(req.parameters);
       Msg msg = params2msg(req.parameters, mapEm, decode);
       println("Processing: <msg>");
       model = update(msg, model);

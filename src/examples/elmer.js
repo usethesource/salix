@@ -7,6 +7,39 @@
 
 var __queue = [];
 
+var __natives = {};
+
+var __builders = {
+	codeMirror: function(parent, attrs, props, events) {
+		var cm = CodeMirror(parent, {
+			lineNumbers: true,
+			matchBrackets: true,
+			tabMode: 'shift',
+			autofocus: true,
+			value: "function myScript(){return 100;}\n",
+			mode:  "javascript"
+		});
+		cm.refresh();
+		console.log(cm);
+		cm.on('cursorActivity', function (editor) {
+			var position = editor.getCursor();
+			var line = position.line;
+			var token = editor.getTokenAt(position);
+			schedule(events.cursorActivity,  {line: line, start: token.start, 
+				end: token.end, string: token.string, tokenType: token.type});
+		});
+	}
+};
+
+function makeNative(native) {
+	if (!__natives.hasOwnProperty(native.key)) {
+		__natives[native.key] = function(parent) {
+			return __builders[native.kind](parent, native.attrs, native.props, native.events);
+		};
+	}
+	return __natives[native.key];
+}
+
 function render(timestamp) {
 	window.requestAnimationFrame(render);
 	if (__queue.length == 0) {
@@ -14,6 +47,7 @@ function render(timestamp) {
 	}
 	var payload = __queue.shift();
 	$.get('/msg', payload, function (p, stats, jqXHR) {
+		// TODO: receive commands here too which will have to be interpreted
 		patch(root(), p, dec2handler);
 	}, 'json');
 }
@@ -38,7 +72,11 @@ function schedule(dec, data) {
 	var ret = dec[type].handle.handle;
 	ret.type = type;
 	if (data) {
-		ret.data = data;
+		for (var k in data) {
+			if (data.hasOwnProperty(k)) {
+				ret[k] = data[k];
+			}
+		}
 	}
 	__queue.push(ret);
 }
@@ -56,21 +94,20 @@ function dec2handler(decoder) {
 			
 		case 'targetValue':
 			return function (event) {
-				schedule(decoder, event.target.value);
+				schedule(decoder, {data: event.target.value});
 			};
 			
 		case 'targetChecked':
 			return function (event) {	
-				schedule(decoder, event.target.checked);
+				schedule(decoder, {data: event.target.checked});
 			};
 			
 		case 'oneKeyCode':
 			return function (event) {	
 				if (event.keyCode == decoder.oneKeyCode.keyCode) {
-					schedule(decoder, event.keyCode);
+					schedule(decoder, {data: event.keyCode});
 				}		
 			};
-			
 		}
 		break;
 	}
@@ -96,7 +133,13 @@ function patchThis(dom, edits) {
 				break;
 				
 			case 'appendNode':
-				dom.appendChild(build(edit[type].html));
+				var kid = build(edit[type].html);
+				if (typeof kid === 'function') {
+					kid(dom);
+				}
+				else {
+					dom.appendChild(kid);
+				}
 				break;
 				
 			case 'setAttr':
@@ -171,6 +214,10 @@ function build(vdom) {
         return document.createTextNode(vdom.txt.contents);
     }
     
+    if (vdom.native !== undefined) {
+    	return makeNative(vdom.native);
+    }
+    
     var elt = document.createElement(vdom.element.tagName);
     var vattrs = vdom.element.attrs || {};
     
@@ -196,7 +243,14 @@ function build(vdom) {
     }
     
     for (var i = 0; i < vdom.element.kids.length; i++) {
-        elt.appendChild(build(vdom.element.kids[i]));
+    	var kid = build(vdom.element.kids[i]);
+    	if (typeof kid === 'function') {
+    		// natives append themselves
+    		kid(elt);
+    	}
+    	else {
+    		elt.appendChild(kid);
+    	}
     }
     
     return elt;    
