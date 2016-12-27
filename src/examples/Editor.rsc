@@ -10,7 +10,6 @@ import String;
 import List;
 import lang::javascript::saner::Syntax;
 
-//
 App[Source] editorApp()
   = app(exampleTerm(), editor, update, |http://localhost:9181|, |project://elmer/src/examples|);
 

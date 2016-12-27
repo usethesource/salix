@@ -15,19 +15,18 @@ data Msg
   ;
 
 
-// Demo  
 App[DebugModel[Model]] debugCounterApp(loc http, loc static)
-  =  debug(init(), view, update, http, static);
+  =  debug(init(), examples::Counter::view, examples::Counter::update, http, static);
 
 App[DebugModel[Model]] debugCounterApp() 
   = debugCounterApp(|http://localhost:9197|, |project://elmer/src/examples|); 
-// end demo
-
-Model init() = <0, 1>;
 
 App[Model] counterApp() 
   = app(init(), view, update, 
         |http://localhost:9197|, |project://elmer/src/examples|); 
+
+
+Model init() = <0, 1>;
 
 void view(Model m) {
   div(() {

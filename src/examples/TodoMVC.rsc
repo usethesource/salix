@@ -3,7 +3,6 @@ module examples::TodoMVC
 import gui::HTML;
 import gui::App;
 
-import util::Maybe;
 import List;
 
 /*
@@ -26,16 +25,6 @@ App[Model] todoMVC()
 Model emptyModel() = <[], "", 0, "All">;
 
 Entry newEntry(str desc, int id) = <desc, false, false, id>;
-
-alias Cmd[&T] = tuple[void]; // todo;
-
-Model init(nothing()) = emptyModel();
-Model init(just(Model m)) = m;
-
-//init savedModel =
-// Maybe.withDefault emptyModel savedModel ! []
-
-
 
 // UPDATE
 

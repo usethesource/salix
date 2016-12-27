@@ -11,12 +11,32 @@ import Map;
 import List;
 import Type;
 
-Handle toHandle(map[str, str] params)
-  = handle(params["path"], toInt(params["id"]));
+@doc{
+Convert request parameters to a Msg value.
+Active mappers at `path`  transform the message according to f.
+}
+// todo: remove duplication with params[path]
+Msg params2msg(map[str, str] params, Msg(str, Msg) f, &T(int,type[&T]) dec) 
+  = f(params["path"], toMsg(toDecoder(params), params, dec));
 
+
+@doc{
+Construct a Decoder value from the request parameters.
+}
 Decoder toDecoder(map[str, str] params)
   = make(#Decoder, params["type"], [toHandle(params)], ());
 
+@doc{
+Parse request parameters into a Handle.
+}
+Handle toHandle(map[str, str] params)
+  = handle(params["path"], toInt(params["id"]));
+
+
+@doc{
+Convert decoders to actual messages by applying the functions
+returned by dec, based on the handle's id.
+}
 Msg toMsg(succeed(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
   = dec(h.id, #Msg);
 
@@ -39,70 +59,105 @@ Msg toMsg(change(Handle h), map[str,str] p, &T(int,type[&T]) dec)
            toInt(p["toLine"]), toInt(p["toCol"]),
            p["text"], p["removed"]);
   
-// todo: remove duplication with params[path]
-Msg params2msg(map[str, str] params, Msg(str, Msg) f, &T(int,type[&T]) dec) 
-  = f(params["path"], toMsg(toDecoder(params), params, dec));
-
+@doc{
+The basic App type:
+- serve to start serving the application
+- stop to shutdown the server
+- hotSwap to replace the capture view and update functions
+}
 alias App[&T] = tuple[
   void() serve, 
   void() stop, 
   void(void(&T), &T(Msg, &T)) hotSwap
 ];
 
-App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
-  
-  int id = -1;
+@doc{
+Internal app state
+}
+alias AppState = tuple[
+  int id, // last assigned id
+  map[int, value] from, // bijection between handle identities and decoder functions
+  map[value, int] to,
+  map[str, list[Msg(Msg)]] mappers // active message mappers per handle path
+];
 
-  map[int, value] _from  = ();
-  map[value, int] _to = ();
-  map[str, list[Msg(Msg)]] _mappers = ();
+AppState newAppState() = < -1, (), (), ()>;
+
+@doc{
+Construct an App over model type &T, providing a view, a model update,
+a http loc to serve the app to, and a location to resolve static files.
+}
+App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
+  AppState state = newAppState();
   
-  Handle myEncode(value x, str path, list[Msg(Msg)] mappers) {
-    if (x notin _to) {
-      id += 1;
-      _from[id] = x;
-      _to[x] = id;
+  // encode a value and path + active mappers as a handle
+  // which can be sent over the wire.
+  Handle encode(value x, str path, list[Msg(Msg)] mappers) {
+    if (x notin state.to) {
+      state.id += 1;
+      state.from[state.id] = x;
+      state.to[x] = state.id;
     }
-    _mappers[path] = mappers;
-    return handle(path, _to[x]);
+    state.mappers[path] = mappers;
+    return handle(path, state.to[x]);
   }
   
+  // retrieve the actual function corresponding to a handle identity.
   &U decode(int id, type[&U] t) = d
-    when &U d := _from[id];
+    when &U d := state.from[id];
   
+  // apply the message transformers to msg that were in scope at path
   Msg mapEm(str path, Msg msg) 
-    = ( msg | f(it) | path in _mappers, Msg(Msg) f <- reverse(_mappers[path]) );
+    = ( msg | f(it) | path in state.mappers, Msg(Msg) f <- reverse(state.mappers[path]) );
 
   Html current;
 
-  // mixes with constructors that are in scope!!!
+  // the main handler to interpret http requests.
+  // BUG: mixes with constructors that are in scope!!!
   Response _handle(Request req) {
-    //withEncode(myEncode); ?? does not work!?!?!
-    gui::HTML::_encode = myEncode;
+    // publish this app's encode to the HTML library.
+    gui::HTML::_encode = encode;
 
+    // initially, just render the view, for the current model.
     if (get("/init") := req) {
       current = render(model, view);
-      //println("Initial:");
-      //iprintln(current);
       return response(current);
     }
     
+    // if receiving an (encoded) message
     if (get("/msg") := req) {
-      //println("");
-      //println(req.parameters);
+      
+      // decode it into a Msg value in four steps
+      // - construct a handle from the request's params
+      // - decode it, to obtain a message decoder
+      // - apply the decoder to the additional values in req.params
+      // - apply all message transformers that were in scope for handle
       Msg msg = params2msg(req.parameters, mapEm, decode);
+      
       println("Processing: <msg>");
+      
+      // update the model
       model = update(msg, model);
+      
+      // compute the new view
       Html newView = render(model, view);
+      
+      // compute the patch to be sent to the browser
       Patch p = diff(current, newView);
+      
+      // update the current view
       current = newView;
+      
+      // send the patch.
       return response(p); 
     }
     
+    // everything else is considered static files.
     if (get(p:/\.<ext:.*>$/) := req, ext in mimeTypes) {
       return fileResponse(static[path="<static.path>/<p>"], mimeTypes[ext], ());
     }
     
+    // or not found
     return response(notFound(), "not handled: <req.path>");
   }
 

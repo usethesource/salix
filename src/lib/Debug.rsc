@@ -20,10 +20,14 @@ data Msg
   | goto(int version)
   ;
 
-App debug(&T model, void(&T) view, &T(Msg, &T) upd, loc http, loc static)
-  = app(<0, [model], upd>, 
-      void(DebugModel[&T] d) { debugView(d, view); }, debugUpdate, http, static); 
+App[DebugModel[&T]] debug(&T model, void(&T) view, &T(Msg, &T) upd, loc http, loc static)
+  = app(wrapModel(model, upd), wrapView(view), debugUpdate, http, static); 
 
+DebugModel[&T] wrapModel(&T model, &T(Msg, &T) upd) 
+  = <0, [model], upd>;
+
+void(DebugModel[&T] d) wrapView(void(&T) view) 
+  = void(DebugModel[&T] d) { debugView(d, view); };
 
 void debugView(DebugModel[&T] model, void(&T) subView) {
   div(() {

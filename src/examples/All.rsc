@@ -4,11 +4,16 @@ import gui::HTML;
 import gui::App;
 import lib::List;
 import lib::Debug;
+
 import examples::Celsius;
 import examples::Counter;
 import examples::ListDemo;
 
-alias AllModel = tuple[real celsius, Model counter, ListModel[str] listDemo];
+alias AllModel = tuple[
+  real celsius, 
+  examples::Counter::Model counter, 
+  ListModel[str] listDemo
+];
 
 data Msg
   = celsius(Msg msg)
@@ -24,8 +29,11 @@ App[DebugModel[AllModel]] debugAllApp()
   = debug(initAll(), viewAll, editAll, 
         |http://localhost:9199|, |project://elmer/src/examples|); 
   
-AllModel initAll()
-  = <37.0, examples::Counter::init(), <["hello", "world!"], editStr, initStr>>;  
+AllModel initAll() = <
+  37.0, 
+  examples::Counter::init(), 
+  <["hello", "world!"], editStr, initStr>
+>;  
   
 void viewAll(AllModel m) {
   div(() {
