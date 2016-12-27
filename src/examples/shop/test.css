@@ -1,7 +1,7 @@
 body {
   font-family: 'Georgia';
-  background: url('bg.jpg') no-repeat 50% 50% fixed; 
-    background-size: cover;
+  /*background: url('bg.jpg') no-repeat 50% 50% fixed; 
+    background-size: cover;*/
 }
 
 h1 {
@@ -25,7 +25,7 @@ h2 {
   padding: 40px;
   border-radius: 20px;
   background:rgba(255,255,255,1);
-  box-shadow: 3px 3px 5px 0px rgba(50, 50, 50, 0.7);
+  /*box-shadow: 3px 3px 5px 0px rgba(50, 50, 50, 0.7);*/
 }
 
 #container table {

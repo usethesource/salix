@@ -1,4 +1,4 @@
-module examples::Editor
+module examples::codemirror::Editor
 
 import gui::HTML;
 import gui::App;

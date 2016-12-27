@@ -1,4 +1,4 @@
-module examples::TodoMVC
+module examples::todomvc::TodoMVC
 
 import gui::HTML;
 import gui::App;

@@ -1,4 +1,4 @@
-module examples::Shop
+module examples::shop::Shop
 
 import gui::HTML;
 import gui::App;
