@@ -16,11 +16,14 @@ var __builders = {
 			matchBrackets: true,
 			tabMode: 'shift',
 			autofocus: true,
-			value: "function myScript(){return 100;}\n",
+			//value: "function myScript(){return 100;}\n",
 			mode:  "javascript"
 		});
-		cm.refresh();
-		console.log(cm);
+		cm.getDoc().setValue('function myScript() {\n  return 100;\n}\n');
+		setTimeout(function() {
+            cm.refresh();
+        }, 100);
+
 		cm.on('cursorActivity', function (editor) {
 			var position = editor.getCursor();
 			var line = position.line;
