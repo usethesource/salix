@@ -5,33 +5,28 @@ import String;
 import IO;
 
 
-@doc{
-This is the basic Message data type that clients
+@doc{This is the basic Message data type that clients
 will extend with concrete constructors.
 
 Note, that instead of make Html parametric on Msg (Html[&Msg])
 we use a single type and ADT extension. This decision makes
 a lot of code slightly less verbose, but sacrifices additional
-type checking when nesting components.
-}
+type checking when nesting components.}
 data Msg;
 
-@doc{
-The basic Html node type, defining constructors for
-elements, text nodes, and native nodes (which are managed in js).
-}
+@doc{The basic Html node type, defining constructors for
+elements, text nodes, and native nodes (which are managed in js).}
 data Html
   = element(str tagName, list[Html] kids, map[str, str] attrs, map[str, str] props, map[str, Decoder] events)
   // TODO: native should additional have arbitrary data...
   | native(str kind, str key, map[str, str] attrs, map[str, str] props, map[str, Decoder] events)
   | txt(str contents)
   ;  
+  
 
-@doc{
-Generalized attributes to be produced by explicit attribute construction
+@doc{Generalized attributes to be produced by explicit attribute construction
 functions (such as class(str), onClick(Msg), or \value(str)).
-null() acts as a zero element and is always ignored.
-}
+null() acts as a zero element and is always ignored.}
 data Attr
   = attr(str name, str val)
   | prop(str name, str val)
@@ -41,17 +36,13 @@ data Attr
 
 // TODO: keyed elements 
 
-@doc{
-Handler represent functions to decode events.
-}
+@doc{Handles represent (encoded) functions to decode events.}
 data Handle
   = handle(str path, int id);
 
-@doc{
-Decoders represent functions to decode event types and data.
+@doc{Decoders represent functions to decode event types and data.
 Here they represented without functions, but using Handles
-so that they can be serialized to JSON.
-}
+so that they can be serialized to JSON.}
 data Decoder
   = succeed(Handle handle)
   | targetValue(Handle handle)
@@ -61,22 +52,19 @@ data Decoder
   | change(Handle handle)
   ;
 
-// To be set by an "app" during rendering.
-@doc{
-The encoding interface between an App and this library.
+@doc{The encoding interface between an App and this library.
 An app sets this variable to its encapulsate encoder before
 rendering. This means that encoding is relative to app and not global.
 
 Encoding produces handles for arbitrary values, at some path,
-recording the list of active message transformers at the moment of call.
-} 
+recording the list of active message transformers at the moment of call.} 
 public Handle(value, str, list[Msg(Msg)]) _encode;
 
 @doc{The html element stack used during rendering.}
 private list[list[Html]] stack = [];
 
 @doc{Basic stack management functions.}
-private void add(Html h) { push(pop() + [h]); }
+private void add(Html h) = push(pop() + [h]);
 
 private void push(list[Html] l) { stack += [l]; }
 
@@ -141,42 +129,41 @@ void mapped(Msg(Msg) f, void() block) {
   mappers = mappers[..-1];
 }
 
-@doc{
-The basic build function to construct html elements using the stack.
+@doc{The basic build function to construct html elements on the stack.
 The list of argument values can contain any number of Attr values.
 The last argument (if any) can be a block, an Html node, or a value.
-In the latter case it is converted to a txt node.
-}
+In the latter case it is converted to a txt node.}
 void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
-  list[Attr] attrs = [ a | Attr a <- vals ];
-  push([]);
+  
+  push([]); // start a new scope for this elements children
+  
   if (vals != []) { 
-    if (void() block := vals[-1]) {
+    if (void() block := vals[-1]) { // argument block is just called
       block();
     }
-    else if (Html h := vals[-1]) {
+    else if (Html h := vals[-1]) { // a computed node is simply added
       add(h);
     }
-    else if (Attr _ !:= vals[-1]) {
+    else if (Attr _ !:= vals[-1]) { // else (and if not Attr), render as text.
       text(vals[-1]);
     }
   }
-  add(elt(pop(), attrs));
+  
+  // construct the `elt` using the kids at the top of the stack
+  // and any attributes in vals and add it to the parent's list of children.
+  add(elt(pop(), [ a | Attr a <- vals ]));
+  
 }
 
 
 @doc{Create a text node.}
-void text(value v) {
-  // todo (?): html encode.
-  add(txt("<v>"));
-}
+void text(value v) = add(txt("<v>")); // TODO: HTML encode.
 
-@doc{
-The element render functions below all call build
+
+@doc{The element render functions below all call build
 to interpret the list of values; build will call the
 second argument (_h1 etc.) to construct the actual
-Html values.
-}
+Html values.}
 void h1(value vals...) = build(vals, _h1);
 void h2(value vals...) = build(vals, _h2);
 void h3(value vals...) = build(vals, _h3);

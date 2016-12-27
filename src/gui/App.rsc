@@ -11,32 +11,22 @@ import Map;
 import List;
 import Type;
 
-@doc{
-Convert request parameters to a Msg value.
-Active mappers at `path`  transform the message according to f.
-}
-// todo: remove duplication with params[path]
+@doc{Convert request parameters to a Msg value.
+Active mappers at `path`  transform the message according to f.}
 Msg params2msg(map[str, str] params, Msg(str, Msg) f, &T(int,type[&T]) dec) 
   = f(params["path"], toMsg(toDecoder(params), params, dec));
 
-
-@doc{
-Construct a Decoder value from the request parameters.
-}
+@doc{Construct a Decoder value from the request parameters.}
 Decoder toDecoder(map[str, str] params)
   = make(#Decoder, params["type"], [toHandle(params)], ());
 
-@doc{
-Parse request parameters into a Handle.
-}
+@doc{Parse request parameters into a Handle.}
 Handle toHandle(map[str, str] params)
   = handle(params["path"], toInt(params["id"]));
 
 
-@doc{
-Convert decoders to actual messages by applying the functions
-returned by dec, based on the handle's id.
-}
+@doc{Convert decoders to actual messages by applying the functions
+returned by dec, based on the handle's id.}
 Msg toMsg(succeed(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
   = dec(h.id, #Msg);
 
@@ -59,34 +49,28 @@ Msg toMsg(change(Handle h), map[str,str] p, &T(int,type[&T]) dec)
            toInt(p["toLine"]), toInt(p["toCol"]),
            p["text"], p["removed"]);
   
-@doc{
-The basic App type:
+@doc{The basic App type:
 - serve to start serving the application
 - stop to shutdown the server
-- hotSwap to replace the capture view and update functions
-}
+- hotSwap to replace the capture view and update functions}
 alias App[&T] = tuple[
   void() serve, 
   void() stop, 
   void(void(&T), &T(Msg, &T)) hotSwap
 ];
 
-@doc{
-Internal app state
-}
+@doc{Internal app state}
 alias AppState = tuple[
-  int id, // last assigned id
+  int id, // last assigned handle id
   map[int, value] from, // bijection between handle identities and decoder functions
   map[value, int] to,
-  map[str, list[Msg(Msg)]] mappers // active message mappers per handle path
+  map[str, list[Msg(Msg)]] mappers // active stack of message mappers per handle path
 ];
 
-AppState newAppState() = < -1, (), (), ()>;
+AppState newAppState() = < -1, (), (), () >;
 
-@doc{
-Construct an App over model type &T, providing a view, a model update,
-a http loc to serve the app to, and a location to resolve static files.
-}
+@doc{Construct an App over model type &T, providing a view, a model update,
+a http loc to serve the app to, and a location to resolve static files.}
 App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
   AppState state = newAppState();
   
