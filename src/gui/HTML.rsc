@@ -5,6 +5,17 @@ import String;
 import IO;
 
 
+/*
+ * NB: as of now, this module cannot be extended, since the global
+ * variables will be copied; this leads to strange results if
+ * different modules use different globals... 
+ *
+ * We need the globals, however, because we don't want to pass any
+ * extra data to the user functions h1/h2/... etc. The only limitation
+ * is thus that case-based functions in this module cannot be extended.
+ * Adding new element functions, or even element constructors is fine.
+ */
+
 @doc{This is the basic Message data type that clients
 will extend with concrete constructors.
 
@@ -41,7 +52,7 @@ data Handle
   = handle(str path, int id);
 
 @doc{Decoders represent functions to decode event types and data.
-Here they represented without functions, but using Handles
+Here they are represented without functions, but using Handles
 so that they can be serialized to JSON.}
 data Decoder
   = succeed(Handle handle)
@@ -53,8 +64,8 @@ data Decoder
   ;
 
 @doc{The encoding interface between an App and this library.
-An app sets this variable to its encapulsate encoder before
-rendering. This means that encoding is relative to app and not global.
+An app needs to set this variable to its encapsulated encoder before
+rendering. This ensures that encoding is relative to app and not global.
 
 Encoding produces handles for arbitrary values, at some path,
 recording the list of active message transformers at the moment of call.} 
@@ -109,14 +120,11 @@ map[str,str] propsOf(list[Attr] attrs) = ( k: v | prop(str k, str v) <- attrs );
 
 map[str,Decoder] eventsOf(list[Attr] attrs) = ( k: v | event(str k, Decoder v) <- attrs );
 
-private Html asRoot(Html h) = h[attrs=h.attrs + ("id": "root")];
-  
-  
 @doc{Render turns void returning views for a model &T into an Html node.}  
 Html render(&T model, void(&T) block) {
   push([]); 
   block(model);
-  return asRoot(pop()[0]);
+  return pop()[0];
 }
 
 @doc{Record mapper to transform messages produced in block according f.}
@@ -144,7 +152,7 @@ void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
     else if (Html h := vals[-1]) { // a computed node is simply added
       add(h);
     }
-    else if (Attr _ !:= vals[-1]) { // else (and if not Attr), render as text.
+    else if (Attr _ !:= vals[-1]) { // else (if not Attr), render as text.
       text(vals[-1]);
     }
   }

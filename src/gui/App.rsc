@@ -70,8 +70,9 @@ alias AppState = tuple[
 AppState newAppState() = < -1, (), (), () >;
 
 @doc{Construct an App over model type &T, providing a view, a model update,
-a http loc to serve the app to, and a location to resolve static files.}
-App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
+a http loc to serve the app to, and a location to resolve static files.
+The keyword param root identifies the root element in the html document.}
+App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, str root = "root") {
   AppState state = newAppState();
   
   // encode a value and path + active mappers as a handle
@@ -94,6 +95,8 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
   Msg mapEm(str path, Msg msg) 
     = ( msg | f(it) | path in state.mappers, Msg(Msg) f <- reverse(state.mappers[path]) );
 
+  Html asRoot(Html h) = h[attrs=h.attrs + ("id": root)];
+
   Html current;
 
   // the main handler to interpret http requests.
@@ -104,7 +107,7 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
 
     // initially, just render the view, for the current model.
     if (get("/init") := req) {
-      current = render(model, view);
+      current = asRoot(render(model, view));
       return response(current);
     }
     
@@ -124,7 +127,7 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
       model = update(msg, model);
       
       // compute the new view
-      Html newView = render(model, view);
+      Html newView = asRoot(render(model, view));
       
       // compute the patch to be sent to the browser
       Patch p = diff(current, newView);
