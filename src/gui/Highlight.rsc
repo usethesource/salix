@@ -5,17 +5,6 @@ import gui::App;
 import ParseTree;
 import IO;
 import String;
-extend lang::std::Layout;
-
-
-syntax Expr
-  = ifThen: "if" Expr "then" Expr "fi"
-  | @category="Variable" var: Var
-  | @category="StringLiteral" Str 
-  ;
-  
-lexical Str = [\"]![\"]*[\"];
-lexical Var = [a-z]+;
 
 alias Cat2Css = map[str, lrel[str, str]]; 
 
@@ -33,53 +22,14 @@ Cat2Css _category2styles = (
 );
 
 
-App highlightApp()
-  = app(exampleTerm(), editor, update, |http://localhost:9181|, |project://elmer/src/examples|);
-
-Expr exampleTerm() = parse(#Expr, "if \"x\" // bla \n then \t\t if y then z fi fi");
-
-data Msg
-  = changeText(str txt)
-  | currentToken(int line, int \start, int end, str string, str tokenType)
-  ;
-
-Expr update(currentToken(int line, int \start, int end, str string, str tokenType), Expr e) = e;
-
-Expr update(changeText(str x), Expr e) {
-  try {
-    return parse(#Expr, x);
-  }
-  catch ParseError(loc l): {
-    // compute string diff, futs the insert elements into e
-    // to be able to highlight.
-    return e;
-  }
-}
-
-
-void codeMirror(value vals...) = build(vals, _codeMirror);
-Html _codeMirror(list[Html] _, list[Attr] attrs)
-  = native("codeMirror", "\<codeMirror\>", 
-      attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
-
-
-
-void editor(Tree t) {
-  // style(<"overflow", "hidden">, <"height", "0">)
-  div(() {
-    h2("Editor example");
-    codeMirror(onCursorActivity(currentToken));
-    div(() {
-      textarea(onInput(changeText), "<t>");
-    });
-    highlight(t);
-  });
-}
 
 
 void highlight(Tree t, void(list[value]) container = pre, Cat2Css cats = _category2styles) {
   container([() {
-    highlightRec(t, "", cats);
+    str pending = highlightRec(t, "", cats);
+    if (pending != "") {
+      text(pending);
+    }
   }]);
 }
 

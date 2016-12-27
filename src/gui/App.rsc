@@ -32,14 +32,24 @@ Msg toMsg(oneKeyCode(Handle h), map[str,str] p, &T(int,type[&T]) dec)
 Msg toMsg(cursorActivity(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
   = dec(h.id, #Msg(int, int, int, str, str))(
            toInt(p["line"]), toInt(p["start"]), toInt(p["end"]), p["string"], p["tokenType"]);
+
+Msg toMsg(change(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
+  = dec(h.id, #Msg(int, int, int, int, str, str))(
+           toInt(p["fromLine"]), toInt(p["fromCol"]), 
+           toInt(p["toLine"]), toInt(p["toCol"]),
+           p["text"], p["removed"]);
   
 // todo: remove duplication with params[path]
 Msg params2msg(map[str, str] params, Msg(str, Msg) f, &T(int,type[&T]) dec) 
   = f(params["path"], toMsg(toDecoder(params), params, dec));
 
-alias App = tuple[void() serve, void() stop];
+alias App[&T] = tuple[
+  void() serve, 
+  void() stop, 
+  void(void(&T), &T(Msg, &T)) hotSwap
+];
 
-App app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
+App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
   
   int id = -1;
 
@@ -78,6 +88,7 @@ App app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
     }
     
     if (get("/msg") := req) {
+      //println("");
       //println(req.parameters);
       Msg msg = params2msg(req.parameters, mapEm, decode);
       println("Processing: <msg>");
@@ -95,5 +106,9 @@ App app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static) {
     return response(notFound(), "not handled: <req.path>");
   }
 
-  return <() { serve(http, _handle); }, () { shutdown(http); }>;
+  return <
+    () { serve(http, _handle); }, 
+    () { shutdown(http); },
+    (void(&T) v, &T(Msg, &T) u) { view = v; update = u; }
+   >;
 }

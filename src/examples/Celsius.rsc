@@ -10,10 +10,10 @@ data Msg
   | f(str f)
   ;
 
-App celsiusApp() = 
+App[real] celsiusApp() = 
   celsiusApp(37.0, |http://localhost:9193|, |project://elmer/src/examples|); 
 
-App celsiusApp(real m, loc http, loc static) 
+App[real] celsiusApp(real m, loc http, loc static) 
   = app(m, view, update, http, static); 
 
 void view(real m) { 

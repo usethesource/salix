@@ -4,7 +4,7 @@ import gui::HTML;
 import gui::App;
 import gui::List;
 
-App listApp() 
+App[ListModel[str]] listApp() 
   = app(<["hello", "world!"], editStr, initStr>, view, editList, 
         |http://localhost:9199|, |project://elmer/src/examples|); 
 
@@ -13,6 +13,7 @@ data Msg
   ;
 
 void view(ListModel[str] m) {
+  h2("Editable list demo");
   listView(m, strView);
 }
 

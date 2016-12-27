@@ -10,6 +10,11 @@ var __queue = [];
 var __natives = {};
 
 var __builders = {
+	// TODO: separate appending, from creating somehow.
+	// so that when appendNode appends codeMirror it works.
+	// futher: natives should receive arb data to config etc.
+	// e.g. in codemirror we can give a mode
+
 	codeMirror: function(parent, attrs, props, events) {
 		var cm = CodeMirror(parent, {
 			lineNumbers: true,
@@ -19,7 +24,7 @@ var __builders = {
 			//value: "function myScript(){return 100;}\n",
 			mode:  "javascript"
 		});
-		cm.getDoc().setValue('function myScript() {\n  return 100;\n}\n');
+		cm.getDoc().setValue(props['value']);
 		setTimeout(function() {
             cm.refresh();
         }, 100);
@@ -28,8 +33,20 @@ var __builders = {
 			var position = editor.getCursor();
 			var line = position.line;
 			var token = editor.getTokenAt(position);
-			schedule(events.cursorActivity,  {line: line, start: token.start, 
-				end: token.end, string: token.string, tokenType: token.type});
+			if (events.cursorActivity) {
+				schedule(events.cursorActivity,  {line: line, start: token.start, 
+					end: token.end, string: token.string, tokenType: token.type});
+			}
+		});
+		cm.on('change', function (editor, change) {
+			if (events.change) {
+				schedule(events.change,  {
+					fromLine: change.from.line, fromCol: change.from.ch,
+					toLine: change.to.line, toCol: change.to.ch,
+					text: change.text.join('\n'),
+					removed: change.removed.join("\n")
+				});
+			}
 		});
 	}
 };
@@ -72,8 +89,11 @@ function replace(dom, newDom) {
 
 function schedule(dec, data) {
 	for (var type in dec) { break; }
-	var ret = dec[type].handle.handle;
-	ret.type = type;
+	// whoops: never modify handles directly...
+	//var ret = dec[type].handle.handle;
+	var handle = dec[type].handle.handle;
+	var ret = {type: type, path: handle.path, id: handle.id};
+
 	if (data) {
 		for (var k in data) {
 			if (data.hasOwnProperty(k)) {

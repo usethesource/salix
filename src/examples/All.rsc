@@ -16,15 +16,18 @@ data Msg
   | listDemo(Msg msg)
   ;
 
-App allApp() 
-  = app(<37.0, <0, 1>, <["hello", "world!"], editStr, initStr>>, examples::All::view, editAll, 
+App[AllModel] allApp() 
+  = app(initAll(), viewAll, editAll, 
         |http://localhost:9199|, |project://elmer/src/examples|); 
 
-App debugAllApp() 
-  = debug(<37.0, <0, 1>, <["hello", "world!"], editStr, initStr>>, examples::All::view, editAll, 
+App[DebugModel[AllModel]] debugAllApp() 
+  = debug(initAll(), viewAll, editAll, 
         |http://localhost:9199|, |project://elmer/src/examples|); 
   
-void view(AllModel m) {
+AllModel initAll()
+  = <37.0, examples::Counter::init(), <["hello", "world!"], editStr, initStr>>;  
+  
+void viewAll(AllModel m) {
   div(() {
      mapped(Msg::celsius, m.celsius, examples::Celsius::view);
      mapped(Msg::counter, m.counter, examples::Counter::view);

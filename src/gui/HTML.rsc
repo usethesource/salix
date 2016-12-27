@@ -10,6 +10,7 @@ data Msg;
 
 data Html
   = element(str tagName, list[Html] kids, map[str, str] attrs, map[str, str] props, map[str, Decoder] events)
+  // TODO: native should additional have arbitrary data...
   | native(str kind, str key, map[str, str] attrs, map[str, str] props, map[str, Decoder] events)
   | txt(str contents)
   ;  
@@ -68,6 +69,7 @@ private str currentPath() = intercalate("_", [ size(l) | list[Html] l <- parent 
 //}
   
 // maybe use Msg() for succeed (consistency?)
+// TODO: remove this indirection, do it directly at event?
 Decoder succeed(Msg msg) = succeed(_encode(msg, currentPath(), mappers));
 Decoder targetValue(Msg(str) str2msg) = targetValue(_encode(str2msg, currentPath(), mappers));
 Decoder targetChecked(Msg(bool) bool2msg) = targetChecked(_encode(bool2msg, currentPath(), mappers));
@@ -76,10 +78,15 @@ Decoder oneKeyCode(int keyCode, Msg(int) int2msg)
   = oneKeyCode(_encode(int2msg, currentPath(), mappers), keyCode = keyCode); 
 
 data Decoder
-  = cursorActivity(Handle handle);
+  = cursorActivity(Handle handle)
+  | change(Handle handle)
+  ;
   
 Decoder cursorActivity(Msg(int, int, int, str, str) token2msg) 
   = cursorActivity(_encode(token2msg, currentPath(), mappers));
+
+Decoder change(Msg(int, int, int, int, str, str) ch2msg) 
+  = change(_encode(ch2msg, currentPath(), mappers));
 
 
 map[str,str] attrsOf(list[Attr] attrs) = ( k: v | attr(str k, str v) <- attrs );
@@ -458,3 +465,6 @@ Attr onInput(Msg(str) f) = event("input", targetValue(f));
 Attr onCheck(Msg(bool) f) = event("check", targetChecked(f));
 Attr onCursorActivity(Msg(int, int, int, str, str) f) 
   = event("cursorActivity", cursorActivity(f));
+
+Attr onChange(Msg(int, int, int, int, str, str) f)
+  = event("change", change(f));
