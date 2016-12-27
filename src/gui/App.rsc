@@ -1,6 +1,6 @@
 module gui::App
 
-import gui::HTML;
+import gui::Render;
 import gui::Diff;
 import gui::Patch;
 
@@ -102,8 +102,8 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, s
   // the main handler to interpret http requests.
   // BUG: mixes with constructors that are in scope!!!
   Response _handle(Request req) {
-    // publish my encoder to gui::HTML.
-    gui::HTML::_encode = encode;
+    // publish my encoder to gui::Render.
+    gui::Render::_encode = encode;
 
     // initially, just render the view, for the current model.
     if (get("/init") := req) {

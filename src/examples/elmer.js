@@ -240,9 +240,12 @@ function build(vdom) {
     if (vdom.native !== undefined) {
     	return makeNative(vdom.native);
     }
-    
-    var elt = document.createElement(vdom.element.tagName);
+
     var vattrs = vdom.element.attrs || {};
+
+    var elt = vattrs.xmlns != undefined
+            ? document.createElementNS(vattrs.xmlns, vdom.element.tagName)
+            : document.createElement(vdom.element.tagName);
     
     for (var k in vattrs) {
         if (vattrs.hasOwnProperty(k)) {

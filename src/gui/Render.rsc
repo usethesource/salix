@@ -20,6 +20,8 @@ a lot of code slightly less verbose, but sacrifices additional
 type checking when nesting components.}
 data Msg;
 
+// TODO: Html -> Node (as it also represents SVG)
+
 @doc{The basic Html node type, defining constructors for
 elements, text nodes, and native nodes (which are managed in js).}
 data Html
@@ -87,6 +89,24 @@ public list[Msg(Msg)] mappers = [];
 
 @doc{Compute the current path as a string from the stack.}
 str currentPath() = intercalate("_", [ size(l) | list[Html] l <- stack ]);
+
+@doc{Smart constructors for constructing encoded event decoders.}
+Decoder succeed(Msg msg) = succeed(_encode(msg, currentPath(), mappers));
+
+Decoder targetValue(Msg(str) str2msg) = targetValue(_encode(str2msg, currentPath(), mappers));
+
+Decoder targetChecked(Msg(bool) bool2msg) = targetChecked(_encode(bool2msg, currentPath(), mappers));
+
+Decoder keyCode(Msg(int) int2msg) = keyCode(_encode(int2msg, currentPath(), mappers)); 
+
+Decoder oneKeyCode(int keyCode, Msg(int) int2msg) 
+  = oneKeyCode(_encode(int2msg, currentPath(), mappers), keyCode = keyCode); 
+  
+Decoder cursorActivity(Msg(int, int, int, str, str) token2msg) 
+  = cursorActivity(_encode(token2msg, currentPath(), mappers));
+
+Decoder change(Msg(int, int, int, int, str, str) ch2msg) 
+  = change(_encode(ch2msg, currentPath(), mappers));
 
 
 @doc{Helper functions to partition list of Attrs into attrs, props and events} 

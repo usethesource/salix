@@ -1,6 +1,6 @@
 module gui::Patch
 
-import gui::HTML;
+import gui::Render;
 import Map;
 import List;
 import Node;
