@@ -2,7 +2,7 @@ module examples::All
 
 import gui::HTML;
 import gui::App;
-import lib::List;
+import lib::EditableList;
 import lib::Debug;
 
 import examples::Celsius;

@@ -102,7 +102,7 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, s
   // the main handler to interpret http requests.
   // BUG: mixes with constructors that are in scope!!!
   Response _handle(Request req) {
-    // publish t
+    // publish my encoder to gui::HTML.
     gui::HTML::_encode = encode;
 
     // initially, just render the view, for the current model.

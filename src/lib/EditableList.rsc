@@ -1,4 +1,4 @@
-module lib::List
+module lib::EditableList
 
 import gui::HTML;
 import gui::App;
