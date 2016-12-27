@@ -31,18 +31,15 @@ Source update(changeText(str x), Source s) {
     return parse(#Source, x);
   }
   catch ParseError(loc l): {
-    // compute string diff, futz the insert elements into e
-    // to be able to highlight.
     return appl(prod(sort("Source"), [], {}), [ char(c) | int c <- chars(x)]);
   }
 }
 
-Source update(doChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed),
-   Source s) {
+Source update(doChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed), Source s) {
   str src = "<s>";
   list[str] lines = split("\n", src);
   int from = ( 0 | it + size(l) + 1 | str l <- lines[..fromLine] ) + fromCol;
-  int to = ( 0 | it + size(l) + 1 | str l <- lines[..toLine] ) + toCol;
+  int to = from + size(removed);
   str newSrc = src[..from] + text + src[to..];
   return update(changeText(newSrc), s);  
 }
@@ -66,9 +63,9 @@ void codeMirror(CodeMirrorConfig config) = build([],
 void editor(Source t) {
   div(() {
     h2("Editor example");
-    codeMirror(\value("<t>"), onChange(doChange), onCursorActivity(currentToken));
+    codeMirror(\value("<t>"), onChange(doChange)/*, onCursorActivity(currentToken)*/);
     div(() {
-      textarea(onInput(changeText), "<t>");
+      textarea(onInput(changeText), \value("<t>"));
     });
     highlight(t);
   });

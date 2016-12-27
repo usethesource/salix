@@ -24,9 +24,9 @@ Cat2Css _category2styles = (
 
 
 
-void highlight(Tree t, void(list[value]) container = pre, Cat2Css cats = _category2styles) {
+void highlight(Tree t, void(list[value]) container = pre, Cat2Css cats = _category2styles, int tabSize = 2) {
   container([() {
-    str pending = highlightRec(t, "", cats);
+    str pending = highlightRec(t, "", cats, tabSize);
     if (pending != "") {
       text(pending);
     }
@@ -34,11 +34,11 @@ void highlight(Tree t, void(list[value]) container = pre, Cat2Css cats = _catego
 }
 
 
-str highlightRec(Tree t, str current, Cat2Css cats) {
+str highlightRec(Tree t, str current, Cat2Css cats, int tabSize) {
   
   void highlightArgs(list[Tree] args) {
     for (Tree a <- args) {
-      current = highlightRec(a, current, cats);
+      current = highlightRec(a, current, cats, tabSize);
     }
   }
   
@@ -72,7 +72,8 @@ str highlightRec(Tree t, str current, Cat2Css cats) {
       highlightArgs(args);
     
     case char(int c): {
-      current += stringChar(c);
+      str s = stringChar(c);
+      current += s == "\t" ? ("" | it + " " | _ <- [0..tabSzie]) : s;
     }
     
     case amb(set[Tree] alts): {
