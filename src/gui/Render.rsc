@@ -1,5 +1,9 @@
 module gui::Render
 
+import List;
+import String;
+import IO;
+
 /*
  * NB: as of now, this module cannot be extended, since the global
  * variables will be copied; this leads to strange results if
@@ -21,6 +25,8 @@ type checking when nesting components.}
 data Msg;
 
 // TODO: Html -> Node (as it also represents SVG)
+// TODO: make attrs/props/events kw params to save memory
+// TODO: make attrs map[str, Attribute] to deal with namespaces
 
 @doc{The basic Html node type, defining constructors for
 elements, text nodes, and native nodes (which are managed in js).}
@@ -58,7 +64,18 @@ data Decoder
   | oneKeyCode(Handle handle, int keyCode = -1)
   | cursorActivity(Handle handle)
   | change(Handle handle)
+  // ???
+  | timeEvery(Handle handle)
   ;
+
+// TODO: interpret subscriptions in js using setTimer
+// and when it happens, send a msg with the current time
+data Subscription
+  = timeEvery(int interval, Handle handle)
+  ;
+
+Subscription timeEvery(int interval, Msg(int) int2msg)
+  = timeEvery(interval, _encode(int2msg, currentPath(), mappers));
 
 @doc{The encoding interface between an App and this library.
 An app needs to set this variable to its encapsulated encoder before

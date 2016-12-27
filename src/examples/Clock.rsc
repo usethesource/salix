@@ -6,9 +6,13 @@ import gui::App;
 import gui::Render;
 import util::Math;
 
+// bigger example: https://github.com/pghalliday/elm-introduction/blob/master/clock.elm
+
+// why does it work with value here and not Model?
 App[Model] clockApp() = 
-  app(0.0, view, real(Msg m, real v) { return v; }, 
-    |http://localhost:9100|, |project://elmer/src/examples|); 
+  app(init(), examples::Clock::view, examples::Clock::update, 
+    |http://localhost:9100|, |project://elmer/src/examples|,
+    subs = subs); 
 
 
 void view(Model m) {
@@ -18,17 +22,32 @@ void view(Model m) {
   });
 }
 
-alias Model = real;
 
+
+alias Model = tuple[int time, bool running];
+
+Model init() = <1, true>;
+
+data Msg
+  = tick(int time)
+  | toggle()
+  ;
+
+list[Subscription] subs(Model m) 
+  = [timeEvery(1000, tick) | m.running ];
+
+Model update(tick(int time), Model t) = t[time=time];
+Model update(toggle(), Model t) = t[running=!t.running];
 
 void clock(Model m) {
-  real angle = PI() / 2;
-  real handX = 50 + 40 * cos(angle);
-  real handY = 50 + 40 * sin(angle);
+  real angle = 2 * PI() * (toReal(m.time) / 60.0);
+  int handX = round(50 + 40 * cos(angle));
+  int handY = round(50 + 40 * sin(angle));
   svg(viewBox("0 0 100 100"), width("300px"), () {
     circle(cx("50"), cy("50"), r("45"), fill("#0B79CE"));
     line(x1("50"), y1("50"), x2("<handX>"), y2("<handY>"), stroke("#023963"));
   }); 
+  button(onClick(toggle()), "On/Off");
 }
       
  /*

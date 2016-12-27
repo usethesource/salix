@@ -66,9 +66,10 @@ function render(timestamp) {
 		return;
 	}
 	var payload = __queue.shift();
-	$.get('/msg', payload, function (p, stats, jqXHR) {
+	$.get('/msg', payload, function (patchAndSubs, stats, jqXHR) {
 		// TODO: receive commands here too which will have to be interpreted
-		patch(root(), p, dec2handler);
+		subscribe(patchAndSubs[1]);
+		patch(root(), patchAndSubs[0], dec2handler);
 	}, 'json');
 }
 
@@ -77,14 +78,60 @@ function root() {
 }
 
 function start() {
-	$.get('/init', {}, function (tree, stats, jqXHR) {
-		replace(root(), build(tree));
+	$.get('/init', {}, function (vdomAndSubs, stats, jqXHR) {
+		// register subs here. 
+		subscribe(vdomAndSubs[1]); // subscriptions
+		replace(root(), build(vdomAndSubs[0]));
 	}, 'json');
 	window.requestAnimationFrame(render);
 }
 
 function replace(dom, newDom) {
 	dom.parentNode.replaceChild(newDom, dom);
+}
+
+var __subscriptions = {};
+
+function subscribe(subs) {
+	//{timeEvery: {interval: ms, handle: {handle: ...}}}
+	for (var i = 0; i < subs.length; i++) {
+		var sub = subs[i];
+		for (var type in sub) { break; }
+		var id = sub[type].handle.handle.id;
+		if (__subscriptions.hasOwnProperty(id)) {
+			continue;
+		}
+		switch (type) {
+		case 'timeEvery':
+			var timer = setInterval(function() {
+				var data = {time: (new Date().getTime() / 1000) | 0};
+				schedule(sub, data); 
+			}, sub.timeEvery.interval);
+			__subscriptions[id] = function () {
+				clearInterval(timer);
+			}; 
+			
+		}
+	}
+	var toDelete = [];
+	outer: for (var k in __subscriptions) {
+		if (__subscriptions.hasOwnProperty(k)) {
+			for (var i = 0; i < subs.length; i++) {
+				var sub = subs[i];
+				for (var type in sub) { break; }
+				var id = sub[type].handle.handle.id;
+				if (('' + id) === k) {
+					continue outer;
+				}
+			}
+			toDelete.push(k);
+		}
+	}
+	for (var i = 0; i < toDelete.length; i++) {
+		__subscriptions[toDelete[i]](); // shutdown
+		delete __subscriptions[toDelete[i]];
+	}
+	
 }
 
 function schedule(dec, data) {
@@ -242,9 +289,10 @@ function build(vdom) {
     }
 
     var vattrs = vdom.element.attrs || {};
-
-    var elt = vattrs.xmlns != undefined
-            ? document.createElementNS(vattrs.xmlns, vdom.element.tagName)
+    var vprops = vdom.element.props || {};
+    
+    var elt = vprops.namespace != undefined
+            ? document.createElementNS(vprops.namespace, vdom.element.tagName)
             : document.createElement(vdom.element.tagName);
     
     for (var k in vattrs) {
@@ -253,7 +301,6 @@ function build(vdom) {
         }
     }
     
-    var vprops = vdom.element.props || {};
     for (var k in vprops) {
     	if (vprops.hasOwnProperty(k)) {
     		elt[k] = vprops[k];

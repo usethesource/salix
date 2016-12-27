@@ -48,6 +48,9 @@ Msg toMsg(change(Handle h), map[str,str] p, &T(int,type[&T]) dec)
            toInt(p["fromLine"]), toInt(p["fromCol"]), 
            toInt(p["toLine"]), toInt(p["toCol"]),
            p["text"], p["removed"]);
+           
+Msg toMsg(timeEvery(Handle h), map[str, str] p, &T(int,type[&T]) dec) 
+  = dec(h.id, #Msg(int))(toInt(p["time"]));
   
 @doc{The basic App type:
 - serve to start serving the application
@@ -72,7 +75,8 @@ AppState newAppState() = < -1, (), (), () >;
 @doc{Construct an App over model type &T, providing a view, a model update,
 a http loc to serve the app to, and a location to resolve static files.
 The keyword param root identifies the root element in the html document.}
-App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, str root = "root") {
+App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
+            list[Subscription](&T) subs = list[Subscription](&T t) { return []; }, str root = "root") {
   AppState state = newAppState();
   
   // encode a value and path + active mappers as a handle
@@ -108,7 +112,10 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, s
     // initially, just render the view, for the current model.
     if (get("/init") := req) {
       current = asRoot(render(model, view));
-      return response(current);
+      list[Subscription] mySubs = subs(model);
+      //println("Mysubs: <mySubs>");
+      
+      return response([current, mySubs]);
     }
     
     // if receiving an (encoded) message
@@ -135,8 +142,11 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, s
       // update the current view
       current = newView;
       
+      list[Subscription] mySubs = subs(model);
+      //println("Mysubs: <mySubs>");
+      
       // send the patch.
-      return response(p); 
+      return response([p, mySubs]); 
     }
     
     // everything else is considered static files.
