@@ -5,9 +5,21 @@ import String;
 import IO;
 
 
-// to be extended by clients
+@doc{
+This is the basic Message data type that clients
+will extend with concrete constructors.
+
+Note, that instead of make Html parametric on Msg (Html[&Msg])
+we use a single type and ADT extension. This decision makes
+a lot of code slightly less verbose, but sacrifices additional
+type checking when nesting components.
+}
 data Msg;
 
+@doc{
+The basic Html node type, defining constructors for
+elements, text nodes, and native nodes (which are managed in js).
+}
 data Html
   = element(str tagName, list[Html] kids, map[str, str] attrs, map[str, str] props, map[str, Decoder] events)
   // TODO: native should additional have arbitrary data...
@@ -15,6 +27,11 @@ data Html
   | txt(str contents)
   ;  
 
+@doc{
+Generalized attributes to be produced by explicit attribute construction
+functions (such as class(str), onClick(Msg), or \value(str)).
+null() acts as a zero element and is always ignored.
+}
 data Attr
   = attr(str name, str val)
   | prop(str name, str val)
@@ -22,27 +39,19 @@ data Attr
   | null()
   ;
 
-/*
- * We NEED function equals for diff to propery diff event handlers
- * (no id/path can stand in for that)
- * The only reason we need a map to find those function back based
- * on some scheme, is because toJSON does not serialize them...
- * The encodings must be different whenever te functions are different
- * and their type (succeed etc.), other than that, events will be distinct
- * according to their position, so no accidental sharing.
- *
- * So: succeed(Msg msg) => decoder("succeed", getId(msg));
- *  targetValue(Msg(str) f) => decoder("targetValue", getId(f));
- *  ...
- * Whenever using inline closures, they'll always be different...
- *
- */
-
 // TODO: keyed elements 
 
+@doc{
+Handler represent functions to decode events.
+}
 data Handle
   = handle(str path, int id);
 
+@doc{
+Decoders represent functions to decode event types and data.
+Here they represented without functions, but using Handles
+so that they can be serialized to JSON.
+}
 data Decoder
   = succeed(Handle handle)
   | targetValue(Handle handle)
@@ -52,25 +61,41 @@ data Decoder
   | change(Handle handle)
   ;
 
-// To be set by an "app" during rendering. 
-public Handle(str, value, str, list[Msg(Msg)]) _encode;
-// should be:
-// Handle(str, value, str, list[Msg(Msg)]) _encode;
+// To be set by an "app" during rendering.
+@doc{
+The encoding interface between an App and this library.
+An app sets this variable to its encapulsate encoder before
+rendering. This means that encoding is relative to app and not global.
 
-private list[list[Html]] parent = [[]];
+Encoding produces handles for arbitrary values, at some path,
+recording the list of active message transformers at the moment of call.
+} 
+public Handle(value, str, list[Msg(Msg)]) _encode;
 
+@doc{The html element stack used during rendering.}
+private list[list[Html]] stack = [];
+
+@doc{Basic stack management functions.}
+private void add(Html h) { push(pop() + [h]); }
+
+private void push(list[Html] l) { stack += [l]; }
+
+private list[Html] top() = stack[-1];
+
+private list[Html] pop() {
+  list[Html] elts = top();
+  stack = stack[..-1];
+  return elts;
+}
+
+@doc{The stack of active msg transformers at some point during rendering.}
 private list[Msg(Msg)] mappers = [];
 
-private str currentPath() = intercalate("_", [ size(l) | list[Html] l <- parent ]);
+@doc{Compute the current path as a string from the stack.}
+private str currentPath() = intercalate("_", [ size(l) | list[Html] l <- stack ]);
 
-
-// Does not work>
-//void withEncode(Decoder(str, value) enc) {
-//  _encode = enc;
-//}
   
-// maybe use Msg() for succeed (consistency?)
-// TODO: remove this indirection, do it directly at event?
+@doc{Smart constructors for constructing encoded event decoders.}
 Decoder succeed(Msg msg) = succeed(_encode(msg, currentPath(), mappers));
 
 Decoder targetValue(Msg(str) str2msg) = targetValue(_encode(str2msg, currentPath(), mappers));
@@ -89,6 +114,7 @@ Decoder change(Msg(int, int, int, int, str, str) ch2msg)
   = change(_encode(ch2msg, currentPath(), mappers));
 
 
+@doc{Helper functions to partition list of Attrs into attrs, props and events} 
 map[str,str] attrsOf(list[Attr] attrs) = ( k: v | attr(str k, str v) <- attrs );
 
 map[str,str] propsOf(list[Attr] attrs) = ( k: v | prop(str k, str v) <- attrs );
@@ -98,33 +124,14 @@ map[str,Decoder] eventsOf(list[Attr] attrs) = ( k: v | event(str k, Decoder v) <
 private Html asRoot(Html h) = h[attrs=h.attrs + ("id": "root")];
   
   
-private void add(Html h) {
-  push(pop() + [h]);
-}
-
-private void push(list[Html] l) {
-  parent += [l];
-}
-
-private list[Html] top() {
-  return parent[-1];
-}
-
-private list[Html] pop() {
-  list[Html] elts = top();
-  parent = parent[..-1];
-  return elts;
-}
-  
+@doc{Render turns void returning views for a model &T into an Html node.}  
 Html render(&T model, void(&T) block) {
   push([]); 
   block(model);
   return asRoot(pop()[0]);
 }
 
-@doc{
-Transforms messages produced in block according f.
-}
+@doc{Record mapper to transform messages produced in block according f.}
 void mapped(Msg(Msg) f, &T t, void(&T) block)
   = mapped(f, void() { block(t); });
 
@@ -134,9 +141,15 @@ void mapped(Msg(Msg) f, void() block) {
   mappers = mappers[..-1];
 }
 
+@doc{
+The basic build function to construct html elements using the stack.
+The list of argument values can contain any number of Attr values.
+The last argument (if any) can be a block, an Html node, or a value.
+In the latter case it is converted to a txt node.
+}
 void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
   list[Attr] attrs = [ a | Attr a <- vals ];
-  parent += [[]];
+  push([]);
   if (vals != []) { 
     if (void() block := vals[-1]) {
       block();
@@ -148,16 +161,22 @@ void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
       text(vals[-1]);
     }
   }
-  // asignables don't work on negative slices...
-  parent = parent[..-2] + [parent[-2] + [elt(parent[-1], attrs)]];
+  add(elt(pop(), attrs));
 }
 
 
+@doc{Create a text node.}
 void text(value v) {
   // todo (?): html encode.
   add(txt("<v>"));
 }
 
+@doc{
+The element render functions below all call build
+to interpret the list of values; build will call the
+second argument (_h1 etc.) to construct the actual
+Html values.
+}
 void h1(value vals...) = build(vals, _h1);
 void h2(value vals...) = build(vals, _h2);
 void h3(value vals...) = build(vals, _h3);
@@ -479,6 +498,8 @@ Attr onBlur(Msg msg) = event("blur", succeed(msg));
 Attr onSubmit(Msg msg) = event("focus", succeed(msg));
 Attr onInput(Msg(str) f) = event("input", targetValue(f)); 
 Attr onCheck(Msg(bool) f) = event("check", targetChecked(f));
+
+// Code mirror ones...
 Attr onCursorActivity(Msg(int, int, int, str, str) f) 
   = event("cursorActivity", cursorActivity(f));
 
