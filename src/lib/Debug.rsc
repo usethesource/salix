@@ -8,6 +8,9 @@ import List;
 // which simply reuses an original model with keyword params so that
 // parents are unaware of it. 
 
+// See here for more inspiration:
+// https://github.com/elm-lang/virtual-dom/blob/master/src/VirtualDom/Expando.elm
+
 alias DebugModel[&T]
   = tuple[int current, list[&T] models, &T(Msg, &T) update]
   ;
