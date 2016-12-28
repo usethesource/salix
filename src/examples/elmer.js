@@ -163,20 +163,14 @@ function dec2handler(decoder) {
 			
 		case 'targetValue':
 			return function (event) {
-				schedule(decoder, {data: event.target.value});
+				schedule(decoder, {value: event.target.value});
 			};
 			
 		case 'targetChecked':
 			return function (event) {	
-				schedule(decoder, {data: event.target.checked});
+				schedule(decoder, {checked: event.target.checked});
 			};
 			
-		case 'oneKeyCode':
-			return function (event) {	
-				if (event.keyCode == decoder.oneKeyCode.keyCode) {
-					schedule(decoder, {data: event.keyCode});
-				}		
-			};
 		}
 		break;
 	}

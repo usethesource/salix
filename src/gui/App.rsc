@@ -91,12 +91,14 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
     // if receiving an (encoded) message
     if (get("/msg") := req) {
       
+      println(req.parameters);
       // decode it into a Msg value in four steps
       // - construct a handle from the request's params
       // - decode it, to obtain a message decoder
       // - apply the decoder to the additional values in req.params
       // - apply all message transformers that were in scope for handle
       Msg msg = params2msg(req.parameters, mapEm, decode);
+      
       
       //println("Processing: <msg>");
       trace += [msg];

@@ -18,7 +18,7 @@ data Msg
   | toggle()
   ;
 
-list[Sub] subs(Model m) = [timeEvery(1000, tick) | m.running ];
+list[Sub] subs(Model m) = [timeEvery(tick, 1000) | m.running ];
 
 Model update(tick(int time), Model t) = t[time=time];
 Model update(toggle(), Model t) = t[running=!t.running];
