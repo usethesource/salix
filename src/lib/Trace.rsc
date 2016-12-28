@@ -5,10 +5,10 @@ import gui::App;
 import gui::Decode;
 import List;
 
-alias TraceModel[&T]
-  = tuple[list[Msg] msgs, &T model]
-  ;
-  
+alias TraceModel[&T] = tuple[list[Msg] msgs, &T model];
+
+
+// requires bootstrap  
 void traceView(TraceModel[&T] model, void(&T) subView) {
   div(() {
     div(class("row"), () {
@@ -16,9 +16,10 @@ void traceView(TraceModel[&T] model, void(&T) subView) {
         subView(model.model);
       });
       div(class("col-lg-4"), () {
-        ul(() {
+        ul(style(<"all", "unset">), () {
           for (Msg m <- model.msgs) {
-            li(style(<"list-style", "none">, <"font-size", "small">), "<m>");
+            li(style(("list-style": "none", "padding": "0 0"
+                     ,"font-size": "small", "border-bottom": "none")), "<m>");
           }
         });
       });
@@ -26,4 +27,3 @@ void traceView(TraceModel[&T] model, void(&T) subView) {
   });
 }
 
-TraceModel[&T] traceUpdate(sub(Msg msg), TraceModel[&T] m) = m.update(m.model);

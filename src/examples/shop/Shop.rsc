@@ -107,21 +107,26 @@ Model update(createLots(), Model m) = m;
 
 
 void shopDemoView(Model m) {
-  table(() {
-    tr(() {
-      td(colspan(2), () {
-        button(onClick(updateSome()), "update some items");
-        button(onClick(createLots()), "create a lot of items");
+  div(() {
+    div(id("header"), () {
+      h1("Elm-in-Rascal shopping cart demo");
+    });  
+    table(() {
+      tr(() {
+        td(colspan(2), () {
+          button(onClick(updateSome()), "update some items");
+          button(onClick(createLots()), "create a lot of items");
+        });
       });
-    });
-    tr(() {
-      td(() {
-        h2("Available items");
-        articlesView(m);
-      });
-      td(() {
-        h2("Your shopping cart");
-        cartView(m);
+      tr(() {
+        td(() {
+          h2("Available items");
+          articlesView(m);
+        });
+        td(() {
+          h2("Your shopping cart");
+          cartView(m);
+        });
       });
     });
   });

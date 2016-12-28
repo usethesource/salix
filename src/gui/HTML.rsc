@@ -225,6 +225,8 @@ Html _menu(list[Html] kids, list[Attr] attrs) = element("menu", kids, attrsOf(at
  */
  
 Attr style(tuple[str, str] styles...) = attr("style", intercalate("; ", ["<k>: <v>" | <k, v> <- styles ])); 
+Attr style(map[str,str] styles) = attr("style", intercalate("; ", ["<k>: <styles[k]>" | k <- styles ])); 
+
 Attr property(str name, value val) = prop(name, "<val>");
 Attr attribute(str name, str val) = attr(name, val);
 Attr class(str val) = attr("class", val);
