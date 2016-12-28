@@ -68,10 +68,10 @@ function render(timestamp) {
 		return;
 	}
 	var payload = __queue.shift();
-	$.get('/msg', payload, function (patchAndSubs, stats, jqXHR) {
-		// TODO: receive commands here too which will have to be interpreted
-		subscribe(patchAndSubs[1]);
-		patch(root(), patchAndSubs[0], dec2handler);
+	$.get('/msg', payload, function (work, stats, jqXHR) {
+		doCommands(work[2]);
+		subscribe(work[1]);
+		patch(root(), work[0], dec2handler);
 	}, 'json');
 }
 
@@ -80,15 +80,29 @@ function root() {
 }
 
 function start() {
-	$.get('/init', {}, function (vdomAndSubs, stats, jqXHR) {
-		subscribe(vdomAndSubs[1]); // subscriptions
-		replace(root(), build(vdomAndSubs[0]));
+	$.get('/init', {}, function (work, stats, jqXHR) {
+		doCommands(work[2]);
+		subscribe(work[1]); // subscriptions
+		replace(root(), build(work[0]));
 	}, 'json');
 	window.requestAnimationFrame(render);
 }
 
 function replace(dom, newDom) {
 	dom.parentNode.replaceChild(newDom, dom);
+}
+
+function doCommands(cmds) {
+	for (var i = 0; i < cmds.length; i++) {
+		var cmd = cmds[i];
+		for (var type in cmd) { break; } // todo: make function
+		switch (type) {
+		case 'random':
+			var random = Math.floor(Math.random() * (cmd.random.to - cmd.random.from + 1)) + cmd.random.from;
+			schedule(cmd, {random: random});
+			break;
+		}
+	}
 }
 
 function subscribe(subs) {

@@ -24,7 +24,7 @@ data Edit
   | appendNode(Html html) 
   | setAttr(str name, str val)
   | setProp(str name, str val)
-  | setEvent(str name, Decoder decoder)
+  | setEvent(str name, Hnd handler)
   | removeAttr(str name)
   | removeProp(str name)
   | removeEvent(str name)
@@ -54,5 +54,5 @@ Html apply(removeProp(str name), Html html) = html[props=delete(html.props, name
 Html apply(removeEvent(str event), Html html) = html[events=delete(html.events, name)];
 Html apply(setAttr(str name, str val), Html html) = html[attrs = html.attrs + (name: val)];
 Html apply(setProp(str name, str val), Html html) = html[props = html.props + (name: val)];
-Html apply(setEvent(str event, Decoder dec), Html html) = html[events = html.events + (event: dec)];
+Html apply(setEvent(str event, Hnd h), Html html) = html[events = html.events + (event: h)];
 

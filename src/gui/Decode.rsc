@@ -25,6 +25,8 @@ data Sub // Subscriptions
   = timeEvery(Handle handle, int interval)
   ;
 
+alias Subs = list[Sub];
+
 @doc{Smart constructors for constructing encoded subscriptions.}
 Sub timeEvery(Msg(int) int2msg, int interval)
   = timeEvery(encode(int2msg), interval);
@@ -33,6 +35,8 @@ Sub timeEvery(Msg(int) int2msg, int interval)
 data Cmd  // Commands
   = random(Handle handle, int from, int to)
   ;
+  
+alias WithCmds[&T] = tuple[&T model, list[Cmd] commands];  
   
 @doc{Smart constructors for constructing encoded commands.}
 Cmd random(Msg(int) f, int from, int to)
@@ -93,28 +97,28 @@ Msg params2msg(map[str, str] params, Msg(str, Msg) f, &T(Handle,type[&T]) dec)
 Result toResult(map[str, str] params)
   = toResult(params["type"], params);
   
-Result toResult("succeed", map[str, str] params)  
-  = Result::succeed(toHandle(params));
+Result toResult("succeed", map[str, str] p)  
+  = Result::succeed(toHandle(p));
 
-Result toResult("targetValue", map[str, str] params)  
-  = targetValue(toHandle(params), params["value"]);
+Result toResult("targetValue", map[str, str] p)  
+  = targetValue(toHandle(p), p["value"]);
 
-Result toResult("targetChecked", map[str, str] params)  
-  = targetChecked(toHandle(params), params["checked"] == true);
+Result toResult("targetChecked", map[str, str] p)  
+  = targetChecked(toHandle(p), p["checked"] == true);
 
-Result toResult("keyCode", map[str, str] params)  
-  = keyCode(toHandle(params), toInt(params["keyCode"]));
+Result toResult("keyCode", map[str, str] p)  
+  = keyCode(toHandle(p), toInt(p["keyCode"]));
 
-Result toResult("change", map[str, str] params)
-  = change(toHandle(params), toInt(p["fromLine"]), toInt(p["fromCol"]), 
+Result toResult("change", map[str, str] p)
+  = change(toHandle(p), toInt(p["fromLine"]), toInt(p["fromCol"]), 
            toInt(p["toLine"]), toInt(p["toCol"]),
            p["text"], p["removed"]);
 
-Result toResult("timeEvery", map[str, str] params)
-  = timeEvery(toHandle(params), toInt(p["time"]));
+Result toResult("timeEvery", map[str, str] p)
+  = timeEvery(toHandle(p), toInt(p["time"]));
   
-Result toResult("random", map[str, str] params)
-  = random(toHandle(params), toInt(p["random"]));
+Result toResult("random", map[str, str] p)
+  = random(toHandle(p), toInt(p["random"]));
 
 @doc{Parse request parameters into a Handle.}
 Handle toHandle(map[str, str] params)
@@ -134,16 +138,13 @@ Msg toMsg(targetValue(Handle h, str \value), &T(Handle,type[&T]) dec)
 Msg toMsg(targetChecked(Handle h, bool checked), &T(Handle,type[&T]) dec) 
   = dec(h, #Msg(bool))(checked);
 
-Msg toMsg(oneKeyCode(Handle h, int keyCode), &T(Handle,type[&T]) dec) 
-  = dec(h, #Msg(int))(keyCode);
-
 Msg toMsg(change(Handle h, int fromLine, int fromCol, int toLine, int toCol, str text, str removed), &T(Handle,type[&T]) dec) 
   = dec(h, #Msg(int, int, int, int, str, str))(fromLine, fromCol, toLine, toCol, text, removed);
            
-Msg toMsg(timeEvery(Handle h, int time), map[str, str] p, &T(Handle,type[&T]) dec) 
+Msg toMsg(timeEvery(Handle h, int time), &T(Handle,type[&T]) dec) 
   = dec(h, #Msg(int))(time);
  
-Msg toMsg(random(Handle h, int random), map[str, str] p, &T(Handle,type[&T]) dec) 
+Msg toMsg(random(Handle h, int random), &T(Handle,type[&T]) dec) 
   = dec(h, #Msg(int))(random);
 
 

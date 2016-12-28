@@ -34,11 +34,19 @@ alias AppState = tuple[
 
 AppState newAppState() = < -1, (), (), (), false>;
 
+App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
+            list[Sub](&T) subs = list[Sub](&T t) { return []; }, str root = "root") 
+ = app(<model, []>, view, WithCmds[&T](Msg m, &T t) { return <update(m, t), []>; },
+     http, static, subs = subs, root = root);
+
+
 @doc{Construct an App over model type &T, providing a view, a model update,
 a http loc to serve the app to, and a location to resolve static files.
 The keyword param root identifies the root element in the html document.}
-App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
+
+App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) update, loc http, loc static, 
             list[Sub](&T) subs = list[Sub](&T t) { return []; }, str root = "root") {
+
   AppState state = newAppState();
   
   // encode a value and path + active mappers as a handle
@@ -70,7 +78,8 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
   void myTracedView(&T t) { 
     return traceView(<trace, t>, view); 
   };
-   
+  
+  &T model;
 
   // the main handler to interpret http requests.
   // BUG: mixes with constructors that are in scope!!!
@@ -80,18 +89,17 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
 
     // initially, just render the view, for the current model.
     if (get("/init") := req) {
-      current = asRoot(render(model, myTracedView));
+      model = modelWithCmds.model;
       list[Sub] mySubs = subs(model);
-      //println("Mysubs: <mySubs>");
-      
-      return response([current, mySubs]);
+      list[Cmd] myCmds = modelWithCmds.commands;
+      current = asRoot(render(model, myTracedView));
+      return response([current, mySubs, myCmds]);
     }
     
     
     // if receiving an (encoded) message
     if (get("/msg") := req) {
       
-      println(req.parameters);
       // decode it into a Msg value in four steps
       // - construct a handle from the request's params
       // - decode it, to obtain a message decoder
@@ -100,14 +108,15 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
       Msg msg = params2msg(req.parameters, mapEm, decode);
       
       
-      //println("Processing: <msg>");
+      println("Processing: <msg>");
       trace += [msg];
       if (size(trace) > 50) {
         trace = trace[1..];
       }
       
       // update the model
-      model = update(msg, model);
+      // TODO: lets avoid the captured model variable here...
+      <model, myCmds> = update(msg, model);
       
       // compute the new view
       Html newView = asRoot(render(model, myTracedView));
@@ -122,7 +131,7 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
       //println("Mysubs: <mySubs>");
       
       // send the patch.
-      return response([p, mySubs]); 
+      return response([p, mySubs, myCmds]); 
     }
     
     // everything else is considered static files.

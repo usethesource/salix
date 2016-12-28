@@ -12,14 +12,14 @@ import IO;
 @doc{The basic Html node type, defining constructors for
 elements, text nodes, and native nodes (which are managed in js).}
 data Html
-  = element(str tagName, list[Html] kids, map[str, str] attrs, map[str, str] props, map[str, Decoder] events)
+  = element(str tagName, list[Html] kids, map[str, str] attrs, map[str, str] props, map[str, Hnd] events)
   // TODO: native should additional have arbitrary data...
-  | native(str kind, str key, map[str, str] attrs, map[str, str] props, map[str, Decoder] events)
+  | native(str kind, str key, map[str, str] attrs, map[str, str] props, map[str, Hnd] events)
   | txt(str contents)
   ;  
 
-@doc{An abstract type for represent functions to decode event occurrences.}
-data Decoder;  
+@doc{An abstract type for represent event handlers.}
+data Hnd;  
 
 @doc{Generalized attributes to be produced by explicit attribute construction
 functions (such as class(str), onClick(Msg), or \value(str)).
@@ -27,7 +27,7 @@ null() acts as a zero element and is always ignored.}
 data Attr
   = attr(str name, str val)
   | prop(str name, str val)
-  | event(str name, Decoder decoder, map[str,str] options = ())
+  | event(str name, Hnd handler, map[str,str] options = ())
   | null()
   ;
 
@@ -58,7 +58,7 @@ map[str,str] attrsOf(list[Attr] attrs) = ( k: v | attr(str k, str v) <- attrs );
 
 map[str,str] propsOf(list[Attr] attrs) = ( k: v | prop(str k, str v) <- attrs );
 
-map[str,Decoder] eventsOf(list[Attr] attrs) = ( k: v | event(str k, Decoder v) <- attrs );
+map[str,Hnd] eventsOf(list[Attr] attrs) = ( k: v | event(str k, Hnd v) <- attrs );
 
 
 @doc{Render turns void returning views for a model &T into an Html node.}  

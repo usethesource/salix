@@ -28,11 +28,11 @@ App[DebugModel[Model]] debugCounterApp(loc http, loc static)
   =  debug(init(), view, update, http, static);
 
 App[DebugModel[Model]] debugCounterApp() 
-  = debugCounterApp(|http://localhost:9197|, |project://elmer/src/examples|); 
+  = debugCounterApp(|http://localhost:9297|, |project://elmer/src/examples|); 
 
 App[Model] counterApp() 
   = app(init(), view, update, 
-        |http://localhost:9197|, |project://elmer/src/examples|); 
+        |http://localhost:9297|, |project://elmer/src/examples|); 
 
 void view(Model m) {
   div(() {

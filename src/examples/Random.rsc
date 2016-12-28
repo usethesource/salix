@@ -13,21 +13,16 @@ data Msg
   | newFace(int face)
   ;
 
+App[Model] randomApp()
+  = app(init(), view, update, 
+    |http://localhost:9097|, |project://elmer/src/examples|); 
 
-data Decoder
-  = random(Handle h, int result);
 
-data Cmd
-  = random(Handle handle, int from, int to)
-  ;
-
-Cmd random(Msg(int) f, int from, int to) = random(encode(f), val);  
- 
-tuple[Model,list[Cmd]] init() = <<1>, []>;
+WithCmds[Model] init() = <<1>, []>;
   
-tuple[Model,list[Cmd]] update(roll(), Model m) = <m, [random(newFace, 1, 6)]>;
+WithCmds[Model] update(roll(), Model m) = <m, [random(newFace, 1, 6)]>;
 
-tuple[Model,list[Cmd]] update(newFace(int n), Model m) = <m[dieFace=n], []>;
+WithCmds[Model] update(newFace(int n), Model m) = <m[dieFace=n], []>;
 
 void view(Model m) {
   div(() {
