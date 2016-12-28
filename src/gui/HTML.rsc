@@ -5,6 +5,9 @@ import List;
 import String;
 import IO;
 
+@doc{Create a text node.}
+void text(value v) = _text(v);
+
 
 @doc{The element render functions below all call build
 to interpret the list of values; build will call the

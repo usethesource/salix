@@ -33,7 +33,7 @@ data Msg
   | toggle()
   ;
 
-list[Subscription] subs(Model m) 
+list[Sub] subs(Model m) 
   = [timeEvery(1000, tick) | m.running ];
 
 Model update(tick(int time), Model t) = t[time=time];

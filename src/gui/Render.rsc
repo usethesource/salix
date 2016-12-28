@@ -54,7 +54,8 @@ data Attr
 data Handle
   = handle(str path, int id);
 
-@doc{Decoders represent functions to decode event types and data.
+@doc{Decoders represent functions to decode event and subscription types,
+plus additional data.
 Here they are represented without functions, but using Handles
 so that they can be serialized to JSON.}
 data Decoder
@@ -64,17 +65,16 @@ data Decoder
   | oneKeyCode(Handle handle, int keyCode = -1)
   | cursorActivity(Handle handle)
   | change(Handle handle)
-  // ???
   | timeEvery(Handle handle)
   ;
 
-// TODO: interpret subscriptions in js using setTimer
-// and when it happens, send a msg with the current time
-data Subscription
+@doc{Subs are like events, and should contain a decoder...
+They are sent to JS, and result in Decoders being sent back.}
+data Sub
   = timeEvery(int interval, Handle handle)
   ;
 
-Subscription timeEvery(int interval, Msg(int) int2msg)
+Sub timeEvery(int interval, Msg(int) int2msg)
   = timeEvery(interval, _encode(int2msg, currentPath(), mappers));
 
 @doc{The encoding interface between an App and this library.
@@ -141,14 +141,24 @@ Html render(&T model, void(&T) block) {
   return pop()[0];
 }
 
+private &T withMapper(Msg(Msg) f, &T() block) {
+  mappers += [f];
+  &T result = block();
+  mappers = mappers[..-1];
+  return result;
+}
+
+// bug: if same name as other mapped, if calling the other
+// it can call this one...
+list[Sub] mappedSubs(Msg(Msg) f, &T t, list[Sub](&T) subs) 
+  = withMapper(f, list[Sub]() { return subs(t); });
+
 @doc{Record mapper to transform messages produced in block according f.}
-void mapped(Msg(Msg) f, &T t, void(&T) block)
+void mapped(Msg(Msg) f, &T t, void(&T) block) 
   = mapped(f, void() { block(t); });
 
 void mapped(Msg(Msg) f, void() block) {
-  mappers += [f];
-  block();
-  mappers = mappers[..-1];
+  withMapper(f, value() { block(); return 0; });
 }
 
 @doc{The basic build function to construct html elements on the stack.
@@ -167,7 +177,7 @@ void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
       add(h);
     }
     else if (Attr _ !:= vals[-1]) { // else (if not Attr), render as text.
-      text(vals[-1]);
+      _text(vals[-1]);
     }
   }
   
@@ -179,4 +189,4 @@ void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
 
 
 @doc{Create a text node.}
-void text(value v) = add(txt("<v>")); // TODO: HTML encode.
+void _text(value v) = add(txt("<v>")); // TODO: HTML encode.

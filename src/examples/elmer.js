@@ -9,6 +9,8 @@ var __queue = [];
 
 var __natives = {};
 
+var __subscriptions = {};
+
 var __builders = {
 	// TODO: separate appending, from creating somehow.
 	// so that when appendNode appends codeMirror it works.
@@ -79,7 +81,6 @@ function root() {
 
 function start() {
 	$.get('/init', {}, function (vdomAndSubs, stats, jqXHR) {
-		// register subs here. 
 		subscribe(vdomAndSubs[1]); // subscriptions
 		replace(root(), build(vdomAndSubs[0]));
 	}, 'json');
@@ -89,8 +90,6 @@ function start() {
 function replace(dom, newDom) {
 	dom.parentNode.replaceChild(newDom, dom);
 }
-
-var __subscriptions = {};
 
 function subscribe(subs) {
 	//{timeEvery: {interval: ms, handle: {handle: ...}}}

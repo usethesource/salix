@@ -76,7 +76,7 @@ AppState newAppState() = < -1, (), (), () >;
 a http loc to serve the app to, and a location to resolve static files.
 The keyword param root identifies the root element in the html document.}
 App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
-            list[Subscription](&T) subs = list[Subscription](&T t) { return []; }, str root = "root") {
+            list[Sub](&T) subs = list[Sub](&T t) { return []; }, str root = "root") {
   AppState state = newAppState();
   
   // encode a value and path + active mappers as a handle
@@ -112,7 +112,7 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
     // initially, just render the view, for the current model.
     if (get("/init") := req) {
       current = asRoot(render(model, view));
-      list[Subscription] mySubs = subs(model);
+      list[Sub] mySubs = subs(model);
       //println("Mysubs: <mySubs>");
       
       return response([current, mySubs]);
@@ -142,7 +142,7 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
       // update the current view
       current = newView;
       
-      list[Subscription] mySubs = subs(model);
+      list[Sub] mySubs = subs(model);
       //println("Mysubs: <mySubs>");
       
       // send the patch.
