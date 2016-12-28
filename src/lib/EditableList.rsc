@@ -1,7 +1,6 @@
 module lib::EditableList
 
 import gui::HTML;
-import gui::Render;
 import gui::Decode;
 import gui::App;
 import List;
@@ -28,7 +27,7 @@ void listView(ListModel[&T] m, void(&T) display) {
       }
       for (int i <- [0..size(m.lst)]) {
         li(() {
-          mapped(toSub(i), () { display(m.lst[i]); });
+          mapping.view(toSub(i), m.lst[i], display);
           if (i > 0) {
             button(onClick(moveUp(i)), "^");
           }

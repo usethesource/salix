@@ -27,10 +27,11 @@ alias AppState = tuple[
   int id, // last assigned handle id
   map[int, value] from, // bijection between handle identities and decoder functions
   map[value, int] to,
-  map[str, list[Msg(Msg)]] mappers // active stack of message mappers per handle path
+  map[str, list[Msg(Msg)]] mappers, // active stack of message mappers per handle path
+  bool running
 ];
 
-AppState newAppState() = < -1, (), (), () >;
+AppState newAppState() = < -1, (), (), (), false>;
 
 @doc{Construct an App over model type &T, providing a view, a model update,
 a http loc to serve the app to, and a location to resolve static files.
@@ -119,8 +120,8 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
   }
 
   return <
-    () { serve(http, _handle); }, 
-    () { shutdown(http); },
+    () { state.running = true; serve(http, _handle); }, 
+    () { state.running = false; shutdown(http); },
     (void(&T) v, &T(Msg, &T) u) { view = v; update = u; }
    >;
 }

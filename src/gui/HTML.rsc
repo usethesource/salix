@@ -113,6 +113,9 @@ void summary(value vals...) = build(vals, _summary);
 void menuitem(value vals...) = build(vals, _menuitem);
 void menu(value vals...) = build(vals, _menu);
 
+// Todo: remove this indirection, and just have
+// Html(list[Html], list[Attr]) _element(str, ..);
+
 Html _h1(list[Html] kids, list[Attr] attrs) = element("h1", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 Html _h2(list[Html] kids, list[Attr] attrs) = element("h2", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 Html _h3(list[Html] kids, list[Attr] attrs) = element("h3", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));

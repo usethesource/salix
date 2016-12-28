@@ -2,7 +2,6 @@ module examples::All
 
 import gui::HTML;
 import gui::App;
-import gui::Render;
 import gui::Decode;
 import lib::EditableList;
 import lib::Debug;
@@ -43,14 +42,14 @@ AllModel initAll() = <
 >;  
   
 list[Sub] subs(AllModel m) 
-  = mappedSubs(Msg::clock, m.clock, examples::Clock::subs);
+  = mapping.subs(Msg::clock, m.clock, examples::Clock::subs);
   
 void viewAll(AllModel m) {
   div(() {
-     mapped(Msg::celsius, m.celsius, examples::Celsius::view);
-     mapped(Msg::counter, m.counter, examples::Counter::view);
-     mapped(Msg::listDemo, m.listDemo, examples::ListDemo::view);
-     mapped(Msg::clock, m.clock, examples::Clock::view);
+     mapping.view(Msg::celsius, m.celsius, examples::Celsius::view);
+     mapping.view(Msg::counter, m.counter, examples::Counter::view);
+     mapping.view(Msg::listDemo, m.listDemo, examples::ListDemo::view);
+     mapping.view(Msg::clock, m.clock, examples::Clock::view);
   });
 }
 

@@ -2,6 +2,7 @@ module examples::todomvc::TodoMVC
 
 import gui::HTML;
 import gui::App;
+import gui::Decode;
 
 import List;
 
@@ -41,12 +42,11 @@ data Msg
   | changeVisibility(str filt)
   ;
 
-Msg(str) updateEntry(int id) = Msg(str x) { return updateEntry(id, x); };
-
 // TODO: we don't have commands yet.
 
-Model update(noOp(), Model model)
-  = model;
+Msg(str) updateEntry(int id) = Msg(str x) { return updateEntry(id, x); };
+
+Model update(noOp(), Model model) = model;
 
 Model update(add(), Model model)
   = model[uid=model.uid + 1][field=""]
@@ -223,7 +223,7 @@ void infoFooter() {
     p(() {
       text("Written by ");
       a(href("http://www.cwi.nl~/storm"), "Tijs van der Storm");
-      text(", inspired by Evan\'s version in Elm");
+      text(", transcribed from Evan\'s version in Elm");
     });
     p(() {
       text("Based ");

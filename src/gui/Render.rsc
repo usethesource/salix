@@ -4,25 +4,6 @@ import List;
 import String;
 import IO;
 
-/*
- * NB: as of now, this module cannot be extended, since the global
- * variables will be copied; this leads to strange results if
- * different modules use different globals... 
- *
- * We need the globals, however, because we don't want to pass any
- * extra data to the user functions h1/h2/... etc. The only limitation
- * is thus that case-based functions in this module cannot be extended.
- * Adding new element functions, or even element constructors is fine.
- */
-
-@doc{This is the basic Message data type that clients
-will extend with concrete constructors.
-
-Note, that instead of make Html parametric on Msg (Html[&Msg])
-we use a single type and ADT extension. This decision makes
-a lot of code slightly less verbose, but sacrifices additional
-type checking when nesting components.}
-data Msg;
 
 // TODO: Html -> Node (as it also represents SVG)
 // TODO: make attrs/props/events kw params to save memory
@@ -37,6 +18,7 @@ data Html
   | txt(str contents)
   ;  
 
+@doc{An abstract type for represent functions to decode event occurrences.}
 data Decoder;  
 
 @doc{Generalized attributes to be produced by explicit attribute construction
@@ -83,6 +65,8 @@ map[str,Decoder] eventsOf(list[Attr] attrs) = ( k: v | event(str k, Decoder v) <
 Html render(&T model, void(&T) block) {
   push([]); 
   block(model);
+  // TODO: throw exception if top is empty or
+  // size > 1
   return pop()[0];
 }
 
@@ -93,7 +77,7 @@ The last argument (if any) can be a block, an Html node, or a value.
 In the latter case it is converted to a txt node.}
 void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
   
-  push([]); // start a new scope for this elements children
+  push([]); // start a new scope for this element's children
   
   if (vals != []) { 
     if (void() block := vals[-1]) { // argument block is just called

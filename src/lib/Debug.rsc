@@ -2,7 +2,6 @@ module lib::Debug
 
 import gui::HTML;
 import gui::App;
-import gui::Render;
 import gui::Decode;
 import List;
 
@@ -42,7 +41,7 @@ void debugView(DebugModel[&T] model, void(&T) subView) {
     p("Current model <model.models[model.current]>");
     
     div(style(<"border", "1px solid">), () {
-      mapped(Msg::sub, model.models[model.current], subView);
+      mapping.view(Msg::sub, model.models[model.current], subView);
     });
     
     h2("Previous versions");
@@ -50,24 +49,39 @@ void debugView(DebugModel[&T] model, void(&T) subView) {
       div(style(<"border", "1px dotted">), () {
         p(i == model.current ? style(<"color", "red">) : null(), "Version: <i>");
         button(onClick(goto(i)), "Goto <i>");
-        mapped(Msg::ignore, model.models[i], subView);
+        mapping.view(Msg::ignore, model.models[i], subView);
       });
     }
   });
 }
 
-DebugModel[&T] debugUpdate(next(), DebugModel[&T] m)
-  = m[current = m.current < size(m.models) - 1 ? m.current + 1 : m.current]; 
-  
-DebugModel[&T] debugUpdate(prev(), DebugModel[&T] m)
-  = m[current = m.current > 0 ? m.current - 1 : m.current];
-  
-DebugModel[&T] debugUpdate(sub(Msg msg), DebugModel[&T] m)
-  = m[current=size(m.models)][models = m.models + [m.update(msg, m.models[m.current])]];
- 
-DebugModel[&T] debugUpdate(ignore(Msg msg), DebugModel[&T] m)
- = m; 
- 
-DebugModel[&T] debugUpdate(goto(int version), DebugModel[&T] m)
- = m[current=version]; 
- 
+DebugModel[&T] debugUpdate(Msg msg, DebugModel[&T] m) {
+  switch (msg) {
+    case next():
+      return m[current = m.current < size(m.models) - 1 ? m.current + 1 : m.current]; 
+    case prev():
+      return  m[current = m.current > 0 ? m.current - 1 : m.current];
+    case sub(Msg s):
+      return m[current=size(m.models)][models = m.models + [m.update(msg, m.models[m.current])]];
+    case ignore(Msg _): 
+      return m;
+    case goto(int v): 
+     return m[current=v];
+  }
+}
+
+//DebugModel[&T] debugUpdate(Msg::next(), DebugModel[&T] m)
+//  = m[current = m.current < size(m.models) - 1 ? m.current + 1 : m.current]; 
+//  
+//DebugModel[&T] debugUpdate(Msg::prev(), DebugModel[&T] m)
+//  = m[current = m.current > 0 ? m.current - 1 : m.current];
+//  
+//DebugModel[&T] debugUpdate(Msg::sub(Msg msg), DebugModel[&T] m)
+//  = m[current=size(m.models)][models = m.models + [m.update(msg, m.models[m.current])]];
+// 
+//DebugModel[&T] debugUpdate(Msg::ignore(Msg msg), DebugModel[&T] m)
+// = m; 
+// 
+//DebugModel[&T] debugUpdate(Msg::goto(int version), DebugModel[&T] m)
+// = m[current=version]; 
+// 

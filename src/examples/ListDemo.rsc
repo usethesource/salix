@@ -4,17 +4,21 @@ import gui::HTML;
 import gui::App;
 import lib::EditableList;
 
-App[ListModel[str]] listApp() 
+//App[ListModel[str]] listApp() 
+// generics and functions...
+App[tuple[list[value],str(Msg, str), str(int)]] listApp() 
   = app(<["hello", "world!"], editStr, initStr>, view, editList, 
-        |http://localhost:9199|, |project://elmer/src/examples|); 
+        |http://localhost:9200|, |project://elmer/src/examples|); 
 
 data Msg
   = changeText(str x)
   ;
 
 void view(ListModel[str] m) {
-  h2("Editable list demo");
-  listView(m, strView);
+  div(() {
+    h2("Editable list demo");
+    listView(m, strView);
+  });
 }
 
 void strView(str x) {

@@ -6,6 +6,16 @@ import List;
 import String;
 
 
+@doc{This is the basic Message data type that clients
+will extend with concrete constructors.
+
+Note, that instead of make Html parametric on Msg (Html[&Msg])
+we use a single type and ADT extension. This decision makes
+a lot of code slightly less verbose, but sacrifices additional
+type checking when nesting components.}
+data Msg;
+
+
 @doc{Handles represent (encoded) functions to decode events.}
 data Handle
   = handle(str path, int id);
@@ -21,7 +31,7 @@ data Decoder
   | oneKeyCode(Handle handle, int keyCode = -1)
   | cursorActivity(Handle handle)
   | change(Handle handle)
-  | timeEvery(Handle handle)
+  | timeEvery(Handle handle) // NB: a decoder of a subscription 
   ;
 
 @doc{Subs are like events, and should contain a decoder...
@@ -29,7 +39,8 @@ They are sent to JS, and result in Decoders being sent back.}
 data Sub
   = timeEvery(int interval, Handle handle)
   ;
-
+  
+@doc{Smart constructors for constructing encoded subscriptions.}
 Sub timeEvery(int interval, Msg(int) int2msg)
   = timeEvery(interval, _encode(int2msg, currentPath(), mappers));
 
@@ -115,13 +126,15 @@ private &T withMapper(Msg(Msg) f, &T() block) {
 
 // bug: if same name as other mapped, if calling the other
 // it can call this one...
-list[Sub] mappedSubs(Msg(Msg) f, &T t, list[Sub](&T) subs) 
+private list[Sub] mappedSubs(Msg(Msg) f, &T t, list[Sub](&T) subs) 
   = withMapper(f, list[Sub]() { return subs(t); });
 
 @doc{Record mapper to transform messages produced in block according f.}
-void mapped(Msg(Msg) f, &T t, void(&T) block) 
-  = mapped(f, void() { block(t); });
-
-void mapped(Msg(Msg) f, void() block) {
-  withMapper(f, value() { block(); return 0; });
+private void mapped(Msg(Msg) f, &T t, void(&T) block) { 
+   withMapper(f, value() { block(t); return 0; });
 }
+
+public tuple[
+  list[Sub](Msg(Msg), &T, list[Sub](&T)) subs,
+  void(Msg(Msg), &T, void(&T)) view
+] mapping = <mappedSubs, mapped>;
