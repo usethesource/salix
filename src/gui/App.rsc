@@ -54,8 +54,8 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
   }
   
   // retrieve the actual function corresponding to a handle identity.
-  &U decode(int id, type[&U] t) = d
-    when &U d := state.from[id];
+  &U decode(Handle h, type[&U] t) = d
+    when &U d := state.from[h.id];
   
   // apply the message transformers to msg that were in scope at path
   Msg mapEm(str path, Msg msg) 

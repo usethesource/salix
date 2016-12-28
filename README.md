@@ -112,7 +112,11 @@ If we didn't use mapping here, the function `updateTwice` could directly interpr
 
 ### Subscriptions
 
-Subscriptions represent events of interest that are not produced by users interacting with the page. Examples include incoming data on Web sockets, or timers. In Elmer these are represented by the type `Sub` (defined in `gui::Decode`). Currently, there's only one: `timeEvery(int interval, Msg(int) time2msg)`. To be notified of subscriptions, provide a function of type `list[Sub](&T)` (where `&T` represents your model type) to the `subs` keyword parameter of `app`.
+Subscriptions can be used to listen to events of interest which are not produced by users interacting with the page. Examples include incoming data on Web sockets, or timers. In Elmer these are represented by the type `Sub` (defined in `gui::Decode`). Currently, there's only one: 
+
+	timeEvery(int interval, Msg(int) time2msg) 
+
+To be notified of subscriptions, provide a function of type `list[Sub](&T)` (where `&T` represents your model type) to the `subs` keyword parameter of `app`.
 
 As as example, let's say we'd like to automatically increment our counter every 5 seconds. This can be achieved as follows:
 
@@ -132,6 +136,12 @@ Finally modify the invocation to `app` as follows:
 
 	App[Model] counterApp() 
       = app(... /* same as before */, subs = counterSubs);
+      
+If your nested components have subscriptions, you need to map them in the same way as views are mapped, but this time using `mapping.subs`. For instance, here's how to map the subscriptions of each counter to combine them into a list of subscriptions of `counterTwice`, assuming the counter app defines its list of subscriptions for a model as `counterSubs(Model m)`:
+
+	list[Sub] subsTwice(ModelTwice m)
+	  = mapping.subs(counter1, m.counter1, counterSubs)
+	  + mapping.subs(counter2, m.counter2, counterSubs);
 
 ### Guide to the modules
 
@@ -140,16 +150,61 @@ Finally modify the invocation to `app` as follows:
 
 - HTML: defines all HTML5 elements and attributes as convenient functions. All element functions (such as `div`, `h2`, etc.) accept a variable sequence of `value`s (i.e. they are "vararg" functions). All values can be attributes (as, e.g., produced by `onClick`, `class` etc.). The last value (if any) can also be either a block (of type `void()`), a `Node`, or a plain Rascal value. In the latter case, it's converted to a string and rendered as an HTML text node.  
 
-- SVG: same as HTML but for SVG. 
+- SVG: same as HTML, but for SVG. 
 
-- Render: defines the rendering logic to convert "views" to HTML `Node`s. Only needed if you define your own events, attributes or elements, or if you need to call `render` explicitly. 
+- Render: defines the rendering logic to convert "views" to HTML `Node`s. Only needed if you define your own attributes or elements, or if you need to call `render` explicitly. 
 
 - Decode: contains the logic of representing decoders (functions that interpret event ocurrences into messages) in such a way that they can be sent to and received from the browser. Import this if you use subscriptions, if you need *mapping* (see above), or if you're defining your own decoders or subscriptions. 
 
 - Diff & Patch: internal modules for diffing and patching `Node`. You should never have to import these modules. 
 
 
+### Extending the Framework
 
+#### Events
 
+An event is defined using the following pattern:
+
+	Attr <eventName>(Msg(...) something2msg) 
+	  = event("<eventName", <decoder>(something2msg));
+
+This code defines an event function named `eventName`, accepting a function to map some event data to a `Msg`. It is defined using the `event` constructor which takes the name of the event and a decoder. Decoders are used to process event data such that it can be fed into the argument function. Decoders thus are specific for such functions.
+
+Standard decoders include `succeed(Msg)` which simply returns the argument when the event succeeds; `targetValue(Msg(str))` feeds the value of the target element of the event into the argument function to obtain a message; and `targetChecked(Msg(bool))` which can be used on checkboxes and radio buttons. These are ready to use in your event definitions. 
+
+If the standard decoders are not sufficient, you can also define your own. By extending the `Decoder` data type, and providing a smart constructor turning the decoder function into serializable form. As an example, `targetValue` is defined as follows:
+
+	data Decoder
+     = ...
+     | targetValue(Handle handle);
+
+	Decoder targetValue(Msg(str) str2msg) 
+	  = targetValue(encode(str2msg));
+
+The type `Handle` is an opaque type representing the decoder function in serializable form. The function `encode` uses internal magic to turn an arbitrary value into a handle. 
+
+The reverse is also needed: turning a handle received from the client into the corresponding message as produced by the decoder function. Here's how `targetValue` decoders are turned into messages, given some HTTP request data in `params`:
+
+	Msg toMsg(targetValue(Handle handle), 
+	          map[str,str] params, 
+	          &T(Handle,type[&T]) decode) 
+	  =  decode(handle, #Msg(str))(params["value"]);
+
+The function `toMsg` receives three parameters: first, the decoder as received from the client; second, a map with auxiliar data (also received from the client); and third, a function to magically turn a handle into an arbitray type (as specified by the reified type). How and why this function is provided is irrelevant here; suffice it to say that the `dec` function captures some local state to perform its parsing magic which prevents it from being an ordinary function. The handle is decoded into a function `Msg(str)`, which is applied to the `data` attribute in the request. As a result, `toMsg` returns a message as originally intended in some `event(..., targetValue(f))` attribute.
+
+Decoder values (i.e., of type `Decoder`) are interpreted in the client. Therefore, adding your own decoder requires changing the Javascript code to support the new kind.
+
+#### Subscriptions
+
+Extend `Sub` with new constructor for sending to client.
+extend decoder to represent a decoder for this subscription
+define smart constructor that encodes decoding functions
+extend js to handle the new subscription.
+
+#### Commands
+
+TBD
+
+#### Interop with JS
 
 

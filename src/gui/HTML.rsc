@@ -355,6 +355,6 @@ Attr onChange(Msg(int, int, int, int, str, str) f)
   
 @doc{Smart constructors for constructing encoded subscriptions.}
 Sub timeEvery(int interval, Msg(int) int2msg)
-  = timeEvery(interval, _encode(int2msg, currentPath(), currentMappers()));
+  = timeEvery(encode(int2msg), interval = interval);
 
   
