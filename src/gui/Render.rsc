@@ -36,7 +36,8 @@ data Html
   | native(str kind, str key, map[str, str] attrs, map[str, str] props, map[str, Decoder] events)
   | txt(str contents)
   ;  
-  
+
+data Decoder;  
 
 @doc{Generalized attributes to be produced by explicit attribute construction
 functions (such as class(str), onClick(Msg), or \value(str)).
@@ -50,43 +51,11 @@ data Attr
 
 // TODO: keyed elements 
 
-@doc{Handles represent (encoded) functions to decode events.}
-data Handle
-  = handle(str path, int id);
-
-@doc{Decoders represent functions to decode event and subscription types,
-plus additional data.
-Here they are represented without functions, but using Handles
-so that they can be serialized to JSON.}
-data Decoder
-  = succeed(Handle handle)
-  | targetValue(Handle handle)
-  | targetChecked(Handle handle)
-  | oneKeyCode(Handle handle, int keyCode = -1)
-  | cursorActivity(Handle handle)
-  | change(Handle handle)
-  | timeEvery(Handle handle)
-  ;
-
-@doc{Subs are like events, and should contain a decoder...
-They are sent to JS, and result in Decoders being sent back.}
-data Sub
-  = timeEvery(int interval, Handle handle)
-  ;
-
-Sub timeEvery(int interval, Msg(int) int2msg)
-  = timeEvery(interval, _encode(int2msg, currentPath(), mappers));
-
-@doc{The encoding interface between an App and this library.
-An app needs to set this variable to its encapsulated encoder before
-rendering. This ensures that encoding is relative to app and not global.
-
-Encoding produces handles for arbitrary values, at some path,
-recording the list of active message transformers at the moment of call.} 
-public Handle(value, str, list[Msg(Msg)]) _encode;
-
 @doc{The html element stack used during rendering.}
 private list[list[Html]] stack = [];
+
+@doc{Compute the current path as a string from the stack.}
+str currentPath() = intercalate("_", [ size(l) | list[Html] l <- stack ]);
 
 @doc{Basic stack management functions.}
 private void add(Html h) = push(pop() + [h]);
@@ -100,30 +69,6 @@ private list[Html] pop() {
   stack = stack[..-1];
   return elts;
 }
-
-@doc{The stack of active msg transformers at some point during rendering.}
-public list[Msg(Msg)] mappers = [];
-
-@doc{Compute the current path as a string from the stack.}
-str currentPath() = intercalate("_", [ size(l) | list[Html] l <- stack ]);
-
-@doc{Smart constructors for constructing encoded event decoders.}
-Decoder succeed(Msg msg) = succeed(_encode(msg, currentPath(), mappers));
-
-Decoder targetValue(Msg(str) str2msg) = targetValue(_encode(str2msg, currentPath(), mappers));
-
-Decoder targetChecked(Msg(bool) bool2msg) = targetChecked(_encode(bool2msg, currentPath(), mappers));
-
-Decoder keyCode(Msg(int) int2msg) = keyCode(_encode(int2msg, currentPath(), mappers)); 
-
-Decoder oneKeyCode(int keyCode, Msg(int) int2msg) 
-  = oneKeyCode(_encode(int2msg, currentPath(), mappers), keyCode = keyCode); 
-  
-Decoder cursorActivity(Msg(int, int, int, str, str) token2msg) 
-  = cursorActivity(_encode(token2msg, currentPath(), mappers));
-
-Decoder change(Msg(int, int, int, int, str, str) ch2msg) 
-  = change(_encode(ch2msg, currentPath(), mappers));
 
 
 @doc{Helper functions to partition list of Attrs into attrs, props and events} 
@@ -141,25 +86,6 @@ Html render(&T model, void(&T) block) {
   return pop()[0];
 }
 
-private &T withMapper(Msg(Msg) f, &T() block) {
-  mappers += [f];
-  &T result = block();
-  mappers = mappers[..-1];
-  return result;
-}
-
-// bug: if same name as other mapped, if calling the other
-// it can call this one...
-list[Sub] mappedSubs(Msg(Msg) f, &T t, list[Sub](&T) subs) 
-  = withMapper(f, list[Sub]() { return subs(t); });
-
-@doc{Record mapper to transform messages produced in block according f.}
-void mapped(Msg(Msg) f, &T t, void(&T) block) 
-  = mapped(f, void() { block(t); });
-
-void mapped(Msg(Msg) f, void() block) {
-  withMapper(f, value() { block(); return 0; });
-}
 
 @doc{The basic build function to construct html elements on the stack.
 The list of argument values can contain any number of Attr values.
@@ -187,6 +113,7 @@ void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
   
 }
 
-
 @doc{Create a text node.}
 void _text(value v) = add(txt("<v>")); // TODO: HTML encode.
+
+

@@ -1,6 +1,7 @@
 module gui::HTML
 
 import gui::Render;
+import gui::Decode;
 import List;
 import String;
 import IO;

@@ -2,6 +2,8 @@ module lib::Debug
 
 import gui::HTML;
 import gui::App;
+import gui::Render;
+import gui::Decode;
 import List;
 
 // TODO: make an undoable component

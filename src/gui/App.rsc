@@ -1,6 +1,7 @@
 module gui::App
 
 import gui::Render;
+import gui::Decode;
 import gui::Diff;
 import gui::Patch;
 
@@ -9,49 +10,8 @@ import IO;
 import String;
 import Map;
 import List;
-import Type;
 
-@doc{Convert request parameters to a Msg value.
-Active mappers at `path`  transform the message according to f.}
-Msg params2msg(map[str, str] params, Msg(str, Msg) f, &T(int,type[&T]) dec) 
-  = f(params["path"], toMsg(toDecoder(params), params, dec));
-
-@doc{Construct a Decoder value from the request parameters.}
-Decoder toDecoder(map[str, str] params)
-  = make(#Decoder, params["type"], [toHandle(params)], ());
-
-@doc{Parse request parameters into a Handle.}
-Handle toHandle(map[str, str] params)
-  = handle(params["path"], toInt(params["id"]));
-
-
-@doc{Convert decoders to actual messages by applying the functions
-returned by dec, based on the handle's id.}
-Msg toMsg(succeed(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
-  = dec(h.id, #Msg);
-
-Msg toMsg(targetValue(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
-  =  dec(h.id, #Msg(str))(p["data"]);
-
-Msg toMsg(targetChecked(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
-  = dec(h.id, #Msg(bool))(p["data"] == "true");
-
-Msg toMsg(oneKeyCode(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
-  = dec(h.id, #Msg(int))(toInt(p["data"]));
-
-Msg toMsg(cursorActivity(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
-  = dec(h.id, #Msg(int, int, int, str, str))(
-           toInt(p["line"]), toInt(p["start"]), toInt(p["end"]), p["string"], p["tokenType"]);
-
-Msg toMsg(change(Handle h), map[str,str] p, &T(int,type[&T]) dec) 
-  = dec(h.id, #Msg(int, int, int, int, str, str))(
-           toInt(p["fromLine"]), toInt(p["fromCol"]), 
-           toInt(p["toLine"]), toInt(p["toCol"]),
-           p["text"], p["removed"]);
-           
-Msg toMsg(timeEvery(Handle h), map[str, str] p, &T(int,type[&T]) dec) 
-  = dec(h.id, #Msg(int))(toInt(p["time"]));
-  
+ 
 @doc{The basic App type:
 - serve to start serving the application
 - stop to shutdown the server
@@ -107,7 +67,7 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
   // BUG: mixes with constructors that are in scope!!!
   Response _handle(Request req) {
     // publish my encoder to gui::Render.
-    gui::Render::_encode = encode;
+    gui::Decode::_encode = encode;
 
     // initially, just render the view, for the current model.
     if (get("/init") := req) {

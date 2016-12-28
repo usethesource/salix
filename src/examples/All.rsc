@@ -3,6 +3,7 @@ module examples::All
 import gui::HTML;
 import gui::App;
 import gui::Render;
+import gui::Decode;
 import lib::EditableList;
 import lib::Debug;
 
