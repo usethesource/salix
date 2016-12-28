@@ -2,6 +2,7 @@ module examples::todomvc::TodoMVC
 
 import gui::HTML;
 import gui::App;
+import gui::Render;
 import gui::Decode;
 
 import List;
