@@ -40,10 +40,6 @@ data Sub
   = timeEvery(int interval, Handle handle)
   ;
   
-@doc{Smart constructors for constructing encoded subscriptions.}
-Sub timeEvery(int interval, Msg(int) int2msg)
-  = timeEvery(interval, _encode(int2msg, currentPath(), mappers));
-
 @doc{The encoding interface between an App and this library.
 An app needs to set this variable to its encapsulated encoder before
 rendering. This ensures that encoding is relative to app and not global.
@@ -134,7 +130,9 @@ private void mapped(Msg(Msg) f, &T t, void(&T) block) {
    withMapper(f, value() { block(t); return 0; });
 }
 
-public tuple[
+alias Mapping = tuple[
   list[Sub](Msg(Msg), &T, list[Sub](&T)) subs,
   void(Msg(Msg), &T, void(&T)) view
-] mapping = <mappedSubs, mapped>;
+];
+
+public /*const*/ Mapping mapping = <mappedSubs, mapped>;

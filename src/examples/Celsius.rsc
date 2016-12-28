@@ -2,7 +2,6 @@ module examples::Celsius
 
 import gui::HTML;
 import gui::App;
-import gui::Decode;
 import lib::Debug;
 import String;
 import util::Math;

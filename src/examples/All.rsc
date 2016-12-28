@@ -2,7 +2,7 @@ module examples::All
 
 import gui::HTML;
 import gui::App;
-import gui::Decode;
+import gui::Decode; // for Sub type
 import lib::EditableList;
 import lib::Debug;
 
@@ -27,12 +27,12 @@ data Msg
 
 App[AllModel] allApp() 
   = app(initAll(), viewAll, editAll, 
-        |http://localhost:9198|, |project://elmer/src/examples|,
+        |http://localhost:9160|, |project://elmer/src/examples|,
         subs = examples::All::subs); 
 
 App[DebugModel[AllModel]] debugAllApp() 
   = debug(initAll(), viewAll, editAll, 
-        |http://localhost:9198|, |project://elmer/src/examples|); 
+        |http://localhost:9160|, |project://elmer/src/examples|); 
   
 AllModel initAll() = <
   37.0, 

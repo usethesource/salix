@@ -2,7 +2,6 @@ module examples::Counter
 
 import gui::HTML;
 import gui::App;
-import gui::Decode;
 import lib::Debug;
 
 import String;
@@ -40,11 +39,11 @@ void view(Model m) {
     
     h2("My first counter app in Rascal");
     
-    button(onClick(dec()), "-");
+    button(onClick(inc()), "▲");
     
     div("<m.count>");
     
-    button(onClick(inc()), "+");
+    button(onClick(dec()), "▼");
     
     input(\value("<m.delta>"),\type("text"), onInput(delta));
 

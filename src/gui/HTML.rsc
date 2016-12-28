@@ -6,6 +6,11 @@ import List;
 import String;
 import IO;
 
+//re-export
+
+public Mapping mapping = gui::Decode::mapping;
+
+
 @doc{Create a text node.}
 void text(value v) = _text(v);
 
@@ -345,3 +350,9 @@ Attr onCursorActivity(Msg(int, int, int, str, str) f)
 
 Attr onChange(Msg(int, int, int, int, str, str) f)
   = event("change", change(f));
+  
+@doc{Smart constructors for constructing encoded subscriptions.}
+Sub timeEvery(int interval, Msg(int) int2msg)
+  = timeEvery(interval, _encode(int2msg, currentPath(), currentMappers()));
+
+  

@@ -30,7 +30,7 @@ App[DebugModel[&T]] debug(&T model, void(&T) view, &T(Msg, &T) upd, loc http, lo
 DebugModel[&T] wrapModel(&T model, &T(Msg, &T) upd) 
   = <0, [model], upd>;
 
-void(DebugModel[&T] d) wrapView(void(&T) view) 
+void(DebugModel[&T]) wrapView(void(&T) view) 
   = void(DebugModel[&T] d) { debugView(d, view); };
 
 void debugView(DebugModel[&T] model, void(&T) subView) {

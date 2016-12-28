@@ -4,6 +4,7 @@ import gui::Render;
 import gui::Decode;
 import gui::Diff;
 import gui::Patch;
+import lib::Trace;
 
 import util::Webserver;
 import IO;
@@ -64,6 +65,13 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
 
   Html current;
 
+  list[Msg] trace = [];
+  
+  void myTracedView(&T t) { 
+    return traceView(<trace, t>, view); 
+  };
+   
+
   // the main handler to interpret http requests.
   // BUG: mixes with constructors that are in scope!!!
   Response _handle(Request req) {
@@ -72,12 +80,13 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
 
     // initially, just render the view, for the current model.
     if (get("/init") := req) {
-      current = asRoot(render(model, view));
+      current = asRoot(render(model, myTracedView));
       list[Sub] mySubs = subs(model);
       //println("Mysubs: <mySubs>");
       
       return response([current, mySubs]);
     }
+    
     
     // if receiving an (encoded) message
     if (get("/msg") := req) {
@@ -89,13 +98,17 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
       // - apply all message transformers that were in scope for handle
       Msg msg = params2msg(req.parameters, mapEm, decode);
       
-      println("Processing: <msg>");
+      //println("Processing: <msg>");
+      trace += [msg];
+      if (size(trace) > 50) {
+        trace = trace[1..];
+      }
       
       // update the model
       model = update(msg, model);
       
       // compute the new view
-      Html newView = asRoot(render(model, view));
+      Html newView = asRoot(render(model, myTracedView));
       
       // compute the patch to be sent to the browser
       Patch p = diff(current, newView);
