@@ -16,7 +16,9 @@ data Sub;
 data Cmd;
  
 
-@doc{Handles represent (encoded) functions to decode events.}
+@doc{Handles represent (encoded) functions to decode events.
+ id: identifies the decoder function (e.g., of type Msg(int))
+ path: identifies the active mappers for this handle.  }
 data Handle
   = handle(str path, int id)
   ;

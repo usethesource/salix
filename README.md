@@ -41,6 +41,16 @@ With the model and the `update` function in place, we can now define the view as
 
 A few notes are in order here. A view in Elmer is a function from a model (in this case, of type `Model`) to `void`. Views defined in this style call HTML generating functions defined in the `gui::HTML` module, which are all `void` functions too. You can use the `render` function in `gui::Render` to turn a view and a model into an actual `Node` value, but typically you should never have to call this explicitly. Consider the `void` functions as "drawing" functions, painting HTML structure on an implicit canvas. This imperative style has the advantage that all regular control-flow constructs of Rascal can be used during view construction. 
 
+An alternative design, more functional-programming-like according to some, would look like this:
+
+    Node view(Model m) =
+      div(
+        h2("My first counter app in Rascal"),
+        button(onClick(inc()), "+"),
+        div(m.count),
+        button(onClick(dec()), "-")
+      );
+
 The top element of the counter view consists of a single `div`. Within the `div` there's an `h2` header element, two `button`s and a `div` showing the current model value. Notice how `void` closures are used to express nesting.
 
 The `button` elements receive attributes to setup event-handling. In this case, the `onClick` attribute wraps an `Msg` value to indicate that this message must be sent if the button is clicked. The main render loop will forward such messages to `update` to obtain a new model value, which in turn is used to create the updated view.
@@ -110,6 +120,14 @@ If we didn't use mapping here, the function `updateTwice` could directly interpr
         view(model);
       });
     }
+    
+##### Why is mapping part of the framework?
+
+You'd think it would easy to realize mapping just using a standard `map` function, or comprehensions. You could just simply transform an embedded function, say of type `Msg(int)` using a transformer `Msg(Msg)`. The transformed function would simply be attached at right position in the `Node` tree, -- nothing special.
+
+Unfortunately, such transformed embedded functions can't be serialized over the wire. That's why they are encoded. When receiving a result, the encoding is used to find the original function again. This requires equality on functions. Function equality in Rascal is tricky: two functions are considered equal if they correspond to the same declaration, or if they are *exactly* the same closure (i.e. created at the same execution point). This basically means that you cannot use inline closures as handlers, because on every render, they will lead to new identities, and hence, spurious event handler updates in the browser.  
+
+Second, our imperative style embedding prevents accessing `Node` values directly.
 
 ### Subscriptions
 
@@ -209,7 +227,7 @@ If the standard handlers are not sufficient, you can also define your own. By ex
      = ...
      | targetValue(Handle handle);
 
-	Hnd targetValue(Msg(str) str2msg) = targetValue(encodeHnd(str2msg));
+	Hnd targetValue(Msg(str) str2msg) = targetValue(encode(str2msg));
 
 The type `Handle` is an opaque type representing the handler function in serializable form. The function `encode` uses internal magic to turn an arbitrary value into a handle. 
 
@@ -233,14 +251,14 @@ For instance, `timeEvery` is defined as follows:
 
 	data Sub = timeEvery(Handle handle, int interval);
 
-	Sub timeEvery(Msg(int) int2msg, int n) = timeEvery(encodeSub(int2msg), n);
+	Sub timeEvery(Msg(int) int2msg, int n) = timeEvery(encode(int2msg), n);
 
 
 For instance, the `random` command is defined as follows:
 
 	data Cmd = random(Handle handle, int from, int to);
   
-	Cmd random(Msg(int) f, int from, int to) = random(encodeCmd(f), from, to);
+	Cmd random(Msg(int) f, int from, int to) = random(encode(f), from, to);
 
 
 New subscriptions and commands always require modifying the Javascript to interpret them. 
