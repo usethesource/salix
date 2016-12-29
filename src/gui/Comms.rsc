@@ -16,7 +16,7 @@ alias Subs = list[Sub];
 
 @doc{Smart constructors for constructing encoded subscriptions.}
 Sub timeEvery(Msg(int) int2msg, int interval)
-  = timeEvery(encodeSub(int2msg), interval);
+  = timeEvery(encode(int2msg), interval);
 
 @doc{Commands represent actions that need to be performed at the client.}
 data Cmd  // Commands
@@ -25,7 +25,7 @@ data Cmd  // Commands
   
 @doc{Smart constructors for constructing encoded commands.}
 Cmd random(Msg(int) f, int from, int to)
-  = random(encodeCmd(f), from, to);
+  = random(encode(f), from, to);
 
 @doc{Handlers are what is sent to the client for handling user events.}
 data Hnd // Handlers for events
@@ -35,13 +35,13 @@ data Hnd // Handlers for events
   ;
   
 @doc{Smart constructors for constructing encoded event decoders.}
-Hnd succeed(Msg msg) = succeed(encodeHnd(msg));
+Hnd succeed(Msg msg) = succeed(encode(msg));
 
-Hnd targetValue(Msg(str) str2msg) = targetValue(encodeHnd(str2msg));
+Hnd targetValue(Msg(str) str2msg) = targetValue(encode(str2msg));
 
-Hnd targetChecked(Msg(bool) bool2msg) = targetChecked(encodeHnd(bool2msg));
+Hnd targetChecked(Msg(bool) bool2msg) = targetChecked(encode(bool2msg));
 
-Hnd keyCode(Msg(int) int2msg) = keyCode(encodeHnd(int2msg)); 
+Hnd keyCode(Msg(int) int2msg) = keyCode(encode(int2msg)); 
 
 data Result // what comes back from the client (either from Cmd/Hnd/Sub
   = nothing(Handle handle)

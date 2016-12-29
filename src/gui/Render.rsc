@@ -36,9 +36,6 @@ data Attr
 @doc{The html element stack used during rendering.}
 private list[list[Html]] stack = [];
 
-@doc{Compute the current path as a string from the stack.}
-str renderPath() = intercalate("_", [ size(l) | list[Html] l <- stack ]);
-
 @doc{Basic stack management functions.}
 private void add(Html h) = push(pop() + [h]);
 

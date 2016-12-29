@@ -1,7 +1,6 @@
 module gui::Encode
 
 import List;
-import gui::Render;
 
 @doc{This is the basic Message data type that clients
 will extend with concrete constructors.
@@ -32,11 +31,7 @@ public Handle(value, str, list[Msg(Msg)]) _encode;
 
 public &T(Handle,type[&T]) _decode;
 
-Handle encodeHnd(value x) = _encode(x, renderPath(), currentMappers());
-
-Handle encodeCmd(value x) = _encode(x, mappingPath(), currentMappers());
-
-Handle encodeSub(value x) = _encode(x, mappingPath(), currentMappers());
+Handle encode(value x) = _encode(x, mappingPath(), currentMappers());
 
 &T decode(Handle h, type[&T] t) = _decode(h, t);
 
@@ -49,8 +44,7 @@ private list[Msg(Msg)] mappers = [];
 list[Msg(Msg)] currentMappers() = mappers;
 
 private str mappingPath()
-  = "*" // prefix to make distinct from render paths
-  + intercalate("_", [ "<mapperTable[f]>" | value f <- currentMappers() ]); 
+  = intercalate("_", [ "<mapperTable[f]>" | value f <- currentMappers() ]); 
 
 private int mapId = -1;
 private map[value, int] mapperTable = ();
