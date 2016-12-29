@@ -54,6 +54,9 @@ private &T withMapper(Msg(Msg) f, &T() block) {
 private list[Sub] mappedSubs(Msg(Msg) f, &T t, list[Sub](&T) subs) 
   = withMapper(f, list[Sub]() { return subs(t); });
 
+private tuple[&T,list[Cmd]] mappedCmds(Msg(Msg) f, Msg msg, &T t, tuple[&T, list[Cmd]](Msg, &T) upd) 
+  = withMapper(f, tuple[&T, list[Cmd]]() { return upd(msg, t); });
+
 @doc{Record mapper to transform messages produced in block according f.}
 private void mapped(Msg(Msg) f, &T t, void(&T) block) { 
    withMapper(f, value() { block(t); return 0; });
@@ -61,7 +64,8 @@ private void mapped(Msg(Msg) f, &T t, void(&T) block) {
 
 alias Mapping = tuple[
   list[Sub](Msg(Msg), &T, list[Sub](&T)) subs,
+  tuple[&T, list[Cmd]](Msg(Msg), Msg, &T, tuple[&T, list[Cmd]](Msg, &T)) cmds,
   void(Msg(Msg), &T, void(&T)) view
 ];
 
-public /*const*/ Mapping mapping = <mappedSubs, mapped>;
+public /*const*/ Mapping mapping = <mappedSubs, mappedCmds, mapped>;

@@ -82,4 +82,4 @@ Msg toMsg(boolean(Handle h, bool b)) = decode(h, #Msg(bool))(b);
 
 Msg toMsg(integer(Handle h, int i)) = decode(h, #Msg(int))(i);
 
-           
+public /*const*/ Mapping mapping = gui::Encode::mapping;

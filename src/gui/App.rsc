@@ -13,10 +13,9 @@ import String;
 import Map;
 import List;
 
-
 alias WithCmds[&T] = tuple[&T model, list[Cmd] commands];  
- 
- 
+
+
 @doc{The basic App type:
 - serve to start serving the application
 - stop to shutdown the server
