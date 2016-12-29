@@ -2,6 +2,7 @@ module lib::EditableList
 
 import gui::HTML;
 import gui::App;
+import gui::Comms;
 import List;
 import IO;
 

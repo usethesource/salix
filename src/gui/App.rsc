@@ -42,7 +42,7 @@ AppState newAppState() = < -1, (), (), (), false>;
 
 App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
             list[Sub](&T) subs = list[Sub](&T t) { return []; }, str root = "root") 
- = app(<model, []>, view, WithCmds[&T](Msg m, &T t) { return <update(m, t), []>; },
+ = app(noCmds(model), view, WithCmds[&T](Msg m, &T t) { return noCmds(update(m, t)); },
      http, static, subs = subs, root = root);
 
 @doc{Construct an App over model type &T, providing a view, a model update,
@@ -85,10 +85,13 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   
   &T model;
 
+  resetMapping(); // they can become inconsistent when there's an exception.
+
   // the main handler to interpret http requests.
   // BUG: mixes with constructors that are in scope!!!
   Response _handle(Request req) {
-    // publish my encoder to gui::Render.
+    // publish my encoder and decoder to gui::Encode.
+    // todo: make a function.
     gui::Encode::_encode = myEncode;
     gui::Encode::_decode = myDecode;
 
@@ -127,7 +130,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
       Html newView = asRoot(render(model, myTracedView));
       
       // compute the patch to be sent to the browser
-      Patch p = diff(current, newView);
+      Patch myPatch = diff(current, newView);
       
       // update the current view
       current = newView;
@@ -136,7 +139,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
       //println("Mysubs: <mySubs>");
       
       // send the patch.
-      return response([p, mySubs, myCmds]); 
+      return response([myPatch, mySubs, myCmds]); 
     }
     
     // everything else is considered static files.

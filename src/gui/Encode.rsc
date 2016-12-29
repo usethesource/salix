@@ -1,5 +1,6 @@
 module gui::Encode
 
+import List;
 import gui::Render;
 
 @doc{This is the basic Message data type that clients
@@ -18,7 +19,8 @@ data Cmd;
 
 @doc{Handles represent (encoded) functions to decode events.}
 data Handle
-  = handle(str path, int id);
+  = handle(str path, int id)
+  ;
 
 
 @doc{The encoding interface between an App and this library.
@@ -30,7 +32,11 @@ public Handle(value, str, list[Msg(Msg)]) _encode;
 
 public &T(Handle,type[&T]) _decode;
 
-Handle encode(value x) = _encode(x, currentPath(), currentMappers());
+Handle encodeHnd(value x) = _encode(x, renderPath(), currentMappers());
+
+Handle encodeCmd(value x) = _encode(x, mappingPath(), currentMappers());
+
+Handle encodeSub(value x) = _encode(x, mappingPath(), currentMappers());
 
 &T decode(Handle h, type[&T] t) = _decode(h, t);
 
@@ -39,10 +45,50 @@ Handle encode(value x) = _encode(x, currentPath(), currentMappers());
 @doc{The stack of active msg transformers at some point during rendering.}
 private list[Msg(Msg)] mappers = [];
 
+
 list[Msg(Msg)] currentMappers() = mappers;
 
+private str mappingPath()
+  = "nonview_" // prefix to make distinct from render paths
+  + intercalate("_", [ "<mapperTable[f]>" | Msg(Msg) f <- currentMappers() ]); 
+
+private int mapId = -1;
+private map[value, int] mapperTable = ();
+
+private void recordMapper(Msg(Msg) f) {
+  //if (f notin mapperTable) { ?????
+  if (value k <- mapperTable, k == f) {
+    return;
+  }
+  mapId += 1;
+  mapperTable[f] = mapId;
+}
+
+void resetMapping() {
+  mappers = [];
+  mapId = -1;
+  mapperTable = ();
+}
+
+
+//private void add(Html h) = push(pop() + [h]);
+//
+//private void push(list[Html] l) { stack += [l]; }
+//
+//private list[Html] top() = stack[-1];
+//
+//private list[Html] pop() {
+//  list[Html] elts = top();
+//  stack = stack[..-1];
+//  return elts;
+//}
+//
+//private void push(Msg(Msg) f) {
+//
+//}
 
 private &T withMapper(Msg(Msg) f, &T() block) {
+  recordMapper(f);
   mappers += [f];
   &T result = block();
   mappers = mappers[..-1];
@@ -58,7 +104,7 @@ private tuple[&T,list[Cmd]] mappedCmds(Msg(Msg) f, Msg msg, &T t, tuple[&T, list
   = withMapper(f, tuple[&T, list[Cmd]]() { return upd(msg, t); });
 
 @doc{Record mapper to transform messages produced in block according f.}
-private void mapped(Msg(Msg) f, &T t, void(&T) block) { 
+private void mappedView(Msg(Msg) f, &T t, void(&T) block) { 
    withMapper(f, value() { block(t); return 0; });
 }
 
@@ -68,4 +114,4 @@ alias Mapping = tuple[
   void(Msg(Msg), &T, void(&T)) view
 ];
 
-public /*const*/ Mapping mapping = <mappedSubs, mappedCmds, mapped>;
+public /*const*/ Mapping mapping = <mappedSubs, mappedCmds, mappedView>;

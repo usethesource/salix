@@ -21,7 +21,7 @@ data Result
      int toLine, int toCol, str text, str removed);
 
 Hnd codeMirrorChange(Msg(int, int, int, int, str, str) ch2msg) 
-  = codeMirrorChange(encode(ch2msg));
+  = codeMirrorChange(encodeHnd(ch2msg));
 
 Result toResult("codeMirrorChange", map[str, str] p)
   = codeMirrorChange(toHandle(p), toInt(p["fromLine"]), toInt(p["fromCol"]), 

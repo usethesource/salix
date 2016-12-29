@@ -3,7 +3,9 @@ module gui::SVG
 import gui::Render;
 import gui::Comms;
 
-Html svgElement(str name, list[Html] kids, map[str,str] attrs, map[str, str] props, map[str, Decoder] events)
+data Msg;
+
+Html svgElement(str name, list[Html] kids, map[str,str] attrs, map[str, str] props, map[str, Hnd] events)
   = element(name, kids, attrs, props + ("namespace": "http://www.w3.org/2000/svg"), events);
   
 // User functions

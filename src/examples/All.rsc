@@ -10,14 +10,14 @@ import examples::Celsius;
 import examples::Counter;
 import examples::ListDemo;
 import examples::Clock;
-//import examples::Random;
+import examples::Random;
 
 
 alias AllModel = tuple[
   real celsius, 
   examples::Counter::Model counter, 
   ListModel[str] listDemo,
-//  examples::Random::Model random,
+  examples::Random::Model random,
   examples::Clock::Model clock
 ];
 
@@ -25,25 +25,26 @@ data Msg
   = celsius(Msg msg)
   | counter(Msg msg)
   | listDemo(Msg msg)
-//  | random(Msg msg)
+  | random(Msg msg)
   | clock(Msg msg)
   ;
 
 App[AllModel] allApp() 
   = app(initAll(), viewAll, editAll, 
-        |http://localhost:9160|, |project://elmer/src/examples|,
+        |http://localhost:9161|, |project://elmer/src/examples|,
         subs = examples::All::subs); 
 
 App[DebugModel[AllModel]] debugAllApp() 
   = debug(initAll(), viewAll, editAll, 
-        |http://localhost:9160|, |project://elmer/src/examples|); 
+        |http://localhost:9161|, |project://elmer/src/examples|); 
   
-AllModel initAll() = <
+WithCmds[AllModel] initAll() = noCmds(<
   37.0, 
   examples::Counter::init(), 
   <["hello", "world!"], editStr, initStr>,
+  examples::Random::init().model,
   examples::Clock::init() 
->;  
+>);  
   
 list[Sub] subs(AllModel m) 
   = mapping.subs(Msg::clock, m.clock, examples::Clock::subs);
@@ -53,11 +54,28 @@ void viewAll(AllModel m) {
      mapping.view(Msg::celsius, m.celsius, examples::Celsius::view);
      mapping.view(Msg::counter, m.counter, examples::Counter::view);
      mapping.view(Msg::listDemo, m.listDemo, examples::ListDemo::view);
+     mapping.view(Msg::random, m.random, examples::Random::view);
      mapping.view(Msg::clock, m.clock, examples::Clock::view);
   });
 }
 
-AllModel editAll(celsius(Msg msg), AllModel m) = m[celsius=examples::Celsius::update(msg, m.celsius)];
-AllModel editAll(counter(Msg msg), AllModel m) = m[counter=examples::Counter::update(msg, m.counter)];
-AllModel editAll(listDemo(Msg msg), AllModel m) = m[listDemo=editList(msg, m.listDemo)];
-AllModel editAll(clock(Msg msg), AllModel m) = m[clock=examples::Clock::update(msg, m.clock)];
+WithCmds[AllModel] editAll(celsius(Msg msg), AllModel m) 
+  = noCmds(m[celsius=examples::Celsius::update(msg, m.celsius)]);
+
+WithCmds[AllModel] editAll(counter(Msg msg), AllModel m) 
+  = noCmds(m[counter=examples::Counter::update(msg, m.counter)]);
+  
+WithCmds[AllModel] editAll(listDemo(Msg msg), AllModel m)
+  = noCmds(m[listDemo=editList(msg, m.listDemo)]);
+
+//mapping.cmds(sub1, msg, m.model1, update)
+
+WithCmds[AllModel] editAll(random(Msg msg), AllModel m)
+  = withCmds(m[random=r], cmds) 
+  when
+    <examples::Random::Model r, list[Cmd] cmds> := 
+      mapping.cmds(Msg::random, msg, m.random, examples::Random::update);
+
+WithCmds[AllModel] editAll(clock(Msg msg), AllModel m) 
+  = noCmds(m[clock=examples::Clock::update(msg, m.clock)]);
+
