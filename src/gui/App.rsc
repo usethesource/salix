@@ -15,6 +15,9 @@ import List;
 
 alias WithCmds[&T] = tuple[&T model, list[Cmd] commands];  
 
+// functions to hide the representation of WithCmds.
+WithCmds[&T] noCmds(&T model) = <model, []>;
+WithCmds[&T] withCmds(&T model, list[Cmd] cmds) = <model, cmds>;
 
 @doc{The basic App type:
 - serve to start serving the application
