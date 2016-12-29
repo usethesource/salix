@@ -99,7 +99,7 @@ function doCommands(cmds) {
 		switch (type) {
 		case 'random':
 			var random = Math.floor(Math.random() * (cmd.random.to - cmd.random.from + 1)) + cmd.random.from;
-			schedule(cmd, {random: random});
+			schedule(cmd.random.handle.handle, {type: 'integer', intVal: random});
 			break;
 		}
 	}
@@ -117,8 +117,8 @@ function subscribe(subs) {
 		switch (type) {
 		case 'timeEvery':
 			var timer = setInterval(function() {
-				var data = {time: (new Date().getTime() / 1000) | 0};
-				schedule(sub, data); 
+				var data = {type: 'integer', intVal: (new Date().getTime() / 1000) | 0};
+				schedule(sub.timeEvery.handle.handle, data); 
 			}, sub.timeEvery.interval);
 			__subscriptions[id] = function () {
 				clearInterval(timer);
@@ -147,21 +147,14 @@ function subscribe(subs) {
 	
 }
 
-function schedule(dec, data) {
-	for (var type in dec) { break; }
-	// whoops: never modify handles directly...
-	//var ret = dec[type].handle.handle;
-	var handle = dec[type].handle.handle;
-	var ret = {type: type, path: handle.path, id: handle.id};
-
-	if (data) {
-		for (var k in data) {
-			if (data.hasOwnProperty(k)) {
-				ret[k] = data[k];
-			}
+function schedule(handle, data) {
+	var result = {path: handle.path, id: handle.id};
+	for (var k in data) {
+		if (data.hasOwnProperty(k)) {
+			result[k] = data[k];
 		}
 	}
-	__queue.push(ret);
+	__queue.push(result);
 }
 
 // this needs adaptation if new kinds of data are required. 
@@ -172,17 +165,19 @@ function dec2handler(decoder) {
 		
 		case 'succeed':
 			return function (event) {	
-				schedule(decoder);
+				schedule(decoder.succeed.handle.handle, {type: 'nothing'});
 			};
 			
 		case 'targetValue':
 			return function (event) {
-				schedule(decoder, {value: event.target.value});
+				schedule(decoder.targetValue.handle.handle, 
+						{type: 'string', strVal: event.target.value});
 			};
 			
 		case 'targetChecked':
 			return function (event) {	
-				schedule(decoder, {checked: event.target.checked});
+				schedule(decoder.targetChecked.handle.handle, 
+						{type: 'boolean', boolVal: event.target.checked});
 			};
 			
 		}

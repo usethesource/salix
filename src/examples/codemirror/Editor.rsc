@@ -10,6 +10,29 @@ import String;
 import List;
 import lang::javascript::saner::Syntax;
 
+
+
+data Hnd
+  = codeMirrorChange(Handle handle)
+  ;
+
+data Result
+  = codeMirrorChange(Handle handle, int fromLine, int fromCol,
+     int toLine, int toCol, str text, str removed);
+
+Hnd codeMirrorChange(Msg(int, int, int, int, str, str) ch2msg) 
+  = codeMirrorChange(encode(ch2msg));
+
+Result toResult("codeMirrorChange", map[str, str] p)
+  = codeMirrorChange(toHandle(p), toInt(p["fromLine"]), toInt(p["fromCol"]), 
+           toInt(p["toLine"]), toInt(p["toCol"]),
+           p["text"], p["removed"]);
+
+Msg toMsg(codeMirrorChange(Handle h, int a, int b, int c, int d, str s1, str s1), &T(Handle,type[&T]) dec) 
+  = dec(h, #Msg(int, int, int, int, str, str))(a, b, c, d, s1, s2);
+
+
+
 App[Source] editorApp()
   = app(exampleTerm(), editor, update, |http://localhost:9181|, |project://elmer/src/examples|);
 

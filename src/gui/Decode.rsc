@@ -47,7 +47,6 @@ data Hnd // Handlers for events
   = succeed(Handle handle)
   | targetValue(Handle handle)
   | targetChecked(Handle handle)
-  | change(Handle handle)
   ;
   
 @doc{Smart constructors for constructing encoded event decoders.}
@@ -59,18 +58,11 @@ Hnd targetChecked(Msg(bool) bool2msg) = targetChecked(encode(bool2msg));
 
 Hnd keyCode(Msg(int) int2msg) = keyCode(encode(int2msg)); 
 
-Hnd change(Msg(int, int, int, int, str, str) ch2msg) 
-  = change(encode(ch2msg));
-  
-// Every Cmd/Hnd/Sub has to have a corresponding Result constructor:
-
 data Result // what comes back from the client (either from Cmd/Hnd/Sub
-  = succeed(Handle handle)
-  | targetValue(Handle handle, str \value)
-  | targetChecked(Handle handle, bool checked)
-  | change(Handle handle, int fromLine, int fromCol, int toLine, int toCol, str text, str removed)
-  | timeEvery(Handle handle, int time) // from Sub
-  | random(Handle handle, int random)  // from Cmd
+  = nothing(Handle handle)
+  | string(Handle handle, str strVal)
+  | boolean(Handle handle, bool boolVal)
+  | integer(Handle handle, int intVal) 
   ;
   
 @doc{The encoding interface between an App and this library.
@@ -85,69 +77,37 @@ public Handle(value, str, list[Msg(Msg)]) _encode;
 Handle encode(value x) = _encode(x, currentPath(), currentMappers());
 
 
-
 @doc{Convert request parameters to a Msg value. Active mappers at `path`
 transform the message according to f.}
 Msg params2msg(map[str, str] params, Msg(str, Msg) f, &T(Handle,type[&T]) dec) 
   = f(params["path"], toMsg(toResult(params), dec));
 
-// FROM req.params TO Result
-
 @doc{Construct a Result value from the request parameters.}
-Result toResult(map[str, str] params)
-  = toResult(params["type"], params);
+Result toResult(map[str, str] params) = toResult(params["type"], params);
   
-Result toResult("succeed", map[str, str] p)  
-  = Result::succeed(toHandle(p));
+Result toResult("nothing", map[str, str] p) = nothing(toHandle(p));
 
-Result toResult("targetValue", map[str, str] p)  
-  = targetValue(toHandle(p), p["value"]);
+Result toResult("string", map[str, str] p) = string(toHandle(p), p["strVal"]);
 
-Result toResult("targetChecked", map[str, str] p)  
-  = targetChecked(toHandle(p), p["checked"] == true);
+Result toResult("boolean", map[str, str] p) = boolean(toHandle(p), p["boolVal"] == true);
 
-Result toResult("keyCode", map[str, str] p)  
-  = keyCode(toHandle(p), toInt(p["keyCode"]));
+Result toResult("integer", map[str, str] p) = integer(toHandle(p), toInt(p["intVal"]));
 
-Result toResult("change", map[str, str] p)
-  = change(toHandle(p), toInt(p["fromLine"]), toInt(p["fromCol"]), 
-           toInt(p["toLine"]), toInt(p["toCol"]),
-           p["text"], p["removed"]);
-
-Result toResult("timeEvery", map[str, str] p)
-  = timeEvery(toHandle(p), toInt(p["time"]));
-  
-Result toResult("random", map[str, str] p)
-  = random(toHandle(p), toInt(p["random"]));
 
 @doc{Parse request parameters into a Handle.}
 Handle toHandle(map[str, str] params)
   = handle(params["path"], toInt(params["id"]));
 
 
-// FROM Result TO Msg
-
 @doc{Convert Results to actual messages by applying the functions
 returned by the decoder dec, based on the handle.}
-Msg toMsg(Result::succeed(Handle h), &T(Handle,type[&T]) dec) 
-  = dec(h, #Msg);
+Msg toMsg(nothing(Handle h), &T(Handle,type[&T]) dec) = dec(h, #Msg);
 
-Msg toMsg(targetValue(Handle h, str \value), &T(Handle,type[&T]) dec) 
-  = dec(h, #Msg(str))(\value);
+Msg toMsg(string(Handle h, str s), &T(Handle,type[&T]) dec) = dec(h, #Msg(str))(s);
 
-Msg toMsg(targetChecked(Handle h, bool checked), &T(Handle,type[&T]) dec) 
-  = dec(h, #Msg(bool))(checked);
+Msg toMsg(boolean(Handle h, bool b), &T(Handle,type[&T]) dec) = dec(h, #Msg(bool))(b);
 
-Msg toMsg(change(Handle h, int fromLine, int fromCol, int toLine, int toCol, str text, str removed), &T(Handle,type[&T]) dec) 
-  = dec(h, #Msg(int, int, int, int, str, str))(fromLine, fromCol, toLine, toCol, text, removed);
            
-Msg toMsg(timeEvery(Handle h, int time), &T(Handle,type[&T]) dec) 
-  = dec(h, #Msg(int))(time);
- 
-Msg toMsg(random(Handle h, int random), &T(Handle,type[&T]) dec) 
-  = dec(h, #Msg(int))(random);
-
-
 // MAPPING
 
 @doc{The stack of active msg transformers at some point during rendering.}

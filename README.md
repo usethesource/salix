@@ -3,6 +3,8 @@
 
 Elmer is Rascal library for developing Web-based GUI programs. It emulates the [Elm Architecture](https://guide.elm-lang.org/architecture/), but since Rascal does not run in the browser (yet), most user code written in Rascal is executed on the server. HTML is sent to the browser and the browser sends messages back to the server, where they are interpreted on the model, to construct the new view. 
 
+The concepts described below are shamelessly copied from Elm; this document describes merely how they are realized in the context of Rascal.
+
 ### A Counter Application
 
 Elmer is best understood through an example. Here we describe a simple counter application.
@@ -46,8 +48,7 @@ The `button` elements receive attributes to setup event-handling. In this case, 
 Now that we've defined all required components of a simple Elmer app, how do we tie it all together? This is where the `app` function comes in: it takes an initial model, a view function, an update function, and two locations capturing the host+port configuration and the path to serve static assets from, respectively. Here's the definition of the counter app: 
 
     App[Model] counterApp() 
-      = app(init(), view, update, 
-            |http://localhost:9197|, |project://elmer/src/examples|); 
+      = app(init(), view, update, |http://localhost:9197|, |file:///...|); 
 
 The returned value of type `App[Model]` is a tuple containing function to start and stop the application, like so:
 
@@ -101,7 +102,7 @@ As an example, let's consider an app that contains the counter app twice. Clicki
 
 The important bit here is that the `view` function of the counter app is embedded twice, via the special `mapping.view` function (exported by `gui::HTML`). It takes as its first argument a function of type `Msg(Msg)` (i.e., a message transformer), and a view (of type `void(&T)`) as its second argument. In this case we provide the `counter1` and `counter2` constructors as message transformers. The function `mapping.view` now ensures that whenever a message is received that originates from the first counter it is wrapped in `counter1`. For instance, `inc()` will be wrapped as `counter1(inc())` and passed to `updateTwice` who will route it to `update` on `m.counter1`. Same for `counter2`.
 
-If we didn't use mapping here, the function `updateTwice` could directly interpret `inc()` and `dec()`, but it wouldn't know which counter model to update! Alternatively, however, you don't have to use mapping if you want two views *sharing* the same model. In this case, there's no need for advanced routing of messages, and the two `view` function can be simply called twice, on the same model. For instance, like this:
+If we didn't use mapping here, the function `updateTwice` could directly interpret `inc()` and `dec()`, but it wouldn't know which counter model to update! Alternatively, however, you shouldn't use mapping if you *want* two views sharing the same model. In this case, there's no need for advanced routing of messages, and the two `view` function can be simply called twice, on the same model. For instance, like this:
 
     void viewTwice(Model model) {
       div(() {
@@ -134,8 +135,7 @@ This code states that every 5 seconds we will be notified of the event through t
 
 Finally modify the invocation to `app` as follows:
 
-	App[Model] counterApp() 
-      = app(... /* same as before */, subs = counterSubs);
+	App[Model] counterApp() = app(..., subs = counterSubs);
       
 If your nested components have subscriptions, you need to map them in the same way as views are mapped, but this time using `mapping.subs`. For instance, here's how to map the subscriptions of each counter to combine them into a list of subscriptions of `counterTwice`, assuming the counter app defines its list of subscriptions for a model as `counterSubs(Model m)`:
 
@@ -143,8 +143,32 @@ If your nested components have subscriptions, you need to map them in the same w
 	  = mapping.subs(counter1, m.counter1, counterSubs)
 	  + mapping.subs(counter2, m.counter2, counterSubs);
 
-### Guide to the modules
 
+### Commands
+
+	WithCmds[Model] init() = <0, []>;
+	
+	WithCmds[Model] update(inc(), Model n) = <n + 1, []>;
+	WithCmds[Model] update(dec(), Model n) = <n - 1, []>;
+	
+
+Now for the interesting bit:
+
+	data Msg = ... | jitter(int r);
+	
+	WithCmds[Model] update(tick(_), Model n) = <n + 1, [random(jitter, -10, 10)]>;
+	
+	WithCmds[Model] update(jitter(int r), Model n) = <n + r, []>;
+
+Random is predefined `Cmd` :
+
+	data Cmd
+      = ...
+      | random(Msg(int) int2msg, int from, int to);
+      
+
+
+### Guide to the modules
 
 - App: contains the top-level `app` function and `App[&T]` data type.
 
@@ -154,7 +178,7 @@ If your nested components have subscriptions, you need to map them in the same w
 
 - Render: defines the rendering logic to convert "views" to HTML `Node`s. Only needed if you define your own attributes or elements, or if you need to call `render` explicitly. 
 
-- Decode: contains the logic of representing decoders (functions that interpret event ocurrences into messages) in such a way that they can be sent to and received from the browser. Import this if you use subscriptions, if you need *mapping* (see above), or if you're defining your own decoders or subscriptions. 
+- Decode: contains the logic of representing handlers (functions that interpret event ocurrences into messages) in such a way that they can be sent to and received from the browser. Import this if you use subscriptions, if you need *mapping* (see above), or if you're defining your own events, commands or subscriptions. 
 
 - Diff & Patch: internal modules for diffing and patching `Node`. You should never have to import these modules. 
 
@@ -166,33 +190,30 @@ If your nested components have subscriptions, you need to map them in the same w
 An event is defined using the following pattern:
 
 	Attr <eventName>(Msg(...) something2msg) 
-	  = event("<eventName", <decoder>(something2msg));
+	  = event("<eventName", <handler>(something2msg));
 
-This code defines an event function named `eventName`, accepting a function to map some event data to a `Msg`. It is defined using the `event` constructor which takes the name of the event and a decoder. Decoders are used to process event data such that it can be fed into the argument function. Decoders thus are specific for such functions.
+This code defines an event function named `eventName`, accepting a function to map some event data to a `Msg`. It is defined using the `event` constructor which takes the name of the event and a "handler". Handlers are used to process event data such that it can eventually be fed into the argument function `somethgin2msg`. Handlers thus are specific for such functions.
 
-Standard decoders include `succeed(Msg)` which simply returns the argument when the event succeeds; `targetValue(Msg(str))` feeds the value of the target element of the event into the argument function to obtain a message; and `targetChecked(Msg(bool))` which can be used on checkboxes and radio buttons. These are ready to use in your event definitions. 
+Standard handlers include `succeed(Msg)` which simply returns the argument when the event succeeds; `targetValue(Msg(str))` feeds the value property of the target element of the event into the argument function to obtain a message; and `targetChecked(Msg(bool))` which can be used on checkboxes and radio buttons. These are ready to use in your event definitions. 
 
-If the standard decoders are not sufficient, you can also define your own. By extending the `Decoder` data type, and providing a smart constructor turning the decoder function into serializable form. As an example, `targetValue` is defined as follows:
+If the standard handlers are not sufficient, you can also define your own. By extending the `Hnd` data type, and providing a smart constructor turning the handler function into serializable form. As an example, `targetValue` is defined as follows:
 
-	data Decoder
+	data Hnd
      = ...
      | targetValue(Handle handle);
 
-	Decoder targetValue(Msg(str) str2msg) 
-	  = targetValue(encode(str2msg));
+	Decoder targetValue(Msg(str) str2msg) = targetValue(encode(str2msg));
 
-The type `Handle` is an opaque type representing the decoder function in serializable form. The function `encode` uses internal magic to turn an arbitrary value into a handle. 
+The type `Handle` is an opaque type representing the handler function in serializable form. The function `encode` uses internal magic to turn an arbitrary value into a handle. 
 
-The reverse is also needed: turning a handle received from the client into the corresponding message as produced by the decoder function. Here's how `targetValue` decoders are turned into messages, given some HTTP request data in `params`:
+The reverse is also needed: turning a handle received from the client into the corresponding message as produced by the handler function. This is performed by interpreting `Result`s. Each subscription, command or handler will map to a result constructor by the client runtime. Such a result is then converted to a message on the server. Here's how the result of `targetValue` is turned into a message:
 
-	Msg toMsg(targetValue(Handle handle), 
-	          map[str,str] params, 
-	          &T(Handle,type[&T]) decode) 
-	  =  decode(handle, #Msg(str))(params["value"]);
+	Msg toMsg(string(Handle handle, str s), &T(Handle,type[&T]) decode) 
+	  =  decode(handle, #Msg(str))(s);
 
-The function `toMsg` receives three parameters: first, the decoder as received from the client; second, a map with auxiliar data (also received from the client); and third, a function to magically turn a handle into an arbitray type (as specified by the reified type). How and why this function is provided is irrelevant here; suffice it to say that the `dec` function captures some local state to perform its parsing magic which prevents it from being an ordinary function. The handle is decoded into a function `Msg(str)`, which is applied to the `data` attribute in the request. As a result, `toMsg` returns a message as originally intended in some `event(..., targetValue(f))` attribute.
+The function `toMsg` receives two parameters: first, the `Result` as received from the client, and second, a function to magically turn a handle into an arbitray type (as specified by the reified type). How and why this function is provided is irrelevant here; suffice it to say that the `decode` function captures some local state to perform its parsing magic which prevents it from being an ordinary function. The handle is decoded into a function `Msg(str)`, which is applied to the value component in the `string` result. 
 
-Decoder values (i.e., of type `Decoder`) are interpreted in the client. Therefore, adding your own decoder requires changing the Javascript code to support the new kind.
+Values of type `Hnd` are are interpreted in the client to produce `Result` values. Therefore, adding your own handlers requires changing the Javascript code to support the new kind.
 
 #### Subscriptions
 
