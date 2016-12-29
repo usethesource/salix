@@ -69,6 +69,7 @@ function render(timestamp) {
 	}
 	var payload = __queue.shift();
 	$.get('/msg', payload, function (work, stats, jqXHR) {
+		// todo: fix order
 		doCommands(work[2]);
 		subscribe(work[1]);
 		patch(root(), work[0], dec2handler);
@@ -148,7 +149,10 @@ function subscribe(subs) {
 }
 
 function schedule(handle, data) {
-	var result = {path: handle.path, id: handle.id};
+	var result = {id: handle.id};
+	if (handle.maps) {
+		result.maps = handle.maps.join(';'); 
+	}
 	for (var k in data) {
 		if (data.hasOwnProperty(k)) {
 			result[k] = data[k];

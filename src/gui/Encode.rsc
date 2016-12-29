@@ -18,9 +18,9 @@ data Cmd;
 
 @doc{Handles represent (encoded) functions to decode events.
  id: identifies the decoder function (e.g., of type Msg(int))
- path: identifies the active mappers for this handle.  }
+ maps: identifies the active mappers for this handle.  }
 data Handle
-  = handle(str path, int id)
+  = handle(int id, list[int] maps = [])
   ;
 
 
@@ -29,46 +29,21 @@ An app set this variable to its encapsulated encoder before
 rendering. This ensures that encoding is relative to app and not global.
 Encoding produces handles for arbitrary values, at some path,
 recording the list of active message transformers at the moment of call.} 
-public Handle(value, str, list[Msg(Msg)]) _encode;
+public int(value) _encode;
 
-public &T(Handle,type[&T]) _decode;
-
-Handle encode(value x) = _encode(x, mappingPath(), currentMappers());
-
-&T decode(Handle h, type[&T] t) = _decode(h, t);
-
-// MAPPING
+public &T(int,type[&T]) _decode;
 
 @doc{The stack of active msg transformers at some point during rendering.}
 private list[Msg(Msg)] mappers = [];
 
+Handle encode(value x)
+  = handle(_encode(x), maps=[ _encode(f) | Msg(Msg) f <- mappers ]);
 
-list[Msg(Msg)] currentMappers() = mappers;
+&T decode(int id, type[&T] t) = _decode(id, t);
 
-private str mappingPath()
-  = intercalate("_", [ "<mapperTable[f]>" | value f <- currentMappers() ]); 
-
-private int mapId = -1;
-private map[value, int] mapperTable = ();
-
-private void recordMapper(value f) {
-  //if (f notin mapperTable) { ?????
-  if (f in mapperTable) {
-    return;
-  }
-  mapId += 1;
-  mapperTable[f] = mapId;
-}
-
-void resetMapping() {
-  mappers = [];
-  mapId = -1;
-  mapperTable = ();
-}
-
+// MAPPING
 
 private &T withMapper(Msg(Msg) f, &T() block) {
-  recordMapper(f);
   mappers += [f];
   &T result = block();
   mappers = mappers[..-1];

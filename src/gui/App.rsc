@@ -55,24 +55,19 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   
   // encode a value and path + active mappers as a handle
   // which can be sent over the wire.
-  Handle myEncode(value x, str path, list[Msg(Msg)] mappers) {
+  int myEncode(value x) {
     if (x notin state.to) {
       state.id += 1;
       state.from[state.id] = x;
       state.to[x] = state.id;
     }
-    state.mappers[path] = mappers;
-    return handle(path, state.to[x]);
+    return state.to[x];
   }
   
   // retrieve the actual function corresponding to a handle identity.
-  &U myDecode(Handle h, type[&U] t) = d
-    when &U d := state.from[h.id];
+  &U myDecode(int id, type[&U] t) = d
+    when &U d := state.from[id];
   
-  // apply the message transformers to msg that were in scope at path
-  Msg mapEm(str path, Msg msg) 
-    = ( msg | f(it) | path in state.mappers, Msg(Msg) f <- reverse(state.mappers[path]) );
-
   Html asRoot(Html h) = h[attrs=h.attrs + ("id": root)];
 
   Html current;
@@ -84,8 +79,6 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   };
   
   &T model;
-
-  resetMapping(); // they can become inconsistent when there's an exception.
 
   // the main handler to interpret http requests.
   // BUG: mixes with constructors that are in scope!!!
@@ -113,7 +106,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
       // - decode it, to obtain a message decoder
       // - apply the decoder to the additional values in req.params
       // - apply all message transformers that were in scope for handle
-      Msg msg = params2msg(req.parameters, mapEm);
+      Msg msg = params2msg(req.parameters);
       
       
       //println("Processing: <msg>");
