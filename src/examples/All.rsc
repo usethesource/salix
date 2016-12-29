@@ -5,6 +5,7 @@ import gui::App;
 import gui::Comms; // for Sub type
 import lib::EditableList;
 import lib::Debug;
+import IO;
 
 import examples::Celsius;
 import examples::Counter;
@@ -17,7 +18,7 @@ alias AllModel = tuple[
   real celsius, 
   examples::Counter::Model counter, 
   ListModel[str] listDemo,
-  examples::Random::Model random,
+  examples::Random::TwiceModel random,
   examples::Clock::Model clock
 ];
 
@@ -42,7 +43,7 @@ WithCmds[AllModel] initAll() = noCmds(<
   37.0, 
   examples::Counter::init(), 
   <["hello", "world!"], editStr, initStr>,
-  examples::Random::init().model,
+  examples::Random::twiceInit().model,
   examples::Clock::init() 
 >);  
   
@@ -54,7 +55,7 @@ void viewAll(AllModel m) {
      mapping.view(Msg::celsius, m.celsius, examples::Celsius::view);
      mapping.view(Msg::counter, m.counter, examples::Counter::view);
      mapping.view(Msg::listDemo, m.listDemo, examples::ListDemo::view);
-     mapping.view(Msg::random, m.random, examples::Random::view);
+     mapping.view(Msg::random, m.random, examples::Random::twiceView);
      mapping.view(Msg::clock, m.clock, examples::Clock::view);
   });
 }
@@ -73,9 +74,13 @@ WithCmds[AllModel] editAll(listDemo(Msg msg), AllModel m)
 WithCmds[AllModel] editAll(random(Msg msg), AllModel m)
   = withCmds(m[random=r], cmds) 
   when
-    <examples::Random::Model r, list[Cmd] cmds> := 
-      mapping.cmds(Msg::random, msg, m.random, examples::Random::update);
+    <examples::Random::TwiceModel r, list[Cmd] cmds> := 
+      mapping.cmds(Msg::random, msg, m.random, examples::Random::twiceUpdate);
 
 WithCmds[AllModel] editAll(clock(Msg msg), AllModel m) 
   = noCmds(m[clock=examples::Clock::update(msg, m.clock)]);
+  
+default WithCmds[AllModel] editAll(Msg msg, AllModel m) = noCmds(m)
+  when bprintln("Uncatched: <msg>");
+  
 

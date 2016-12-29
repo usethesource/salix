@@ -202,7 +202,7 @@ If the standard handlers are not sufficient, you can also define your own. By ex
      = ...
      | targetValue(Handle handle);
 
-	Decoder targetValue(Msg(str) str2msg) = targetValue(encode(str2msg));
+	Hnd targetValue(Msg(str) str2msg) = targetValue(encodeHnd(str2msg));
 
 The type `Handle` is an opaque type representing the handler function in serializable form. The function `encode` uses internal magic to turn an arbitrary value into a handle. 
 

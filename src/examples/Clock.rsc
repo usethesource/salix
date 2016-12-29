@@ -11,7 +11,7 @@ import util::Math;
 
 alias Model = tuple[int time, bool running];
 
-Model init() = <1, true>;
+Model init() = <1, false>;
 
 data Msg
   = tick(int time)

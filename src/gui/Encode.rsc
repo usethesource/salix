@@ -49,15 +49,15 @@ private list[Msg(Msg)] mappers = [];
 list[Msg(Msg)] currentMappers() = mappers;
 
 private str mappingPath()
-  = "nonview_" // prefix to make distinct from render paths
-  + intercalate("_", [ "<mapperTable[f]>" | Msg(Msg) f <- currentMappers() ]); 
+  = "*" // prefix to make distinct from render paths
+  + intercalate("_", [ "<mapperTable[f]>" | value f <- currentMappers() ]); 
 
 private int mapId = -1;
 private map[value, int] mapperTable = ();
 
-private void recordMapper(Msg(Msg) f) {
+private void recordMapper(value f) {
   //if (f notin mapperTable) { ?????
-  if (value k <- mapperTable, k == f) {
+  if (f in mapperTable) {
     return;
   }
   mapId += 1;
@@ -70,22 +70,6 @@ void resetMapping() {
   mapperTable = ();
 }
 
-
-//private void add(Html h) = push(pop() + [h]);
-//
-//private void push(list[Html] l) { stack += [l]; }
-//
-//private list[Html] top() = stack[-1];
-//
-//private list[Html] pop() {
-//  list[Html] elts = top();
-//  stack = stack[..-1];
-//  return elts;
-//}
-//
-//private void push(Msg(Msg) f) {
-//
-//}
 
 private &T withMapper(Msg(Msg) f, &T() block) {
   recordMapper(f);

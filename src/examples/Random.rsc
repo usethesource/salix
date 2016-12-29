@@ -25,7 +25,7 @@ WithCmds[Model] update(newFace(int n), Model m) = noCmds(m[dieFace=n]);
 
 void view(Model m) {
   div(() {
-     h1(m.dieFace);
+     h2("Commands demo: <m.dieFace>");
      button(onClick(roll()), "Roll");
   });
 }
