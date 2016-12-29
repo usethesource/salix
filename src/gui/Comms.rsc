@@ -12,8 +12,6 @@ data Sub // Subscriptions
   = timeEvery(Handle handle, int interval)
   ;
 
-alias Subs = list[Sub];
-
 @doc{Smart constructors for constructing encoded subscriptions.}
 Sub timeEvery(Msg(int) int2msg, int interval)
   = timeEvery(encode(int2msg), interval);

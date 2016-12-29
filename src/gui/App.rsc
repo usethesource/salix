@@ -25,36 +25,38 @@ WithCmds[&T] withCmds(&T model, list[Cmd] cmds) = <model, cmds>;
 - hotSwap to replace the capture view and update functions}
 alias App[&T] = tuple[
   void() serve, 
-  void() stop, 
-  void(void(&T), &T(Msg, &T)) hotSwap
+  void() stop 
 ];
+
+alias Subs[&T] = list[Sub](&T);
+
+list[Sub] noSubs(&T t) = [];
+
+WithCmds[&T](Msg, &T) emptyCmds(&T(Msg, &T) update)
+  = WithCmds[&T](Msg m, &T t) { return noCmds(update(m, t)); };
 
 @doc{Internal app state}
 alias AppState = tuple[
   int id, // last assigned handle id
   map[int, value] from, // bijection between handle identities and decoder functions
-  map[value, int] to,
-  map[str, list[Msg(Msg)]] mappers, // active stack of message mappers per handle path
-  bool running
+  map[value, int] to
 ];
 
-AppState newAppState() = < -1, (), (), (), false>;
+AppState newAppState() = < -1, (), ()>;
 
 App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
-            list[Sub](&T) subs = list[Sub](&T t) { return []; }, str root = "root") 
- = app(noCmds(model), view, WithCmds[&T](Msg m, &T t) { return noCmds(update(m, t)); },
-     http, static, subs = subs, root = root);
+            Subs[&T] subs = noSubs, str root = "root") 
+ = app(noCmds(model), view, emptyCmds(update), http, static, subs = subs, root = root);
 
 @doc{Construct an App over model type &T, providing a view, a model update,
 a http loc to serve the app to, and a location to resolve static files.
 The keyword param root identifies the root element in the html document.}
 App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) update, loc http, loc static, 
-            list[Sub](&T) subs = list[Sub](&T t) { return []; }, str root = "root") {
+            Subs[&T] subs = noSubs, str root = "root") {
 
   AppState state = newAppState();
   
-  // encode a value and path + active mappers as a handle
-  // which can be sent over the wire.
+  // encode functions (for handlers) as integers
   int myEncode(value x) {
     if (x notin state.to) {
       state.id += 1;
@@ -74,9 +76,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
 
   list[Msg] trace = [];
   
-  void myTracedView(&T t) { 
-    return traceView(<trace, t>, view); 
-  };
+  void myTracedView(&T t) = traceView(<trace, t>, view); 
   
   &T model;
 
@@ -145,8 +145,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   }
 
   return <
-    () { state.running = true; serve(http, _handle); }, 
-    () { state.running = false; shutdown(http); },
-    (void(&T) v, &T(Msg, &T) u) { view = v; update = u; }
+    () { println("Serving at: <http>"); serve(http, _handle); }, 
+    () { shutdown(http); }
    >;
 }

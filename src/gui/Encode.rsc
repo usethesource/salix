@@ -44,9 +44,9 @@ Handle encode(value x)
 // MAPPING
 
 private &T withMapper(Msg(Msg) f, &T() block) {
-  mappers += [f];
+  mappers = [f] + mappers;
   &T result = block();
-  mappers = mappers[..-1];
+  mappers = mappers[1..];
   return result;
 }
 
