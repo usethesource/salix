@@ -52,8 +52,8 @@ data Result // what comes back from the client (either from Cmd/Hnd/Sub
   
 @doc{Convert request parameters to a Msg value. Active mappers at `path`
 transform the message according to f.}
-Msg params2msg(map[str, str] params, Msg(str, Msg) f, &T(Handle,type[&T]) dec) 
-  = f(params["path"], toMsg(toResult(params), dec));
+Msg params2msg(map[str, str] params, Msg(str, Msg) f) 
+  = f(params["path"], toMsg(toResult(params)));
 
 @doc{Construct a Result value from the request parameters.}
 Result toResult(map[str, str] params) = toResult(params["type"], params);
@@ -74,12 +74,12 @@ Handle toHandle(map[str, str] params)
 
 @doc{Convert Results to actual messages by applying the functions
 returned by the decoder dec, based on the handle.}
-Msg toMsg(nothing(Handle h), &T(Handle,type[&T]) dec) = dec(h, #Msg);
+Msg toMsg(nothing(Handle h)) = decode(h, #Msg);
 
-Msg toMsg(string(Handle h, str s), &T(Handle,type[&T]) dec) = dec(h, #Msg(str))(s);
+Msg toMsg(string(Handle h, str s)) = decode(h, #Msg(str))(s);
 
-Msg toMsg(boolean(Handle h, bool b), &T(Handle,type[&T]) dec) = dec(h, #Msg(bool))(b);
+Msg toMsg(boolean(Handle h, bool b)) = decode(h, #Msg(bool))(b);
 
-Msg toMsg(integer(Handle h, int i), &T(Handle,type[&T]) dec) = dec(h, #Msg(int))(i);
+Msg toMsg(integer(Handle h, int i)) = decode(h, #Msg(int))(i);
 
            

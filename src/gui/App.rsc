@@ -64,7 +64,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   }
   
   // retrieve the actual function corresponding to a handle identity.
-  &U decode(Handle h, type[&U] t) = d
+  &U myDecode(Handle h, type[&U] t) = d
     when &U d := state.from[h.id];
   
   // apply the message transformers to msg that were in scope at path
@@ -88,6 +88,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   Response _handle(Request req) {
     // publish my encoder to gui::Render.
     gui::Encode::_encode = myEncode;
+    gui::Encode::_decode = myDecode;
 
     // initially, just render the view, for the current model.
     if (get("/init") := req) {
@@ -107,7 +108,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
       // - decode it, to obtain a message decoder
       // - apply the decoder to the additional values in req.params
       // - apply all message transformers that were in scope for handle
-      Msg msg = params2msg(req.parameters, mapEm, decode);
+      Msg msg = params2msg(req.parameters, mapEm);
       
       
       println("Processing: <msg>");

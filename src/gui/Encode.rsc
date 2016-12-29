@@ -28,9 +28,11 @@ Encoding produces handles for arbitrary values, at some path,
 recording the list of active message transformers at the moment of call.} 
 public Handle(value, str, list[Msg(Msg)]) _encode;
 
-@doc{Smart constructors for handlers, commands or subscriptions use encode}
+public &T(Handle,type[&T]) _decode;
+
 Handle encode(value x) = _encode(x, currentPath(), currentMappers());
 
+&T decode(Handle h, type[&T] t) = _decode(h, t);
 
 // MAPPING
 
