@@ -1,15 +1,12 @@
 module gui::HTML
 
 import gui::Render;
-import gui::Decode;
+import gui::Comms;
 import List;
 import String;
 import IO;
 
-//re-export
-
-public Mapping mapping = gui::Decode::mapping;
-
+data Msg;
 
 @doc{Create a text node.}
 void text(value v) = _text(v);
@@ -332,17 +329,17 @@ Attr manifest(str val) = attr("manifest", val);
  * Events
  */
  
-Attr onClick(Msg msg) = event("click", Hnd::succeed(msg));
-Attr onDoubleClick(Msg msg) = event("dblclick", Hnd::succeed(msg));
-Attr onMouseDown(Msg msg) = event("mousedown", Hnd::succeed(msg));
-Attr onMouseUp(Msg msg) = event("mouseup", Hnd::succeed(msg));
-Attr onMouseEnter(Msg msg) = event("mouseenter", Hnd::succeed(msg));
-Attr onMouseLeave(Msg msg) = event("mouseleave", Hnd::succeed(msg));
-Attr onMouseOver(Msg msg) = event("mouseover", Hnd::succeed(msg));
-Attr onMouseOut(Msg msg) = event("mouseout", Hnd::succeed(msg));
-Attr onSubmit(Msg msg) = event("submit", Hnd::succeed(msg));
-Attr onBlur(Msg msg) = event("blur", Hnd::succeed(msg));
-Attr onSubmit(Msg msg) = event("focus", Hnd::succeed(msg));
+Attr onClick(Msg msg) = event("click", succeed(msg));
+Attr onDoubleClick(Msg msg) = event("dblclick", succeed(msg));
+Attr onMouseDown(Msg msg) = event("mousedown", succeed(msg));
+Attr onMouseUp(Msg msg) = event("mouseup", succeed(msg));
+Attr onMouseEnter(Msg msg) = event("mouseenter", succeed(msg));
+Attr onMouseLeave(Msg msg) = event("mouseleave", succeed(msg));
+Attr onMouseOver(Msg msg) = event("mouseover", succeed(msg));
+Attr onMouseOut(Msg msg) = event("mouseout", succeed(msg));
+Attr onSubmit(Msg msg) = event("submit", succeed(msg));
+Attr onBlur(Msg msg) = event("blur", succeed(msg));
+Attr onSubmit(Msg msg) = event("focus", succeed(msg));
 Attr onInput(Msg(str) f) = event("input", targetValue(f)); 
 Attr onCheck(Msg(bool) f) = event("check", targetChecked(f));
 

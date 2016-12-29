@@ -2,7 +2,7 @@ module examples::All
 
 import gui::HTML;
 import gui::App;
-import gui::Decode; // for Sub type
+import gui::Comms; // for Sub type
 import lib::EditableList;
 import lib::Debug;
 
@@ -10,11 +10,14 @@ import examples::Celsius;
 import examples::Counter;
 import examples::ListDemo;
 import examples::Clock;
+//import examples::Random;
+
 
 alias AllModel = tuple[
   real celsius, 
   examples::Counter::Model counter, 
   ListModel[str] listDemo,
+//  examples::Random::Model random,
   examples::Clock::Model clock
 ];
 
@@ -22,6 +25,7 @@ data Msg
   = celsius(Msg msg)
   | counter(Msg msg)
   | listDemo(Msg msg)
+//  | random(Msg msg)
   | clock(Msg msg)
   ;
 

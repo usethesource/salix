@@ -1,8 +1,8 @@
 module examples::Random
 
 import gui::HTML;
+import gui::Comms;
 import gui::App;
-import gui::Decode;
 
 import util::Math;
 
@@ -15,7 +15,7 @@ data Msg
 
 App[Model] randomApp()
   = app(init(), view, update, 
-    |http://localhost:9097|, |project://elmer/src/examples|); 
+    |http://localhost:9098|, |project://elmer/src/examples|); 
 
 
 WithCmds[Model] init() = <<1>, []>;

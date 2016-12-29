@@ -1,7 +1,8 @@
 module gui::App
 
 import gui::Render;
-import gui::Decode;
+import gui::Encode;
+import gui::Comms;
 import gui::Diff;
 import gui::Patch;
 import lib::Trace;
@@ -12,6 +13,9 @@ import String;
 import Map;
 import List;
 
+
+alias WithCmds[&T] = tuple[&T model, list[Cmd] commands];  
+ 
  
 @doc{The basic App type:
 - serve to start serving the application
@@ -39,11 +43,9 @@ App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static,
  = app(<model, []>, view, WithCmds[&T](Msg m, &T t) { return <update(m, t), []>; },
      http, static, subs = subs, root = root);
 
-
 @doc{Construct an App over model type &T, providing a view, a model update,
 a http loc to serve the app to, and a location to resolve static files.
 The keyword param root identifies the root element in the html document.}
-
 App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) update, loc http, loc static, 
             list[Sub](&T) subs = list[Sub](&T t) { return []; }, str root = "root") {
 
@@ -51,7 +53,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   
   // encode a value and path + active mappers as a handle
   // which can be sent over the wire.
-  Handle encode(value x, str path, list[Msg(Msg)] mappers) {
+  Handle myEncode(value x, str path, list[Msg(Msg)] mappers) {
     if (x notin state.to) {
       state.id += 1;
       state.from[state.id] = x;
@@ -85,7 +87,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   // BUG: mixes with constructors that are in scope!!!
   Response _handle(Request req) {
     // publish my encoder to gui::Render.
-    gui::Decode::_encode = encode;
+    gui::Encode::_encode = myEncode;
 
     // initially, just render the view, for the current model.
     if (get("/init") := req) {

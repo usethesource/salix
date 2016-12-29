@@ -1,0 +1,65 @@
+module gui::Encode
+
+import gui::Render;
+
+@doc{This is the basic Message data type that clients
+will extend with concrete constructors.
+
+Note, that instead of make Html parametric on Msg (Html[&Msg])
+we use a single type and ADT extension. This decision makes
+a lot of code slightly less verbose, but sacrifices additional
+type checking when nesting components.}
+data Msg;
+
+data Sub;
+
+data Cmd;
+ 
+
+@doc{Handles represent (encoded) functions to decode events.}
+data Handle
+  = handle(str path, int id);
+
+
+@doc{The encoding interface between an App and this library.
+An app set this variable to its encapsulated encoder before
+rendering. This ensures that encoding is relative to app and not global.
+Encoding produces handles for arbitrary values, at some path,
+recording the list of active message transformers at the moment of call.} 
+public Handle(value, str, list[Msg(Msg)]) _encode;
+
+@doc{Smart constructors for handlers, commands or subscriptions use encode}
+Handle encode(value x) = _encode(x, currentPath(), currentMappers());
+
+
+// MAPPING
+
+@doc{The stack of active msg transformers at some point during rendering.}
+private list[Msg(Msg)] mappers = [];
+
+list[Msg(Msg)] currentMappers() = mappers;
+
+
+private &T withMapper(Msg(Msg) f, &T() block) {
+  mappers += [f];
+  &T result = block();
+  mappers = mappers[..-1];
+  return result;
+}
+
+// bug: if same name as other mapped, if calling the other
+// it can call this one...
+private list[Sub] mappedSubs(Msg(Msg) f, &T t, list[Sub](&T) subs) 
+  = withMapper(f, list[Sub]() { return subs(t); });
+
+@doc{Record mapper to transform messages produced in block according f.}
+private void mapped(Msg(Msg) f, &T t, void(&T) block) { 
+   withMapper(f, value() { block(t); return 0; });
+}
+
+alias Mapping = tuple[
+  list[Sub](Msg(Msg), &T, list[Sub](&T)) subs,
+  void(Msg(Msg), &T, void(&T)) view
+];
+
+public /*const*/ Mapping mapping = <mappedSubs, mapped>;

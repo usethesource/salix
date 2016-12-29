@@ -1,8 +1,6 @@
 module lib::Trace
 
 import gui::HTML;
-import gui::App;
-import gui::Decode;
 import List;
 
 alias TraceModel[&T] = tuple[list[Msg] msgs, &T model];

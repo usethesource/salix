@@ -4,7 +4,7 @@ import gui::SVG;
 import gui::HTML;
 import gui::App;
 import gui::Render;
-import gui::Decode;
+import gui::Comms;
 import util::Math;
 
 // bigger example: https://github.com/pghalliday/elm-introduction/blob/master/clock.elm
