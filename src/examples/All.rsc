@@ -37,7 +37,8 @@ App[AllModel] allApp()
 
 App[DebugModel[AllModel]] debugAllApp() 
   = debug(initAll(), viewAll, editAll, 
-        |http://localhost:9201|, |project://elmer/src/examples|); 
+        |http://localhost:9201|, |project://elmer/src/examples|,
+        subs = allSubs); 
   
 WithCmds[AllModel] initAll() = noCmds(<
   37.0, 
@@ -47,7 +48,7 @@ WithCmds[AllModel] initAll() = noCmds(<
   examples::Clock::init() 
 >);  
   
-list[Sub] subs(AllModel m) 
+list[Sub] allSubs(AllModel m) 
   = mapping.subs(Msg::clock, m.clock, examples::Clock::subs);
   
 void viewAll(AllModel m) {

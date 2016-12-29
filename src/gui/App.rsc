@@ -74,9 +74,9 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
 
   Html current;
 
-  list[Msg] trace = [];
+  //list[Msg] trace = [];
   
-  void myTracedView(&T t) = traceView(<trace, t>, view); 
+  //void myTracedView(&T t) = traceView(<trace, t>, view); 
   
   &T model;
 
@@ -93,7 +93,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
       model = modelWithCmds.model;
       list[Sub] mySubs = subs(model);
       list[Cmd] myCmds = modelWithCmds.commands;
-      current = asRoot(render(model, myTracedView));
+      current = asRoot(render(model, view));
       return response([current, mySubs, myCmds]);
     }
     
@@ -110,17 +110,17 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
       
       
       //println("Processing: <msg>");
-      trace += [msg];
-      if (size(trace) > 50) {
-        trace = trace[1..];
-      }
+      //trace += [msg];
+      //if (size(trace) > 50) {
+      //  trace = trace[1..];
+      //}
       
       // update the model
       // TODO: lets avoid the captured model variable here...
       <model, myCmds> = update(msg, model);
       
       // compute the new view
-      Html newView = asRoot(render(model, myTracedView));
+      Html newView = asRoot(render(model, view));
       
       // compute the patch to be sent to the browser
       Patch myPatch = diff(current, newView);
