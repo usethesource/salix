@@ -224,7 +224,7 @@ function patchThis(dom, edits) {
 				
 			case 'setEvent':
 				var key = edit[type].name;
-				var handler = dec2handler(edit[type].decoder);
+				var handler = dec2handler(edit[type].handler);
 				dom.addEventListener(key, withCleanListeners(dom, key, handler));
 				break
 			

@@ -25,8 +25,8 @@ WithCmds[Model] update(newFace(int n), Model m) = noCmds(m[dieFace=n]);
 
 void view(Model m) {
   div(() {
-     h2("Commands demo: <m.dieFace>");
      button(onClick(roll()), "Roll");
+     text(m.dieFace);
   });
 }
 
@@ -56,6 +56,7 @@ WithCmds[TwiceModel] twiceUpdate(sub2(Msg msg), TwiceModel m)
 
 void twiceView(TwiceModel m) {
   div(() {
+    h2("Two times roll a die");
     mapping.view(sub1, m.model1, view);
     mapping.view(sub2, m.model2, view);
   });
