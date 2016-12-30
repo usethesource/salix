@@ -13,6 +13,44 @@ import List;
 // See here for more inspiration:
 // https://github.com/elm-lang/virtual-dom/blob/master/src/VirtualDom/Expando.elm
 
+// interface Msg<T> {
+//    T doIt();
+//
+//
+// class DebugModel<T> {
+//   DebugModel<T> next() {..}
+//   prev()
+//   DebugModel<T> sub(Msg<T> m) {
+//      return new DebugModel<>(m.doIt());
+///   }   
+// }
+//   class Html<T> {
+//      Node<T> div(...)
+//      <U> Html<U> map(Function<Msg<T>, Msg<U>, f) {
+//        return new Html<U>(f);
+//      }
+//
+//      
+//
+//  interface View<T> {
+//    Html<T> view(T t);
+//    <U> Html<U> map(Function<Msg<T>, Msg<U>> f, T model) {
+//       Html<T> h = view(model);
+//       return h.map(f);
+//    }
+// }
+// class DebugView<T> implements View<DebugModel<T>> {
+//    Debug(View<T> sub) {.
+//    } 
+//    
+//    Node<T> view(DebugModel<T> model, HTML<T> h) {
+//       h.div(() -> {
+//       h.button(h.onClick(model::next)) {
+//       sub.view(model.subModel, h.map(mode::sub));
+//
+//    }
+//           
+//
 alias DebugModel[&T]
   = tuple[int current, list[&T] models, list[Msg] messages, WithCmds[&T](Msg, &T) update]
   ;
@@ -21,7 +59,6 @@ data Msg
   = next()
   | prev()
   | sub(Msg msg)
-  | ignore(Msg msg)
   | goto(int version)
   ;
 
@@ -65,7 +102,7 @@ void debugView(DebugModel[&T] model, void(&T) subView) {
         ul(style(<"all", "unset">), () {
           for (int i <- [0..size(model.messages)]) {
             li(style(("list-style": "none", "padding": "0 0" ,"font-size": "small", "border-bottom": "none")), () {
-               a(i == model.current ? style(<"font-weight", "bold">) : null(),
+               a(style(("font-weight": "bold" | i == model.current)),
                   onClick(goto(i)), model.messages[i]);      
             });
           }
@@ -77,20 +114,27 @@ void debugView(DebugModel[&T] model, void(&T) subView) {
 }
 
 WithCmds[DebugModel[&T]] debugUpdate(Msg msg, DebugModel[&T] m) {
+  list[Cmd] cmds = [];
+  
   switch (msg) {
+  
     case next():
-      return noCmds(m[current = m.current < size(m.models) - 1 ? m.current + 1 : m.current]); 
+      m.current = m.current < size(m.models) - 1 ? m.current + 1 : m.current;
+       
     case prev():
-      return  noCmds(m[current = m.current > 0 ? m.current - 1 : m.current]);
+      m.current = m.current > 0 ? m.current - 1 : m.current;
+      
     case sub(Msg s): {
       <newModel, cmds> = mapping.cmds(Msg::sub, s, m.models[m.current], m.update);
+      m.models += [newModel];
       m.messages += [s];
-      return withCmds(m[current=size(m.models)][models = m.models + [newModel]], cmds);
+      m.current = size(m.models);
     }
-    case ignore(Msg _): 
-      return noCmds(m);
+
     case goto(int v): 
-     return noCmds(m[current=v]);
+      m.current = v;
   }
+  
+  return withCmds(m, cmds);
 }
 
