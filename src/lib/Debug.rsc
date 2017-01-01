@@ -6,51 +6,7 @@ import gui::Comms;
 import gui::Render; // for null()...
 import List;
 
-// TODO: make an undoable component
-// which simply reuses an original model with keyword params so that
-// parents are unaware of it. 
 
-// See here for more inspiration:
-// https://github.com/elm-lang/virtual-dom/blob/master/src/VirtualDom/Expando.elm
-
-// interface Msg<T> {
-//    T doIt();
-//
-//
-// class DebugModel<T> {
-//   DebugModel<T> next() {..}
-//   prev()
-//   DebugModel<T> sub(Msg<T> m) {
-//      return new DebugModel<>(m.doIt());
-///   }   
-// }
-//   class Html<T> {
-//      Node<T> div(...)
-//      <U> Html<U> map(Function<Msg<T>, Msg<U>, f) {
-//        return new Html<U>(f);
-//      }
-//
-//      
-//
-//  interface View<T> {
-//    Html<T> view(T t);
-//    <U> Html<U> map(Function<Msg<T>, Msg<U>> f, T model) {
-//       Html<T> h = view(model);
-//       return h.map(f);
-//    }
-// }
-// class DebugView<T> implements View<DebugModel<T>> {
-//    Debug(View<T> sub) {.
-//    } 
-//    
-//    Node<T> view(DebugModel<T> model, HTML<T> h) {
-//       h.div(() -> {
-//       h.button(h.onClick(model::next)) {
-//       sub.view(model.subModel, h.map(mode::sub));
-//
-//    }
-//           
-//
 alias DebugModel[&T]
   = tuple[int current, list[&T] models, list[Msg] messages, WithCmds[&T](Msg, &T) update]
   ;

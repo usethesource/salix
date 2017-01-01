@@ -21,8 +21,7 @@ WithCmds[&T] withCmds(&T model, list[Cmd] cmds) = <model, cmds>;
 
 @doc{The basic App type:
 - serve to start serving the application
-- stop to shutdown the server
-- hotSwap to replace the capture view and update functions}
+- stop to shutdown the server}
 alias App[&T] = tuple[
   void() serve, 
   void() stop 
@@ -136,7 +135,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
     }
     
     // everything else is considered static files.
-    if (get(p:/\.<ext:.*>$/) := req, ext in mimeTypes) {
+    if (get(p:/\.<ext:[^.]*>$/) := req, ext in mimeTypes) {
       return fileResponse(static[path="<static.path>/<p>"], mimeTypes[ext], ());
     }
     

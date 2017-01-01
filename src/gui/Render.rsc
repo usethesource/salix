@@ -6,6 +6,7 @@ import IO;
 
 
 // TODO: Html -> Node (as it also represents SVG)
+// TODO: move node to its own module
 // TODO: make attrs/props/events kw params to save memory
 // TODO: make attrs map[str, Attribute] to deal with namespaces
 

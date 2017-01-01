@@ -32,12 +32,12 @@ data Msg
 
 App[AllModel] allApp() 
   = app(initAll(), viewAll, editAll, 
-        |http://localhost:9201|, |project://elmer/src/examples|,
-        subs = examples::All::subs); 
+        |http://localhost:9203|, |project://elmer/src/examples|,
+        subs = allSubs); 
 
 App[DebugModel[AllModel]] debugAllApp() 
   = debug(initAll(), viewAll, editAll, 
-        |http://localhost:9201|, |project://elmer/src/examples|,
+        |http://localhost:9203|, |project://elmer/src/examples|,
         subs = allSubs); 
   
 WithCmds[AllModel] initAll() = noCmds(<

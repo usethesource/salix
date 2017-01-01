@@ -1,15 +1,5 @@
 
 
-/*
- * TODO
- * - figure out how to avoid out of order processing...
- */
-
-var __queue = [];
-
-var __natives = {};
-
-var __subscriptions = {};
 
 var __builders = {
 	// TODO: separate appending, from creating somehow.
@@ -36,13 +26,13 @@ var __builders = {
 			var line = position.line;
 			var token = editor.getTokenAt(position);
 			if (events.cursorActivity) {
-				schedule(events.cursorActivity,  {line: line, start: token.start, 
+				schedule(__event_queue, events.cursorActivity,  {line: line, start: token.start, 
 					end: token.end, string: token.string, tokenType: token.type});
 			}
 		});
 		cm.on('change', function (editor, change) {
 			if (events.change) {
-				schedule(events.change,  {
+				schedule(__event_queue, events.change,  {
 					fromLine: change.from.line, fromCol: change.from.ch,
 					toLine: change.to.line, toCol: change.to.ch,
 					text: change.text.join('\n'),
@@ -62,18 +52,57 @@ function makeNative(native) {
 	return __natives[native.key];
 }
 
+
+var __event_queue = [];
+var __other_queue = [];
+
+var __natives = {};
+var __subscriptions = {};
+
+function pendingWork() {
+	return __event_queue.length > 0 || __other_queue.length > 0;
+}
+
+function nextMessage() {
+	return __event_queue.length > 0 ? __event_queue.shift() : __other_queue.shift();
+}
+
+function flushUIEvents() {
+	console.log("Flushing pending events." + JSON.stringify(__event_queue));
+	__event_queue = [];
+}
+
 function render(timestamp) {
 	window.requestAnimationFrame(render);
-	if (__queue.length == 0) {
+
+	if (!pendingWork()) {
+		return; 
+	}
+	
+	if (waitingForResponse()) { 
+		flushUIEvents();
 		return;
 	}
-	var payload = __queue.shift();
-	$.get('/msg', payload, function (work, stats, jqXHR) {
-		// todo: fix order
+	
+	sendMessage('/msg', nextMessage(), function (work) {
 		doCommands(work[2]);
 		subscribe(work[1]);
 		patch(root(), work[0], dec2handler);
-	}, 'json');
+	});
+}
+
+
+var __waiting = false;
+
+function waitingForResponse() {
+	return __waiting;
+}
+
+function sendMessage(url, message, handle) {
+	__waiting = true;
+	$.get(url, message, handle, 'json').always(function () {
+		__waiting = false;
+	});
 }
 
 function root() {
@@ -81,11 +110,11 @@ function root() {
 }
 
 function start() {
-	$.get('/init', {}, function (work, stats, jqXHR) {
+	sendMessage('/init', {}, function (work) {
 		doCommands(work[2]);
-		subscribe(work[1]); // subscriptions
+		subscribe(work[1]); 
 		replace(root(), build(work[0]));
-	}, 'json');
+	});
 	window.requestAnimationFrame(render);
 }
 
@@ -93,47 +122,61 @@ function replace(dom, newDom) {
 	dom.parentNode.replaceChild(newDom, dom);
 }
 
+function nodeType(node) {
+	for (var type in node) { break; }
+	return type;
+}
+
 function doCommands(cmds) {
 	for (var i = 0; i < cmds.length; i++) {
 		var cmd = cmds[i];
-		for (var type in cmd) { break; } // todo: make function
-		switch (type) {
+		
+		switch (nodeType(cmd)) {
+		
 		case 'random':
 			var random = Math.floor(Math.random() * (cmd.random.to - cmd.random.from + 1)) + cmd.random.from;
-			schedule(cmd.random.handle.handle, {type: 'integer', intVal: random});
+			schedule(__other_queue, cmd.random.handle.handle, {type: 'integer', intVal: random});
 			break;
 		}
+		
+	}
+}
+
+function sub2handler(sub) {
+	switch (nodeType(sub)) {
+	
+	case 'timeEvery':
+		var timer = setInterval(function() {
+			var data = {type: 'integer', intVal: (new Date().getTime() / 1000) | 0};
+			schedule(__other_queue, sub.timeEvery.handle.handle, data); 
+		}, sub.timeEvery.interval);
+		return function () {
+			clearInterval(timer);
+		};
 	}
 }
 
 function subscribe(subs) {
-	//{timeEvery: {interval: ms, handle: {handle: ...}}}
 	for (var i = 0; i < subs.length; i++) {
 		var sub = subs[i];
-		for (var type in sub) { break; }
+		var type = nodeType(sub);
 		var id = sub[type].handle.handle.id;
 		if (__subscriptions.hasOwnProperty(id)) {
 			continue;
 		}
-		switch (type) {
-		case 'timeEvery':
-			var timer = setInterval(function() {
-				var data = {type: 'integer', intVal: (new Date().getTime() / 1000) | 0};
-				schedule(sub.timeEvery.handle.handle, data); 
-			}, sub.timeEvery.interval);
-			__subscriptions[id] = function () {
-				clearInterval(timer);
-			}; 
-			
-		}
+		__subscriptions[id] = sub2handler(sub);
 	}
+
+	unsubscribeStaleSubs(subs);
+}
+
+function unsubscribeStaleSubs(subs) {
 	var toDelete = [];
 	outer: for (var k in __subscriptions) {
 		if (__subscriptions.hasOwnProperty(k)) {
 			for (var i = 0; i < subs.length; i++) {
 				var sub = subs[i];
-				for (var type in sub) { break; }
-				var id = sub[type].handle.handle.id;
+				var id = sub[nodeType(sub)].handle.handle.id;
 				if (('' + id) === k) {
 					continue outer;
 				}
@@ -145,10 +188,9 @@ function subscribe(subs) {
 		__subscriptions[toDelete[i]](); // shutdown
 		delete __subscriptions[toDelete[i]];
 	}
-	
 }
 
-function schedule(handle, data) {
+function schedule(queue, handle, data) {
 	var result = {id: handle.id};
 	if (handle.maps) {
 		result.maps = handle.maps.join(';'); 
@@ -158,34 +200,31 @@ function schedule(handle, data) {
 			result[k] = data[k];
 		}
 	}
-	__queue.push(result);
+	queue.push(result);
 }
 
 // this needs adaptation if new kinds of data are required. 
 function dec2handler(decoder) {
-	for (var cons in decoder) {
-
-		switch (cons) {
+	switch (nodeType(decoder)) {
+	
+	case 'succeed':
+		return function (event) {	
+			// TODO: change 'nothing' to 'ok'
+			schedule(__event_queue, decoder.succeed.handle.handle, {type: 'nothing'});
+		};
 		
-		case 'succeed':
-			return function (event) {	
-				schedule(decoder.succeed.handle.handle, {type: 'nothing'});
-			};
-			
-		case 'targetValue':
-			return function (event) {
-				schedule(decoder.targetValue.handle.handle, 
-						{type: 'string', strVal: event.target.value});
-			};
-			
-		case 'targetChecked':
-			return function (event) {	
-				schedule(decoder.targetChecked.handle.handle, 
-						{type: 'boolean', boolVal: event.target.checked});
-			};
-			
-		}
-		break;
+	case 'targetValue':
+		return function (event) {
+			schedule(__event_queue, decoder.targetValue.handle.handle, 
+					{type: 'string', strVal: event.target.value});
+		};
+		
+	case 'targetChecked':
+		return function (event) {	
+			schedule(__event_queue, decoder.targetChecked.handle.handle, 
+					{type: 'boolean', boolVal: event.target.checked});
+		};
+		
 	}
 }
 

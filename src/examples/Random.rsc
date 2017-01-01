@@ -30,8 +30,7 @@ data Msg
 // , so it's fine to use switch.
 
 App[Model] randomApp()
-  = app(init(), view, update, 
-    |http://localhost:9098|, |project://elmer/src/examples|); 
+  = app(init(), view, update, |http://localhost:9098|, |project://elmer/src/examples|); 
 
 WithCmds[Model] init() = noCmds(<1>);
   
@@ -71,8 +70,7 @@ WithCmds[TwiceModel] twice(WithCmds[Model] m1, WithCmds[Model] m2)
   = withCmds(twice(m1.model, m2.model), m1.commands + m2.commands);
 
 App[TwiceModel] twiceRandomApp()
-  = app(twiceInit(), twiceView, twiceUpdate, 
-    |http://localhost:9098|, |project://elmer/src/examples|); 
+  = app(twiceInit(), twiceView, twiceUpdate, |http://localhost:9098|, |project://elmer/src/examples|); 
 
 WithCmds[TwiceModel] twiceInit() = twice(init(), init());
 
@@ -83,6 +81,9 @@ WithCmds[TwiceModel] twiceUpdate(sub1(Msg msg), TwiceModel m)
 
 WithCmds[TwiceModel] twiceUpdate(sub2(Msg msg), TwiceModel m)
   = twice(noCmds(m.model1), mapping.cmds(sub2, msg, m.model2, update));   
+
+
+data Msg = sub1(Msg msg) | sub2(Msg msg);
 
 void twiceView(TwiceModel m) {
   div(() {

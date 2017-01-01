@@ -37,8 +37,16 @@ real toF(real c) = c * 9.0/5.0 + 32.0;
 
 real toC(real f) = (f - 32.0) * 5.0/9.0;
 
-real update(c(str new), real _) = toReal(new);
+real toReal_(str s) {
+  try {
+    return toReal(s);
+  }
+  catch IllegalArgument():
+    return 0.0;
+}
 
-real update(f(str new), real _) = toC(toReal(new));
+real update(c(str new), real _) = toReal_(new);
+
+real update(f(str new), real _) = toC(toReal_(new));
 
 
