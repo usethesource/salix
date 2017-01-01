@@ -1,75 +1,11 @@
 
 
+// TODO: make nice object, with methods to register natives/builders etc.
 
-var __builders = {
-	// TODO: separate appending, from creating somehow.
-	// so that when appendNode appends codeMirror it works.
-	// futher: natives should receive arb data to config etc.
-	// e.g. in codemirror we can give a mode
+function start() {
+	buildInitialView();
 
-	codeMirror: function(parent, attrs, props, events) {
-		var cm = CodeMirror(parent, {
-			lineNumbers: true,
-			matchBrackets: true,
-			tabMode: 'shift',
-			autofocus: true,
-			//value: "function myScript(){return 100;}\n",
-			mode:  "javascript"
-		});
-		cm.getDoc().setValue(props['value']);
-		setTimeout(function() {
-            cm.refresh();
-        }, 100);
-
-		cm.on('cursorActivity', function (editor) {
-			var position = editor.getCursor();
-			var line = position.line;
-			var token = editor.getTokenAt(position);
-			if (events.cursorActivity) {
-				schedule(__event_queue, events.cursorActivity,  {line: line, start: token.start, 
-					end: token.end, string: token.string, tokenType: token.type});
-			}
-		});
-		cm.on('change', function (editor, change) {
-			if (events.change) {
-				schedule(__event_queue, events.change,  {
-					fromLine: change.from.line, fromCol: change.from.ch,
-					toLine: change.to.line, toCol: change.to.ch,
-					text: change.text.join('\n'),
-					removed: change.removed.join("\n")
-				});
-			}
-		});
-	}
-};
-
-function makeNative(native) {
-	if (!__natives.hasOwnProperty(native.key)) {
-		__natives[native.key] = function(parent) {
-			return __builders[native.kind](parent, native.attrs, native.props, native.events);
-		};
-	}
-	return __natives[native.key];
-}
-
-
-var __event_queue = [];
-var __other_queue = [];
-
-var __natives = {};
-var __subscriptions = {};
-
-function pendingWork() {
-	return __event_queue.length > 0 || __other_queue.length > 0;
-}
-
-function nextMessage() {
-	return __event_queue.length > 0 ? __event_queue.shift() : __other_queue.shift();
-}
-
-function flushUIEvents() {
-	console.log("Flushing pending events." + JSON.stringify(__event_queue));
-	__event_queue = [];
+	window.requestAnimationFrame(render);
 }
 
 function render(timestamp) {
@@ -84,13 +20,46 @@ function render(timestamp) {
 		return;
 	}
 	
-	sendMessage('/msg', nextMessage(), function (work) {
+	processMessage(nextMessage());
+}
+
+
+var __event_queue = [];
+var __other_queue = [];
+
+var __natives = {};
+var __subscriptions = {};
+
+
+
+function pendingWork() {
+	return __event_queue.length > 0 || __other_queue.length > 0;
+}
+
+function nextMessage() {
+	return __event_queue.length > 0 ? __event_queue.shift() : __other_queue.shift();
+}
+
+function flushUIEvents() {
+	console.log("Flushing pending events." + JSON.stringify(__event_queue));
+	__event_queue = [];
+}
+
+function buildInitialView() {
+	send('/init', {}, function (work) {
+		doCommands(work[2]);
+		subscribe(work[1]); 
+		replace(root(), build(work[0]));
+	});
+}
+
+function processMessage(msg) {
+	send('/msg', msg, function (work) {
 		doCommands(work[2]);
 		subscribe(work[1]);
 		patch(root(), work[0], dec2handler);
 	});
 }
-
 
 var __waiting = false;
 
@@ -98,7 +67,7 @@ function waitingForResponse() {
 	return __waiting;
 }
 
-function sendMessage(url, message, handle) {
+function send(url, message, handle) {
 	__waiting = true;
 	$.get(url, message, handle, 'json').always(function () {
 		__waiting = false;
@@ -107,15 +76,6 @@ function sendMessage(url, message, handle) {
 
 function root() {
 	return document.getElementById('root');
-}
-
-function start() {
-	sendMessage('/init', {}, function (work) {
-		doCommands(work[2]);
-		subscribe(work[1]); 
-		replace(root(), build(work[0]));
-	});
-	window.requestAnimationFrame(render);
 }
 
 function replace(dom, newDom) {
@@ -137,6 +97,7 @@ function doCommands(cmds) {
 			var random = Math.floor(Math.random() * (cmd.random.to - cmd.random.from + 1)) + cmd.random.from;
 			schedule(__other_queue, cmd.random.handle.handle, {type: 'integer', intVal: random});
 			break;
+		
 		}
 		
 	}
@@ -153,6 +114,7 @@ function sub2handler(sub) {
 		return function () {
 			clearInterval(timer);
 		};
+		
 	}
 }
 
@@ -232,64 +194,62 @@ function patchThis(dom, edits) {
 	edits = edits || [];
 	for (var i = 0; i < edits.length; i++) {
 		var edit = edits[i];
-		for (var type in edit) {
+		var type = nodeType(edit);
+
+		switch (type) {
+		
+		case 'replace':
+			return build(edit[type].html);
+
+		case 'setText':
+			dom.nodeValue = edit[type].contents;
+			break;			
 			
-			switch (type) {
+		case 'removeNode':
+			dom.removeChild(dom.lastChild);
+			break;
 			
-			case 'replace':
-				return build(edit[type].html);
-	
-			case 'setText':
-				dom.nodeValue = edit[type].contents;
-				break;			
-				
-			case 'removeNode':
-				dom.removeChild(dom.lastChild);
-				break;
-				
-			case 'appendNode':
-				var kid = build(edit[type].html);
-				if (typeof kid === 'function') {
-					kid(dom);
-				}
-				else {
-					dom.appendChild(kid);
-				}
-				break;
-				
-			case 'setAttr':
-				dom.setAttribute(edit[type].name, edit[type].val);
-				break;
-				
-			case 'setProp':
-				dom[edit[type].name] = edit[type].val;
-				break;
-				
-			case 'setEvent':
-				var key = edit[type].name;
-				var handler = dec2handler(edit[type].handler);
-				dom.addEventListener(key, withCleanListeners(dom, key, handler));
-				break
-			
-			case 'removeAttr':
-				dom.removeAttribute(edit[type].name);
-				break;
-				
-			case 'removeProp':
-				delete dom[edit[type].name]; //???
-				break;
-				
-			case 'removeEvent':
-				// todo: refactor
-				var handler = dom.myHandlers[edit[type].name];
-				dom.removeEventListener(edit[type].name, handler);
-				break;
-				
-			default: 
-				throw 'unsupported edit: ' + JSON.stringify(edit);
-				
+		case 'appendNode':
+			var kid = build(edit[type].html);
+			if (typeof kid === 'function') {
+				kid(dom);
+			}
+			else {
+				dom.appendChild(kid);
 			}
 			break;
+			
+		case 'setAttr':
+			dom.setAttribute(edit[type].name, edit[type].val);
+			break;
+			
+		case 'setProp':
+			dom[edit[type].name] = edit[type].val;
+			break;
+			
+		case 'setEvent':
+			var key = edit[type].name;
+			var handler = dec2handler(edit[type].handler);
+			dom.addEventListener(key, withCleanListeners(dom, key, handler));
+			break
+		
+		case 'removeAttr':
+			dom.removeAttribute(edit[type].name);
+			break;
+			
+		case 'removeProp':
+			delete dom[edit[type].name]; //???
+			break;
+			
+		case 'removeEvent':
+			// todo: refactor
+			var handler = dom.myHandlers[edit[type].name];
+			dom.removeEventListener(edit[type].name, handler);
+			break;
+			
+		default: 
+			throw 'unsupported edit: ' + JSON.stringify(edit);
+			
 		}
 	}
 }
@@ -373,3 +333,13 @@ function build(vdom) {
     
     return elt;    
 }
+
+function makeNative(native) {
+	if (!__natives.hasOwnProperty(native.key)) {
+		__natives[native.key] = function(parent) {
+			return __builders[native.kind](parent, native.attrs, native.props, native.events);
+		};
+	}
+	return __natives[native.key];
+}
+
