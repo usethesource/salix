@@ -24,8 +24,7 @@ Patch diff(Html old, Html new, int idx) {
   
   if (old is native, new is native) {
     // todo: extra data 
-    edits = diffMap(old.attrs, new.attrs, setAttr, removeAttr)
-      + diffMap(old.props, new.props, setProp, removeProp)
+    edits = diffMap(old.props, new.props, setProp, removeProp)
       + diffMap(old.events, new.events, setEvent, removeEvent);
     return patch(idx, [], edits);  
   }

@@ -15,7 +15,9 @@ elements, text nodes, and native nodes (which are managed in js).}
 data Html
   = element(str tagName, list[Html] kids, map[str, str] attrs, map[str, str] props, map[str, Hnd] events)
   // TODO: native should additional have arbitrary data...
-  | native(str kind, str key, map[str, str] attrs, map[str, str] props, map[str, Hnd] events)
+  // Natives don't have attrs, since we don't manage the DOM for it;
+  // properties are handled however the internals wish to.
+  | native(str kind, map[str, str] props, map[str, Hnd] events)
   | txt(str contents)
   ;  
 

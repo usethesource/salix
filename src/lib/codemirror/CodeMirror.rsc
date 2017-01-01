@@ -1,4 +1,4 @@
-module examples::codemirror::Editor
+module lib::codemirror::CodeMirror
 
 import gui::HTML;
 import gui::App;
@@ -33,8 +33,7 @@ Msg toMsg(codeMirrorChange(Handle h, int a, int b, int c, int d, str s1, str s1)
 void codeMirror(value vals...) = build(vals, _codeMirror);
 
 Html _codeMirror(list[Html] _, list[Attr] attrs)
-  = native("codeMirror", "\<codeMirror\>", 
-      attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
+  = native("codeMirror",  propsOf(attrs), eventsOf(attrs));
 
 
 
