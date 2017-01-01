@@ -67,7 +67,7 @@ Msg booleanParser(Handle h, map[str,str] p)
   = applyMaps(h, decode(h.id, #Msg(bool))(p["boolVal"] == true));
 
 Msg integerParser(Handle h, map[str,str] p) 
-  = applyMaps(h, decode(h.id, #Msg(int))(toInt(params["intVal"])));
+  = applyMaps(h, decode(h.id, #Msg(int))(toInt(p["intVal"])));
 
 
 Msg applyMaps(Handle h, Msg msg) = ( msg | decode(m, #(Msg(Msg)))(it) | int m <- h.maps );

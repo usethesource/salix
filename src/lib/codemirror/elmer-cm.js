@@ -80,7 +80,7 @@ function registerCodeMirror(elmer) {
 
 			for (var i = 0; i < edits.length; i++) {
 				var edit = edits[i];
-				var type = nodeType(edit);
+				var type = elmer.nodeType(edit);
 
 				switch (type) {
 				
@@ -90,7 +90,19 @@ function registerCodeMirror(elmer) {
 				case 'setProp': 
 					var key = edit[type].name;
 					var val = edit[type].val;
-					if (key == 'width') {
+					if (key === 'value') {
+						if (cm.getValue() !== val) {
+							var hasChange = myHandlers.hasOwnProperty('change');
+							if (hasChange) { 
+								cm.off('change', myHandlers.change);	
+							}
+							cm.setValue(val);
+							if (hasChange) {
+								cm.on('change', myHandlers.change);
+							}
+						}
+					}
+					else if (key === 'width') {
 						cm.setSize(val, null);
 					}
 					else if (key === 'height') {

@@ -14,9 +14,6 @@ data Hnd
   = codeMirrorChange(Handle handle)
   ;
 
-Hnd codeMirrorChange(Msg(int, int, int, int, str, str) ch2msg) 
-  = codeMirrorChange(encode(ch2msg));
-
 Msg codeMirrorChangeParser(Handle h, map[str, str] p)
   = applyMaps(h, decode(h.id, #Msg(int, int, int, int, str, str))(
            toInt(p["fromLine"]), toInt(p["fromCol"]), 
@@ -30,11 +27,14 @@ Html _codeMirror(list[Html] _, list[Attr] attrs)
 
 // hack to make something run on import
 // NB: bug, after decl!!
-void _ = { msgParser("codeMirrorChange", codeMirrorChangeParser); };
+
+void registerCodeMirror() {
+  msgParser("codeMirrorChange", codeMirrorChangeParser);
+}
 
 
 Attr onChange(Msg(int, int, int, int, str, str) ch2msg)
-  = event("change", codeMirrorChange(ch2msg));
+  = event("change", codeMirrorChange(encode(ch2msg)));
 
 // Special cased
 // http://codemirror.net/doc/manual.html#setSize
@@ -42,8 +42,6 @@ Attr onChange(Msg(int, int, int, int, str, str) ch2msg)
 Attr width(int pxOrPerc) = prop("width", "<pxOrPerc>");
 Attr height(int pxOrPerc) = prop("height", "<pxOrPerc>");
 
-
-// Passed to constructor:
 
 Attr \value(str val) = prop("value", val);
 Attr mode(str name) = prop("mode", name);

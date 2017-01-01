@@ -265,7 +265,9 @@ function Elmer(aRootId) {
 	}
 
 	function patch(dom, tree) {
-		var newDom = patchThis(dom, tree.patch.edits);
+		var newDom = dom.elmer_native 
+		  	? dom.elmer_native.patch(tree.patch.edits)
+		  	: patchThis(dom, tree.patch.edits);
 		
 		if (newDom) {
 			replace(dom, newDom);
