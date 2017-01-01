@@ -5,9 +5,10 @@ function registerCodeMirror(elmer) {
 	function dec2handler(decoder) {
 		switch (elmer.nodeType(decoder)) {
 		
-		case 'change':
+		case 'codeMirrorChange':
 			return function (editor, change) {
-				elmer.scheduleEvent(events.change,  {
+				elmer.scheduleEvent(decoder.codeMirrorChange.handle.handle,  {
+					type: 'codeMirrorChange', 
 					fromLine: change.from.line, fromCol: change.from.ch,
 					toLine: change.to.line, toCol: change.to.ch,
 					text: change.text.join('\n'),
@@ -20,7 +21,8 @@ function registerCodeMirror(elmer) {
 				var position = editor.getCursor();
 				var line = position.line;
 				var token = editor.getTokenAt(position);
-				elmer.scheduleEvent(events.cursorActivity,  {line: line, start: token.start, 
+				elmer.scheduleEvent(decoder.cursorActivity.handle.handle, 
+					{type: 'cursorActivity', line: line, start: token.start, 
 					end: token.end, string: token.string, tokenType: token.type});
 			};
 		
@@ -29,11 +31,17 @@ function registerCodeMirror(elmer) {
 	
 	function codeMirror(parent, props, events) {
 		var cm = CodeMirror(parent, {});
+		// for remove event.
+		var myHandlers = {};
+		
 
 		for (var key in props) {
+			// todo: this logic is shared with setProp
 			if (props.hasOwnProperty(key)) {
+				var val = props[key];
+				
 				if (key === 'value') {
-					cm.getDoc().setValue(props.value);
+					cm.getDoc().setValue(val);
 				}
 				if (key == 'width') {
 					cm.setSize(val, null);
@@ -52,14 +60,20 @@ function registerCodeMirror(elmer) {
 				}
 			}
 		}
+		
+		for (var key in events) {
+			// TODO: shared with setEvent
+			if (events.hasOwnProperty(key)) {
+				var handler = dec2handler(events[key]);
+				myHandlers[key] = handler;
+				cm.on(key, handler);
+			}
+		}
 
 		setTimeout(function() {
             cm.refresh();
         }, 100);
 		
-		
-		// for remove event.
-		var myHandlers = {};
 		
 		function patch(edits) {
 			edits = edits || [];

@@ -108,7 +108,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
       Msg msg = params2msg(req.parameters);
       
       
-      //println("Processing: <msg>");
+      println("Processing: <msg>");
       //trace += [msg];
       //if (size(trace) > 50) {
       //  trace = trace[1..];

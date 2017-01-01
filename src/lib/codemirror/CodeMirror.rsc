@@ -2,40 +2,39 @@ module lib::codemirror::CodeMirror
 
 import gui::HTML;
 import gui::App;
-extend gui::Comms;
+import gui::Comms;
 import gui::Encode;
+import gui::Render;
 import IO;
 import String;
 import List;
-
 
 
 data Hnd
   = codeMirrorChange(Handle handle)
   ;
 
-data Result
-  = codeMirrorChange(Handle handle, int fromLine, int fromCol,
-     int toLine, int toCol, str text, str removed);
-
 Hnd codeMirrorChange(Msg(int, int, int, int, str, str) ch2msg) 
-  = codeMirrorChange(encodeHnd(ch2msg));
+  = codeMirrorChange(encode(ch2msg));
 
-Result toResult("codeMirrorChange", map[str, str] p)
-  = codeMirrorChange(toHandle(p), toInt(p["fromLine"]), toInt(p["fromCol"]), 
+Msg codeMirrorChangeParser(Handle h, map[str, str] p)
+  = applyMaps(h, decode(h.id, #Msg(int, int, int, int, str, str))(
+           toInt(p["fromLine"]), toInt(p["fromCol"]), 
            toInt(p["toLine"]), toInt(p["toCol"]),
-           p["text"], p["removed"]);
-
-Msg toMsg(codeMirrorChange(Handle h, int a, int b, int c, int d, str s1, str s1)) 
-  = applyMaps(decode(h, #Msg(int, int, int, int, str, str))(a, b, c, d, s1, s2));
-
+           p["text"], p["removed"]));
 
 void codeMirror(value vals...) = build(vals, _codeMirror);
 
 Html _codeMirror(list[Html] _, list[Attr] attrs)
   = native("codeMirror",  propsOf(attrs), eventsOf(attrs));
 
+// hack to make something run on import
+// NB: bug, after decl!!
+void _ = { msgParser("codeMirrorChange", codeMirrorChangeParser); };
 
+
+Attr onChange(Msg(int, int, int, int, str, str) ch2msg)
+  = event("change", codeMirrorChange(ch2msg));
 
 // Special cased
 // http://codemirror.net/doc/manual.html#setSize

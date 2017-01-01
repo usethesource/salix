@@ -41,28 +41,15 @@ Hnd targetChecked(Msg(bool) bool2msg) = targetChecked(encode(bool2msg));
 
 Hnd keyCode(Msg(int) int2msg) = keyCode(encode(int2msg)); 
 
-data Result // what comes back from the client (either from Cmd/Hnd/Sub
-  = nothing(Handle handle)
-  | string(Handle handle, str strVal)
-  | boolean(Handle handle, bool boolVal)
-  | integer(Handle handle, int intVal) 
-  ;
   
 @doc{Convert request parameters to a Msg value. Active mappers at `path`
 transform the message according to f.}
-Msg params2msg(map[str, str] params) = toMsg(toResult(params));
+Msg params2msg(map[str, str] params) 
+  = msgParsers[params["type"]](toHandle(params), params);
 
-@doc{Construct a Result value from the request parameters.}
-Result toResult(map[str, str] params) = toResult(params["type"], params);
-  
-Result toResult("nothing", map[str, str] p) = nothing(toHandle(p));
-
-Result toResult("string", map[str, str] p) = string(toHandle(p), p["strVal"]);
-
-Result toResult("boolean", map[str, str] p) = boolean(toHandle(p), p["boolVal"] == true);
-
-Result toResult("integer", map[str, str] p) = integer(toHandle(p), toInt(p["intVal"]));
-
+void msgParser(str typ, Msg(Handle, map[str,str]) parser) {
+  msgParsers[typ] = parser;
+}
 
 @doc{Parse request parameters into a Handle.}
 Handle toHandle(map[str, str] params)
@@ -70,17 +57,27 @@ Handle toHandle(map[str, str] params)
 
 list[int] toMaps(str x) = [ toInt(i) | str i <- split(";", x), i != "" ];
 
-@doc{Convert Results to actual messages by applying the functions
-returned by the decoder dec, based on the handle.}
-Msg toMsg(nothing(Handle h)) = applyMaps(h, decode(h.id, #Msg));
+Msg nothingParser(Handle h, map[str, str] p) 
+  = applyMaps(h, decode(h.id, #Msg)); 
 
-Msg toMsg(string(Handle h, str s)) = applyMaps(h, decode(h.id, #Msg(str))(s));
+Msg stringParser(Handle h, map[str,str] p) 
+  = applyMaps(h, decode(h.id, #Msg(str))(p["string"]));
 
-Msg toMsg(boolean(Handle h, bool b)) = applyMaps(h, decode(h.id, #Msg(bool))(b));
+Msg booleanParser(Handle h, map[str,str] p) 
+  = applyMaps(h, decode(h.id, #Msg(bool))(p["boolVal"] == true));
 
-Msg toMsg(integer(Handle h, int i)) = applyMaps(h, decode(h.id, #Msg(int))(i));
+Msg integerParser(Handle h, map[str,str] p) 
+  = applyMaps(h, decode(h.id, #Msg(int))(toInt(params["intVal"])));
 
 
 Msg applyMaps(Handle h, Msg msg) = ( msg | decode(m, #(Msg(Msg)))(it) | int m <- h.maps );
 
 public /*const*/ Mapping mapping = gui::Encode::mapping;
+
+private map[str, Msg(Handle, map[str, str])] msgParsers = (
+  "nothing": nothingParser,
+  "string": stringParser,
+  "boolean": booleanParser,
+  "integer": integerParser
+);
+

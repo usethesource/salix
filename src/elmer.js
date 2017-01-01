@@ -10,6 +10,7 @@ function Elmer(aRootId) {
 
 	var natives = {};
 	var subscriptions = {};
+	var builders = {};
 
 	function start() {
 		buildInitialView();
@@ -315,7 +316,10 @@ function Elmer(aRootId) {
         
 	    for (var i = 0; i < vdom.element.kids.length; i++) {
 	    	var kid = build(vdom.element.kids[i]);
-	    	if (!kid.elmer_native) { // natives append themselves
+	    	if (typeof kid === 'function') {
+	    		kid(elt);
+	    	}
+	    	else {
 	    		elt.appendChild(kid);
 	    	}
 	    }
@@ -348,7 +352,9 @@ function Elmer(aRootId) {
 	}
 	
 	function makeNative(native) {
-		return builders[native.kind](parent, native.props, native.events);
+		return function (parent) {
+			return builders[native.kind](parent, native.props, native.events);
+		}
 	}
 
 	return {start: start, 
