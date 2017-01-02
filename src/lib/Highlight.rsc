@@ -1,7 +1,6 @@
 module lib::Highlight
 
 import gui::HTML;
-import gui::App;
 import ParseTree;
 import IO;
 import String;

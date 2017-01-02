@@ -19,9 +19,9 @@ data Patch
 @doc{Primitive edit constructs.}
 data Edit
   = setText(str contents)
-  | replace(Html html)
+  | replace(Node html)
   | removeNode() 
-  | appendNode(Html html) 
+  | appendNode(Node html) 
   | setAttr(str name, str val)
   | setProp(str name, str val)
   | setEvent(str name, Hnd handler)
@@ -30,8 +30,8 @@ data Edit
   | removeEvent(str name)
   ; 
 
-@doc{Applying a patch to an Html node; only for testing.}
-Html apply(Patch p, Html html) {
+@doc{Applying a patch to an Node node; only for testing.}
+Node apply(Patch p, Node html) {
   assert any(Edit e <- p.edits, e is replace) ==> p.patches == [];
   
   html = ( html | apply(e, it) | Edit e <- p.edits );
@@ -45,14 +45,14 @@ Html apply(Patch p, Html html) {
   return html;
 }
   
-Html apply(setText(str txt), txt(_)) = txt(txt);
-Html apply(replace(Html html), _) = html;
-Html apply(appendNode(Html html), Html e) = e[kids=e.kids + [html]];
-Html apply(removeNode(), Html e) = e[kids = e.kids[..-1]];
-Html apply(removeAttr(str name), Html html) = html[attrs=delete(html.attrs, name)];
-Html apply(removeProp(str name), Html html) = html[props=delete(html.props, name)];
-Html apply(removeEvent(str event), Html html) = html[events=delete(html.events, name)];
-Html apply(setAttr(str name, str val), Html html) = html[attrs = html.attrs + (name: val)];
-Html apply(setProp(str name, str val), Html html) = html[props = html.props + (name: val)];
-Html apply(setEvent(str event, Hnd h), Html html) = html[events = html.events + (event: h)];
+Node apply(setText(str txt), txt(_)) = txt(txt);
+Node apply(replace(Node html), _) = html;
+Node apply(appendNode(Node html), Node e) = e[kids=e.kids + [html]];
+Node apply(removeNode(), Node e) = e[kids = e.kids[..-1]];
+Node apply(removeAttr(str name), Node html) = html[attrs=delete(html.attrs, name)];
+Node apply(removeProp(str name), Node html) = html[props=delete(html.props, name)];
+Node apply(removeEvent(str event), Node html) = html[events=delete(html.events, name)];
+Node apply(setAttr(str name, str val), Node html) = html[attrs = html.attrs + (name: val)];
+Node apply(setProp(str name, str val), Node html) = html[props = html.props + (name: val)];
+Node apply(setEvent(str event, Hnd h), Node html) = html[events = html.events + (event: h)];
 

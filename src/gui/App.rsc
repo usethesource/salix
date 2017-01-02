@@ -1,11 +1,9 @@
 module gui::App
 
 import gui::Node;
-import gui::Encode;
-import gui::Comms;
+import gui::Core;
 import gui::Diff;
 import gui::Patch;
-import lib::Trace;
 
 import util::Webserver;
 import IO;
@@ -13,23 +11,13 @@ import String;
 import Map;
 import List;
 
-alias WithCmds[&T] = tuple[&T model, list[Cmd] commands];  
-
-// functions to hide the representation of WithCmds.
-WithCmds[&T] noCmds(&T model) = <model, []>;
-WithCmds[&T] withCmds(&T model, list[Cmd] cmds) = <model, cmds>;
+data Msg;
 
 @doc{The basic App type:
 - serve to start serving the application
 - stop to shutdown the server}
-alias App[&T] = tuple[
-  void() serve, 
-  void() stop 
-];
+alias App[&T] = tuple[void() serve, void() stop];
 
-alias Subs[&T] = list[Sub](&T);
-
-list[Sub] noSubs(&T t) = [];
 
 WithCmds[&T](Msg, &T) emptyCmds(&T(Msg, &T) update)
   = WithCmds[&T](Msg m, &T t) { return noCmds(update(m, t)); };
@@ -41,8 +29,8 @@ alias AppState = tuple[
   map[value, int] to
 ];
 
-AppState newAppState() = < -1, (), ()>;
 
+@doc{Helper function for apps that don't need commands.}
 App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
             Subs[&T] subs = noSubs, str root = "root") 
  = app(noCmds(model), view, emptyCmds(update), http, static, subs = subs, root = root);
@@ -53,7 +41,7 @@ The keyword param root identifies the root element in the html document.}
 App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) update, loc http, loc static, 
             Subs[&T] subs = noSubs, str root = "root") {
 
-  AppState state = newAppState();
+  AppState state = < -1, (), ()>;
   
   // encode functions (for handlers) as integers
   int myEncode(value x) {
@@ -69,9 +57,9 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   &U myDecode(int id, type[&U] t) = d
     when &U d := state.from[id];
   
-  Html asRoot(Html h) = h[attrs=h.attrs + ("id": root)];
+  Node asRoot(Node h) = h[attrs=h.attrs + ("id": root)];
 
-  Html current;
+  Node current;
 
   &T model;
 
@@ -80,8 +68,8 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   Response _handle(Request req) {
     // publish my encoder and decoder to gui::Encode.
     // todo: make a function.
-    gui::Encode::_encode = myEncode;
-    gui::Encode::_decode = myDecode;
+    gui::Core::_encode = myEncode;
+    gui::Core::_decode = myDecode;
 
     // initially, just render the view, for the current model.
     if (get("/init") := req) {
@@ -110,7 +98,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
       <model, myCmds> = update(msg, model);
       
       // compute the new view
-      Html newView = asRoot(render(model, view));
+      Node newView = asRoot(render(model, view));
       
       // compute the patch to be sent to the browser
       Patch myPatch = diff(current, newView);

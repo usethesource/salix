@@ -2,7 +2,6 @@ module examples::shop::Shop
 
 import gui::HTML;
 import gui::App;
-import gui::Comms;
 import String;
 import List;
 import IO;

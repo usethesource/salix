@@ -3,7 +3,7 @@ module lib::Expando
 
 import gui::HTML;
 import gui::App;
-import gui::Render;
+import gui::Node;
 import util::Maybe;
 import Type;
 import Node;

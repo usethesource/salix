@@ -1,7 +1,7 @@
 module examples::Random
 
 import gui::HTML;
-import gui::Comms;
+import gui::Core;
 import gui::App;
 
 import util::Math;

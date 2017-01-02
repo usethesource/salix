@@ -5,15 +5,13 @@ import String;
 import IO;
 
 
-// TODO: Html -> Node (as it also represents SVG)
-// TODO: move node to its own module
 // TODO: make attrs/props/events kw params to save memory
 // TODO: make attrs map[str, Attribute] to deal with namespaces
 
 @doc{The basic Html node type, defining constructors for
 elements, text nodes, and native nodes (which are managed in js).}
-data Html
-  = element(str tagName, list[Html] kids, map[str, str] attrs, map[str, str] props, map[str, Hnd] events)
+data Node
+  = element(str tagName, list[Node] kids, map[str, str] attrs, map[str, str] props, map[str, Hnd] events)
   // Natives don't have attrs, since we don't manage the DOM for it;
   // properties are handled however the internals wish to.
   | native(str kind, map[str, str] props, map[str, Hnd] events)
@@ -36,17 +34,17 @@ data Attr
 // TODO: keyed elements 
 
 @doc{The html element stack used during rendering.}
-private list[list[Html]] stack = [];
+private list[list[Node]] stack = [];
 
 @doc{Basic stack management functions.}
-private void add(Html h) = push(pop() + [h]);
+private void add(Node h) = push(pop() + [h]);
 
-private void push(list[Html] l) { stack += [l]; }
+private void push(list[Node] l) { stack += [l]; }
 
-private list[Html] top() = stack[-1];
+private list[Node] top() = stack[-1];
 
-private list[Html] pop() {
-  list[Html] elts = top();
+private list[Node] pop() {
+  list[Node] elts = top();
   stack = stack[..-1];
   return elts;
 }
@@ -60,8 +58,8 @@ map[str,str] propsOf(list[Attr] attrs) = ( k: v | prop(str k, str v) <- attrs );
 map[str,Hnd] eventsOf(list[Attr] attrs) = ( k: v | event(str k, Hnd v) <- attrs );
 
 
-@doc{Render turns void returning views for a model &T into an Html node.}  
-Html render(&T model, void(&T) block) {
+@doc{Render turns void returning views for a model &T into an Node node.}  
+Node render(&T model, void(&T) block) {
   push([]); 
   block(model);
   // TODO: throw exception if top is empty or
@@ -72,9 +70,9 @@ Html render(&T model, void(&T) block) {
 
 @doc{The basic build function to construct html elements on the stack.
 The list of argument values can contain any number of Attr values.
-The last argument (if any) can be a block, an Html node, or a value.
+The last argument (if any) can be a block, an Node node, or a value.
 In the latter case it is converted to a txt node.}
-void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
+void build(list[value] vals, Node(list[Node], list[Attr]) elt) {
   
   push([]); // start a new scope for this element's children
   
@@ -82,7 +80,7 @@ void build(list[value] vals, Html(list[Html], list[Attr]) elt) {
     if (void() block := vals[-1]) { // argument block is just called
       block();
     }
-    else if (Html h := vals[-1]) { // a computed node is simply added
+    else if (Node h := vals[-1]) { // a computed node is simply added
       add(h);
     }
     else if (Attr _ !:= vals[-1]) { // else (if not Attr), render as text.

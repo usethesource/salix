@@ -2,7 +2,7 @@ module lib::Debug
 
 import gui::HTML;
 import gui::App;
-import gui::Comms;
+import gui::Core;
 import gui::Node; // for null()...
 import List;
 

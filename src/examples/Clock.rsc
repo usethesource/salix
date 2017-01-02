@@ -3,7 +3,7 @@ module examples::Clock
 import gui::SVG;
 import gui::HTML;
 import gui::App;
-import gui::Comms;
+import gui::Core;
 import util::Math;
 
 alias Model = tuple[int time, bool running];

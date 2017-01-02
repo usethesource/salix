@@ -6,11 +6,11 @@ import Node;
 import List;
 import util::Math;
 
-bool sanity(Html h1, Html h2) = apply(diff(h1, h2), h1) == h2;
+bool sanity(Node h1, Node h2) = apply(diff(h1, h2), h1) == h2;
 
-Patch diff(Html old, Html new) = diff(old, new, -1);
+Patch diff(Node old, Node new) = diff(old, new, -1);
 
-Patch diff(Html old, Html new, int idx) {
+Patch diff(Node old, Node new, int idx) {
   if (getName(old) != getName(new)) {
     return patch(idx, [], [replace(new)]);
   }
@@ -41,7 +41,7 @@ Patch diff(Html old, Html new, int idx) {
   return diffKids(old.kids, new.kids, patch(idx, [], edits));
 }
 
-Patch diffKids(list[Html] oldKids, list[Html] newKids, Patch myPatch) {
+Patch diffKids(list[Node] oldKids, list[Node] newKids, Patch myPatch) {
   oldLen = size(oldKids);
   newLen = size(newKids);
   

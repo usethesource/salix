@@ -1,9 +1,7 @@
 module lib::codemirror::CodeMirror
 
 import gui::HTML;
-import gui::App;
-import gui::Comms;
-import gui::Encode;
+import gui::Core;
 import gui::Node;
 import IO;
 import String;
@@ -22,7 +20,7 @@ Msg codeMirrorChangeParser(Handle h, map[str, str] p)
 
 void codeMirror(value vals...) = build(vals, _codeMirror);
 
-Html _codeMirror(list[Html] _, list[Attr] attrs)
+Node _codeMirror(list[Node] _, list[Attr] attrs)
   = native("codeMirror",  propsOf(attrs), eventsOf(attrs));
 
 // hack to make something run on import

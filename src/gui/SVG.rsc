@@ -1,11 +1,11 @@
 module gui::SVG
 
 import gui::Node;
-import gui::Comms;
+import gui::Core;
 
 data Msg;
 
-Html svgElement(str name, list[Html] kids, map[str,str] attrs, map[str, str] props, map[str, Hnd] events)
+Node svgElement(str name, list[Node] kids, map[str,str] attrs, map[str, str] props, map[str, Hnd] events)
   = element(name, kids, attrs, props + ("namespace": "http://www.w3.org/2000/svg"), events);
   
 // User functions
@@ -129,145 +129,145 @@ void view(value vals...) = build(vals, _view);
   
 // basics  
   
-Html _svg(list[Html] kids, list[Attr] attrs)
+Node _svg(list[Node] kids, list[Attr] attrs)
   = svgElement("svg", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _animate(list[Html] kids, list[Attr] attrs)
+Node _animate(list[Node] kids, list[Attr] attrs)
   = svgElement("animate", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _animateColor(list[Html] kids, list[Attr] attrs)
+Node _animateColor(list[Node] kids, list[Attr] attrs)
   = svgElement("animateColor", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _animateMotion(list[Html] kids, list[Attr] attrs)
+Node _animateMotion(list[Node] kids, list[Attr] attrs)
   = svgElement("animateMotion", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _animateTransform(list[Html] kids, list[Attr] attrs)
+Node _animateTransform(list[Node] kids, list[Attr] attrs)
   = svgElement("animateTransform", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _mpath(list[Html] kids, list[Attr] attrs)
+Node _mpath(list[Node] kids, list[Attr] attrs)
   = svgElement("mpath", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _set(list[Html] kids, list[Attr] attrs)
+Node _set(list[Node] kids, list[Attr] attrs)
   = svgElement("set", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 // Container elements
 
-Html _a(list[Html] kids, list[Attr] attrs)
+Node _a(list[Node] kids, list[Attr] attrs)
   = svgElement("a", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _defs(list[Html] kids, list[Attr] attrs)
+Node _defs(list[Node] kids, list[Attr] attrs)
   = svgElement("defs", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _g(list[Html] kids, list[Attr] attrs)
+Node _g(list[Node] kids, list[Attr] attrs)
   = svgElement("g", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _marker(list[Html] kids, list[Attr] attrs)
+Node _marker(list[Node] kids, list[Attr] attrs)
   = svgElement("marker", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _mask(list[Html] kids, list[Attr] attrs)
+Node _mask(list[Node] kids, list[Attr] attrs)
   = svgElement("mask", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _pattern(list[Html] kids, list[Attr] attrs)
+Node _pattern(list[Node] kids, list[Attr] attrs)
   = svgElement("pattern", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _switch(list[Html] kids, list[Attr] attrs)
+Node _switch(list[Node] kids, list[Attr] attrs)
   = svgElement("switch", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _symbol(list[Html] kids, list[Attr] attrs)
+Node _symbol(list[Node] kids, list[Attr] attrs)
   = svgElement("symbol", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 // Descriptive elements
 
-Html _desc(list[Html] kids, list[Attr] attrs)
+Node _desc(list[Node] kids, list[Attr] attrs)
   = svgElement("desc", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _metadata(list[Html] kids, list[Attr] attrs)
+Node _metadata(list[Node] kids, list[Attr] attrs)
   = svgElement("metadata", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _title(list[Html] kids, list[Attr] attrs)
+Node _title(list[Node] kids, list[Attr] attrs)
   = svgElement("title", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 // Filter primitive elements
 
-Html _feBlend(list[Html] kids, list[Attr] attrs)
+Node _feBlend(list[Node] kids, list[Attr] attrs)
   = svgElement("feBlend", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feColorMatrix(list[Html] kids, list[Attr] attrs)
+Node _feColorMatrix(list[Node] kids, list[Attr] attrs)
   = svgElement("feColorMatrix", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feComponentTransfer(list[Html] kids, list[Attr] attrs)
+Node _feComponentTransfer(list[Node] kids, list[Attr] attrs)
   = svgElement("feComponentTransfer", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feComposite(list[Html] kids, list[Attr] attrs)
+Node _feComposite(list[Node] kids, list[Attr] attrs)
   = svgElement("feComposite", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feConvolveMatrix(list[Html] kids, list[Attr] attrs)
+Node _feConvolveMatrix(list[Node] kids, list[Attr] attrs)
   = svgElement("feConvolveMatrix", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 
-Html _feDiffuseLighting(list[Html] kids, list[Attr] attrs)
+Node _feDiffuseLighting(list[Node] kids, list[Attr] attrs)
   = svgElement("feDiffuseLighting", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feDisplacementMap(list[Html] kids, list[Attr] attrs)
+Node _feDisplacementMap(list[Node] kids, list[Attr] attrs)
   = svgElement("feDisplacementMap", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feFlood(list[Html] kids, list[Attr] attrs)
+Node _feFlood(list[Node] kids, list[Attr] attrs)
   = svgElement("feFlood", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feFuncA(list[Html] kids, list[Attr] attrs)
+Node _feFuncA(list[Node] kids, list[Attr] attrs)
   = svgElement("feFuncA", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feFuncB(list[Html] kids, list[Attr] attrs)
+Node _feFuncB(list[Node] kids, list[Attr] attrs)
   = svgElement("feFuncB", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feFuncG(list[Html] kids, list[Attr] attrs)
+Node _feFuncG(list[Node] kids, list[Attr] attrs)
   = svgElement("feFuncG", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feFuncR(list[Html] kids, list[Attr] attrs)
+Node _feFuncR(list[Node] kids, list[Attr] attrs)
   = svgElement("feFuncR", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feGaussianBlur(list[Html] kids, list[Attr] attrs)
+Node _feGaussianBlur(list[Node] kids, list[Attr] attrs)
   = svgElement("feGaussianBlur", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feImage(list[Html] kids, list[Attr] attrs)
+Node _feImage(list[Node] kids, list[Attr] attrs)
   = svgElement("feImage", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feMerge(list[Html] kids, list[Attr] attrs)
+Node _feMerge(list[Node] kids, list[Attr] attrs)
   = svgElement("feMerge", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feMergeNode(list[Html] kids, list[Attr] attrs)
+Node _feMergeNode(list[Node] kids, list[Attr] attrs)
   = svgElement("feMergeNode", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feMorphology(list[Html] kids, list[Attr] attrs)
+Node _feMorphology(list[Node] kids, list[Attr] attrs)
   = svgElement("feMorphology", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feOffset(list[Html] kids, list[Attr] attrs)
+Node _feOffset(list[Node] kids, list[Attr] attrs)
   = svgElement("feOffset", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feSpecularLighting(list[Html] kids, list[Attr] attrs)
+Node _feSpecularLighting(list[Node] kids, list[Attr] attrs)
   = svgElement("feSpecularLighting", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feTile(list[Html] kids, list[Attr] attrs)
+Node _feTile(list[Node] kids, list[Attr] attrs)
   = svgElement("feTile", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feTurbulence(list[Html] kids, list[Attr] attrs)
+Node _feTurbulence(list[Node] kids, list[Attr] attrs)
   = svgElement("feTurbulence", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 
 // Font elements
 
-Html _font(list[Html] kids, list[Attr] attrs)
+Node _font(list[Node] kids, list[Attr] attrs)
   = svgElement("font", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 // Gradient elements
 
-Html _linearGradient(list[Html] kids, list[Attr] attrs)
+Node _linearGradient(list[Node] kids, list[Attr] attrs)
   = svgElement("linearGradient", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _radialGradient(list[Html] kids, list[Attr] attrs)
+Node _radialGradient(list[Node] kids, list[Attr] attrs)
   = svgElement("radialGradient", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _stop(list[Html] kids, list[Attr] attrs)
+Node _stop(list[Node] kids, list[Attr] attrs)
   = svgElement("stop", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 // Graphics elements
@@ -276,22 +276,22 @@ Html _stop(list[Html] kids, list[Attr] attrs)
 a center point and a radius.
     circle [ cx "60", cy "60", r "50" ] []
 */
-Html _circle(list[Html] kids, list[Attr] attrs)
+Node _circle(list[Node] kids, list[Attr] attrs)
   = svgElement("circle", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _ellipse(list[Html] kids, list[Attr] attrs)
+Node _ellipse(list[Node] kids, list[Attr] attrs)
   = svgElement("ellipse", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _image(list[Html] kids, list[Attr] attrs)
+Node _image(list[Node] kids, list[Attr] attrs)
   = svgElement("image", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _line(list[Html] kids, list[Attr] attrs)
+Node _line(list[Node] kids, list[Attr] attrs)
   = svgElement("line", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _path(list[Html] kids, list[Attr] attrs)
+Node _path(list[Node] kids, list[Attr] attrs)
   = svgElement("path", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _polygon(list[Html] kids, list[Attr] attrs)
+Node _polygon(list[Node] kids, list[Attr] attrs)
   = svgElement("polygon", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 /* The polyline element is an SVG basic shape, used to create a series of
@@ -299,76 +299,76 @@ straight lines connecting several points. Typically a polyline is used to
 create open shapes.
     polyline [ fill "none", stroke "black", points "20,100 40,60 70,80 100,20" ] []
 */
-Html _polyline(list[Html] kids, list[Attr] attrs)
+Node _polyline(list[Node] kids, list[Attr] attrs)
   = svgElement("polyline", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _rect(list[Html] kids, list[Attr] attrs)
+Node _rect(list[Node] kids, list[Attr] attrs)
   = svgElement("rect", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _use(list[Html] kids, list[Attr] attrs)
+Node _use(list[Node] kids, list[Attr] attrs)
   = svgElement("use", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 // Light source elements
 
-Html _feDistantLight(list[Html] kids, list[Attr] attrs)
+Node _feDistantLight(list[Node] kids, list[Attr] attrs)
   = svgElement("feDistantLight", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _fePointLight(list[Html] kids, list[Attr] attrs)
+Node _fePointLight(list[Node] kids, list[Attr] attrs)
   = svgElement("fePointLight", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _feSpotLight(list[Html] kids, list[Attr] attrs)
+Node _feSpotLight(list[Node] kids, list[Attr] attrs)
   = svgElement("feSpotLight", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 // Text content elements
 
-Html _altGlyph(list[Html] kids, list[Attr] attrs)
+Node _altGlyph(list[Node] kids, list[Attr] attrs)
   = svgElement("altGlyph", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _altGlyphDef(list[Html] kids, list[Attr] attrs)
+Node _altGlyphDef(list[Node] kids, list[Attr] attrs)
   = svgElement("altGlyphDef", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _altGlyphItem(list[Html] kids, list[Attr] attrs)
+Node _altGlyphItem(list[Node] kids, list[Attr] attrs)
   = svgElement("altGlyphItem", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _glyph(list[Html] kids, list[Attr] attrs)
+Node _glyph(list[Node] kids, list[Attr] attrs)
   = svgElement("glyph", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _glyphRef(list[Html] kids, list[Attr] attrs)
+Node _glyphRef(list[Node] kids, list[Attr] attrs)
   = svgElement("glyphRef", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _textPath(list[Html] kids, list[Attr] attrs)
+Node _textPath(list[Node] kids, list[Attr] attrs)
   = svgElement("textPath", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _text_(list[Html] kids, list[Attr] attrs)
+Node _text_(list[Node] kids, list[Attr] attrs)
   = svgElement("text", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _tref(list[Html] kids, list[Attr] attrs)
+Node _tref(list[Node] kids, list[Attr] attrs)
   = svgElement("tref", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _tspan(list[Html] kids, list[Attr] attrs)
+Node _tspan(list[Node] kids, list[Attr] attrs)
   = svgElement("tspan", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 // Uncategorized elements
 
-Html _clipPath(list[Html] kids, list[Attr] attrs)
+Node _clipPath(list[Node] kids, list[Attr] attrs)
   = svgElement("clipPath", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _colorProfile(list[Html] kids, list[Attr] attrs)
+Node _colorProfile(list[Node] kids, list[Attr] attrs)
   = svgElement("colorProfile", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _cursor(list[Html] kids, list[Attr] attrs)
+Node _cursor(list[Node] kids, list[Attr] attrs)
   = svgElement("cursor", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _filter(list[Html] kids, list[Attr] attrs)
+Node _filter(list[Node] kids, list[Attr] attrs)
   = svgElement("filter", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _script(list[Html] kids, list[Attr] attrs)
+Node _script(list[Node] kids, list[Attr] attrs)
   = svgElement("script", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _style(list[Html] kids, list[Attr] attrs)
+Node _style(list[Node] kids, list[Attr] attrs)
   = svgElement("style", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Html _view(list[Html] kids, list[Attr] attrs)
+Node _view(list[Node] kids, list[Attr] attrs)
   = svgElement("view", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 // Attributes

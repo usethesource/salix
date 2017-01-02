@@ -2,7 +2,7 @@ module examples::All
 
 import gui::HTML;
 import gui::App;
-import gui::Comms; // for Sub type
+import gui::Core; 
 import lib::EditableList;
 import lib::Debug;
 import IO;
@@ -40,7 +40,7 @@ App[AllModel] allApp()
 
 App[AllModel] debugAllApp() 
   = debug(initAll(), viewAll, editAll, 
-        |http://localhost:9203|, |project://elmer/src|,
+        |http://localhost:9204|, |project://elmer/src|,
         subs = allSubs); 
   
 WithCmds[AllModel] initAll() = noCmds(<
