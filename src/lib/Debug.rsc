@@ -3,7 +3,7 @@ module lib::Debug
 import gui::HTML;
 import gui::App;
 import gui::Comms;
-import gui::Render; // for null()...
+import gui::Node; // for null()...
 import List;
 
 alias DebugModel[&T]

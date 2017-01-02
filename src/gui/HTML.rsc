@@ -1,6 +1,6 @@
 module gui::HTML
 
-import gui::Render;
+import gui::Node;
 import gui::Comms;
 import List;
 import String;

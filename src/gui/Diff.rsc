@@ -1,6 +1,6 @@
 module gui::Diff
 
-import gui::Render;
+import gui::Node;
 import gui::Patch;
 import Node;
 import List;

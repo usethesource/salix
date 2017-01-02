@@ -4,7 +4,7 @@ import gui::HTML;
 import gui::App;
 import gui::Comms;
 import gui::Encode;
-import gui::Render;
+import gui::Node;
 import IO;
 import String;
 import List;

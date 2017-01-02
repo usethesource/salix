@@ -2,7 +2,6 @@ module examples::todomvc::TodoMVC
 
 import gui::HTML;
 import gui::App;
-import gui::Render;
 import gui::Comms;
 
 import List;
@@ -53,8 +52,8 @@ Model update(Msg msg, Model model) {
       ;
       
     case add(): {
-      model.uid += 1;
       if (model.field != "") {
+        model.uid += 1;
         model.entries += [newEntry(model.field, model.uid)];
         model.field = "";
       }

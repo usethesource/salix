@@ -1,6 +1,6 @@
 module gui::App
 
-import gui::Render;
+import gui::Node;
 import gui::Encode;
 import gui::Comms;
 import gui::Diff;
@@ -73,10 +73,6 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
 
   Html current;
 
-  //list[Msg] trace = [];
-  
-  //void myTracedView(&T t) = traceView(<trace, t>, view); 
-  
   &T model;
 
   // the main handler to interpret http requests.
@@ -109,13 +105,8 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
       
       
       println("Processing: <msg>");
-      //trace += [msg];
-      //if (size(trace) > 50) {
-      //  trace = trace[1..];
-      //}
       
       // update the model
-      // TODO: lets avoid the captured model variable here...
       <model, myCmds> = update(msg, model);
       
       // compute the new view
@@ -148,3 +139,4 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
     () { shutdown(http); }
    >;
 }
+

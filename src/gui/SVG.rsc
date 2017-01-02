@@ -1,6 +1,6 @@
 module gui::SVG
 
-import gui::Render;
+import gui::Node;
 import gui::Comms;
 
 data Msg;

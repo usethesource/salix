@@ -3,7 +3,6 @@ module examples::Clock
 import gui::SVG;
 import gui::HTML;
 import gui::App;
-import gui::Render;
 import gui::Comms;
 import util::Math;
 
