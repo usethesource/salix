@@ -223,9 +223,11 @@ function Salix(aRootId) {
 				}
 			}
 		}
+		var offset = 0;
 		for (var i = 0; i < del.length; i++) {
-			console.log("Discarding stale event: " + JSON.stringify(event_queue[i].result));
-			event_queue.splice(i, 1);
+			console.log("Discarding stale event: " + JSON.stringify(event_queue[i - offset].result));
+			event_queue.splice(i - offset, 1);
+			offset += 1;
 		}
 	}
 
@@ -247,6 +249,7 @@ function Salix(aRootId) {
 				break;			
 				
 			case 'removeNode': // can't happen if dom is native
+				flushEvents(dom.lastChild);
 				dom.removeChild(dom.lastChild);
 				break;
 				
