@@ -4,7 +4,7 @@ import Type;
 import ParseTree;
 
 data Mode
-  = mode(list[State] states, map[str, value] meta = ());
+  = mode(str name, list[State] states, map[str, value] meta = ());
   
 data State
   = state(str name, list[Rule] rules)
@@ -21,7 +21,7 @@ str cat2token("Variable") = "variable";
 str cat2token(str _) = "unknown";
 
 
-Mode grammar2mode(type[&T <: Tree] sym) {
+Mode grammar2mode(str name, type[&T <: Tree] sym) {
   defs = sym.definitions;
   
   str reEsc(str c) = c in {"*", "\\", "+", "?", "|"} ? "\\<c>" : c;
@@ -36,11 +36,11 @@ Mode grammar2mode(type[&T <: Tree] sym) {
   kwRule = rule("(?:<intercalate("|", [ l | l <- lits ])>)\\b", ["keyword"]);   
   opRule = rule("(?:<intercalate("|", [ reEsc(l) | l <- ops ])>)\\b", ["operator"]);
      
-  return mode([state("start", [kwRule, opRule])]);
+  return mode(name, [state("start", [kwRule, opRule])]);
 }  
   
   
-Mode jsExample() = mode([  
+Mode jsExample() = mode("javascript", [  
   state("start", [
     rule("\"(?:[^\\]|\\.)*?(?:\"|$)", ["string"]),
 

@@ -8,6 +8,29 @@
 
 function registerCodeMirror(elmer) {
 	
+	
+	function parseSimpleMode(mode) {
+		console.log(JSON.stringify(mode, 2));
+		
+		var jsMode = {};
+		for (var i = 0; i < mode.mode.states.length; i++) {
+			var state = mode.mode.states[i]
+			var name = state.state.name;
+			jsMode[name] = []; 
+			for (var j = 0; j < state.state.rules.length; j++) {
+				var rule = state.state.rules[i];
+				var token = rule.rule.tokens.length > 1 
+					? rule.rule.tokens : rule.rule.tokens[0];
+				jsMode[name].push({regex: new RegExp(rule.rule.regex),
+						token: token});
+			}
+		}
+		console.log(JSON.stringify(jsMode, 2));
+		
+		return jsMode;
+	}
+	
+	
 	function dec2handler(decoder) {
 		switch (elmer.nodeType(decoder)) {
 		
@@ -35,11 +58,15 @@ function registerCodeMirror(elmer) {
 		}
 	}
 	
-	function codeMirror(parent, props, events) {
+	function codeMirror(parent, props, events, extra) {
 		var cm = CodeMirror(parent, {});
 		// for remove event.
 		var myHandlers = {};
 		
+		if (extra && extra.mode) {
+			var mode = parseSimpleMode(extra.mode);
+			CodeMirror.defineSimpleMode(extra.mode.mode.name, mode);
+		}
 
 		for (var key in props) {
 			// todo: this logic is shared with setProp

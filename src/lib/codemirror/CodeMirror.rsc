@@ -3,6 +3,7 @@ module lib::codemirror::CodeMirror
 import gui::HTML;
 import gui::Core;
 import gui::Node;
+import lib::Mode;
 import IO;
 import String;
 import List;
@@ -19,6 +20,13 @@ Msg codeMirrorChangeParser(Handle h, map[str, str] p)
            p["text"], p["removed"]));
 
 void codeMirror(value vals...) = build(vals, _codeMirror);
+
+void codeMirrorWithMode(Mode mode, value vals...) = build(vals, _codeMirrorWithMode(mode));
+
+Node(list[Node],list[Attr]) _codeMirrorWithMode(Mode mode)
+  = Node(list[Node] _, list[Attr] attrs) { 
+      return native("codeMirror",  propsOf(attrs), eventsOf(attrs), extra = ("mode": mode));
+   };
 
 Node _codeMirror(list[Node] _, list[Attr] attrs)
   = native("codeMirror",  propsOf(attrs), eventsOf(attrs));

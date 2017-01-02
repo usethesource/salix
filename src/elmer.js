@@ -1,6 +1,19 @@
 
 
-// TODO: make nice object, with methods to register natives/builders etc.
+/*
+ *
+ * Here's another problem of ordering:
+ * 
+Processing: sub(clock(tick(1483357114)))
+Processing: sub(clock(tick(1483357115)))
+Processing: sub(clock(tick(1483357116)))
+Processing: sub(clock(tick(1483357117)))
+Processing: sub(clock(tick(1483357118)))
+Processing: sub(clock(toggle()))
+Processing: sub(clock(tick(1483357119)))
+
+ */
+
 
 function Elmer(aRootId) {
 	var rootId = aRootId || 'root';
@@ -351,7 +364,7 @@ function Elmer(aRootId) {
 	
 	function makeNative(native) {
 		return function (parent) {
-			return builders[native.kind](parent, native.props, native.events);
+			return builders[native.kind](parent, native.props, native.events, native.extra);
 		}
 	}
 
