@@ -1,14 +1,14 @@
-module examples::ListDemo
+module salix::demo::ListDemo
 
-import gui::HTML;
-import gui::App;
-import lib::EditableList;
+import salix::HTML;
+import salix::App;
+import salix::lib::EditableList;
 
 //App[ListModel[str]] listApp() 
 // generics and functions...
 App[tuple[list[value],str(Msg, str), str(int)]] listApp() 
   = app(<["hello", "world!"], editStr, initStr>, view, editList, 
-        |http://localhost:9200|, |project://elmer/src/examples|); 
+        |http://localhost:9200|, |project://salix/src|); 
 
 data Msg
   = changeText(str x)

@@ -1,7 +1,7 @@
-module gui::Diff
+module salix::Diff
 
-import gui::Node;
-import gui::Patch;
+import salix::Node;
+import salix::Patch;
 import Node;
 import List;
 import util::Math;

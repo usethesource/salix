@@ -1,27 +1,27 @@
-module examples::All
+module demo::basic::All
 
-import gui::HTML;
-import gui::App;
-import gui::Core; 
-import lib::EditableList;
-import lib::Debug;
+import salix::HTML;
+import salix::App;
+import salix::Core; 
+import salix::lib::EditableList;
+import salix::lib::Debug;
 import IO;
 
-import examples::Celsius;
-import examples::Counter;
-import examples::ListDemo;
-import examples::CodeMirror;
-import examples::Clock;
-import examples::Random;
+import demo::basic::Celsius;
+import demo::basic::Counter;
+import demo::basic::ListDemo;
+import demo::basic::CodeMirror;
+import demo::basic::Clock;
+import demo::basic::Random;
 
 
 alias AllModel = tuple[
   real celsius, 
-  examples::Counter::Model counter, 
+  demo::basic::Counter::Model counter, 
   ListModel[str] listDemo,
-  examples::Random::TwiceModel random,
-  examples::CodeMirror::Model codeMirror,
-  examples::Clock::Model clock
+  demo::basic::Random::TwiceModel random,
+  demo::basic::CodeMirror::Model codeMirror,
+  demo::basic::Clock::Model clock
 ];
 
 data Msg
@@ -34,35 +34,31 @@ data Msg
   ;
 
 App[AllModel] allApp() 
-  = app(initAll(), viewAll, editAll, 
-        |http://localhost:9203|, |project://elmer/src|,
-        subs = allSubs); 
+  = app(initAll(), viewAll, editAll, |http://localhost:9203|, |project://salix/src|, subs = allSubs); 
 
 App[AllModel] debugAllApp() 
-  = debug(initAll(), viewAll, editAll, 
-        |http://localhost:9204|, |project://elmer/src|,
-        subs = allSubs); 
+  = debug(initAll(), viewAll, editAll, |http://localhost:9204|, |project://salix/src|, subs = allSubs); 
   
 WithCmds[AllModel] initAll() = noCmds(<
   37.0, 
-  examples::Counter::init(), 
+  demo::basic::Counter::init(), 
   <["hello", "world!"], editStr, initStr>,
-  examples::Random::twiceInit().model,
-  examples::CodeMirror::init(),
-  examples::Clock::init() 
+  demo::basic::Random::twiceInit().model,
+  demo::basic::CodeMirror::init(),
+  demo::basic::Clock::init() 
 >);  
   
 list[Sub] allSubs(AllModel m) 
-  = mapping.subs(Msg::clock, m.clock, examples::Clock::subs);
+  = mapping.subs(Msg::clock, m.clock, demo::basic::Clock::subs);
   
 void viewAll(AllModel m) {
   div(() {
-     mapping.view(Msg::celsius, m.celsius, examples::Celsius::view);
-     mapping.view(Msg::counter, m.counter, examples::Counter::view);
-     mapping.view(Msg::listDemo, m.listDemo, examples::ListDemo::view);
-     mapping.view(Msg::random, m.random, examples::Random::twiceView);
-     mapping.view(Msg::codeMirror, m.codeMirror, examples::CodeMirror::view);
-     mapping.view(Msg::clock, m.clock, examples::Clock::view);
+     mapping.view(Msg::celsius, m.celsius, demo::basic::Celsius::view);
+     mapping.view(Msg::counter, m.counter, demo::basic::Counter::view);
+     mapping.view(Msg::listDemo, m.listDemo, demo::basic::ListDemo::view);
+     mapping.view(Msg::random, m.random, demo::basic::Random::twiceView);
+     mapping.view(Msg::codeMirror, m.codeMirror, demo::basic::CodeMirror::view);
+     mapping.view(Msg::clock, m.clock, demo::basic::Clock::view);
   });
 }
 
@@ -70,10 +66,10 @@ WithCmds[AllModel] editAll(Msg msg, AllModel m) {
   list[Cmd] cmds = [];
   switch (msg) {
     case celsius(Msg msg):
-      m.celsius = examples::Celsius::update(msg, m.celsius);
+      m.celsius = demo::basic::Celsius::update(msg, m.celsius);
       
     case counter(Msg msg):
-      m.counter = examples::Counter::update(msg, m.counter);
+      m.counter = demo::basic::Counter::update(msg, m.counter);
     
     case listDemo(Msg msg):
       m.listDemo = editList(msg, m.listDemo);
@@ -82,10 +78,10 @@ WithCmds[AllModel] editAll(Msg msg, AllModel m) {
       <m.random, cmds> = mapping.cmds(Msg::random, msg, m.random, twiceUpdate);
     
     case codeMirror(Msg msg):
-      m.codeMirror = examples::CodeMirror::update(msg, m.codeMirror);
+      m.codeMirror = demo::basic::CodeMirror::update(msg, m.codeMirror);
       
     case clock(Msg msg):
-      m.clock = examples::Clock::update(msg, m.clock);
+      m.clock = demo::basic::Clock::update(msg, m.clock);
   }
   
   return withCmds(m, cmds);

@@ -1,8 +1,8 @@
-module examples::Celsius
+module demo::basic::Celsius
 
-import gui::HTML;
-import gui::App;
-import lib::Debug;
+import salix::HTML;
+import salix::App;
+import salix::lib::Debug;
 import String;
 import util::Math;
 
@@ -13,7 +13,7 @@ data Msg
   ;
 
 App[real] celsiusApp() = 
-  celsiusApp(37.0, |http://localhost:9193|, |project://elmer/src/examples|); 
+  celsiusApp(37.0, |http://localhost:9193|, |project://salix/src|); 
 
 App[real] celsiusApp(real m, loc http, loc static) 
   = app(m, view, update, http, static); 

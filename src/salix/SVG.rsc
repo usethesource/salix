@@ -1,7 +1,7 @@
 module gui::SVG
 
-import gui::Node;
-import gui::Core;
+import salix::Node;
+import salix::Core;
 
 data Msg;
 

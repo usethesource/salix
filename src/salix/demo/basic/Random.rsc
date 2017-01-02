@@ -1,8 +1,8 @@
-module examples::Random
+module salix::demo::Random
 
-import gui::HTML;
-import gui::Core;
-import gui::App;
+import salix::HTML;
+import salix::Core;
+import salix::App;
 
 import util::Math;
 
@@ -59,7 +59,7 @@ void view(Model m) {
 // Twice
 
 App[TwiceModel] twiceRandomApp()
-  = app(twiceInit(), twiceView, twiceUpdate, |http://localhost:9098|, |project://elmer/src/examples|); 
+  = app(twiceInit(), twiceView, twiceUpdate, |http://localhost:9098|, |project://salix/src|); 
 
 data TwiceModel 
   = twice(Model model1, Model model2);

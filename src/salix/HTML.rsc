@@ -1,7 +1,7 @@
-module gui::HTML
+module salix::HTML
 
-import gui::Node;
-import gui::Core;
+import salix::Node;
+import salix::Core;
 import List;
 import String;
 import IO;

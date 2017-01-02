@@ -1,4 +1,4 @@
-module examples::statemachine::StateMachine
+module salix::demo::ide::StateMachine
 
 start syntax Controller = controller: Events events ResetEvents? resets Commands? commands State* states;
 

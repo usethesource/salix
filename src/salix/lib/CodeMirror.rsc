@@ -1,9 +1,9 @@
-module lib::codemirror::CodeMirror
+module salix::lib::CodeMirror
 
-import gui::HTML;
-import gui::Core;
-import gui::Node;
-import lib::Mode;
+import salix::HTML;
+import salix::Core;
+import salix::Node;
+import salix::lib::Mode;
 import IO;
 import String;
 import List;

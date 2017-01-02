@@ -1,4 +1,4 @@
-module gui::Core
+module salix::Core
 
 // import this if you need commands/subscriptions, or define your
 // own event handling parsers.

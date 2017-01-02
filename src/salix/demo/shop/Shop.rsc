@@ -1,7 +1,7 @@
-module examples::shop::Shop
+module salix::demo::shop::Shop
 
-import gui::HTML;
-import gui::App;
+import salix::HTML;
+import salix::App;
 import String;
 import List;
 import IO;

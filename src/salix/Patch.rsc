@@ -1,6 +1,6 @@
-module gui::Patch
+module salix::Patch
 
-import gui::Node;
+import salix::Node;
 import Map;
 import List;
 import Node;

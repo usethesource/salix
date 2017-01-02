@@ -1,7 +1,7 @@
-module lib::EditableList
+module salix::lib::EditableList
 
-import gui::HTML;
-import gui::Core;
+import salix::HTML;
+import salix::Core;
 import List;
 import IO;
 

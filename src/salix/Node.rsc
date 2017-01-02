@@ -1,4 +1,4 @@
-module gui::Node
+module salix::Node
 
 import List;
 import String;

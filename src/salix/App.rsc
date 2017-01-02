@@ -1,9 +1,9 @@
-module gui::App
+module salix::App
 
-import gui::Node;
-import gui::Core;
-import gui::Diff;
-import gui::Patch;
+import salix::Node;
+import salix::Core;
+import salix::Diff;
+import salix::Patch;
 
 import util::Webserver;
 import IO;

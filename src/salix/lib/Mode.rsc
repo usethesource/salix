@@ -1,4 +1,6 @@
-module lib::Mode
+module salix::lib::Mode
+
+// todo: move elsewhere (e.g. to CodeMirror).
 
 import Type;
 import ParseTree;

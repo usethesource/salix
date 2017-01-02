@@ -1,11 +1,11 @@
-module examples::statemachine::IDE
+module salix::demo::ide::IDE
 
-import gui::App;
-import gui::HTML;
-import gui::Node;
-import examples::statemachine::StateMachine;
-import lib::codemirror::CodeMirror;
-import lib::Mode;
+import salix::App;
+import salix::HTML;
+import salix::Node;
+import salix::demo::ide::StateMachine;
+import salix::lib::CodeMirror;
+import salix::lib::Mode;
 import util::Maybe;
 import ParseTree;
 import String;
@@ -14,7 +14,7 @@ import IO;
 
 
 App[Model] ideApp() 
-  = app(init(), view, update, |http://localhost:8001|, |project://elmer/src|); 
+  = app(init(), view, update, |http://localhost:8001|, |project://salix/src|); 
 
 alias Model = tuple[
   str src, 

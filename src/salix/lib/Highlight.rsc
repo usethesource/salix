@@ -1,6 +1,6 @@
-module lib::Highlight
+module salix::lib::Highlight
 
-import gui::HTML;
+import salix::HTML;
 import ParseTree;
 import IO;
 import String;

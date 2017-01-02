@@ -1,8 +1,8 @@
-module examples::Counter
+module salix::demo::Counter
 
-import gui::HTML;
-import gui::App;
-import lib::Debug;
+import salix::HTML;
+import salix::App;
+import salix::lib::Debug;
 
 import String;
 import IO;

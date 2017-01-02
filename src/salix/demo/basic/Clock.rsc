@@ -1,9 +1,9 @@
-module examples::Clock
+module demo::basic::Clock
 
-import gui::SVG;
-import gui::HTML;
-import gui::App;
-import gui::Core;
+import salix::SVG;
+import salix::HTML;
+import salix::App;
+import salix::Core;
 import util::Math;
 
 alias Model = tuple[int time, bool running];
@@ -27,7 +27,7 @@ Model update(Msg msg, Model t) {
 
 App[Model] clockApp() = 
   app(init(), examples::Clock::view, examples::Clock::update, 
-    |http://localhost:9100|, |project://elmer/src/examples|,
+    |http://localhost:9100|, |project://salix/src|,
     subs = subs); 
 
 

@@ -1,15 +1,14 @@
-module examples::CodeMirror
+module salix::demo::CodeMirror
 
-import gui::HTML;
-import gui::App;
-import lib::codemirror::CodeMirror;
+import salix::HTML;
+import salix::App;
+import salix::lib::CodeMirror;
 import IO;
 
 alias Model = tuple[list[Msg] changes, str src];
 
 App[str] cmApp()
-  = app(init(), view, update, 
-        |http://localhost:9000|, |project://elmer/src|); 
+  = app(init(), view, update, |http://localhost:9000|, |project://salix/src|); 
 
 
 Model init() {

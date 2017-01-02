@@ -1,24 +1,22 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>TodoMVC in Rascal</title>
+
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="lib/codemirror/codemirror.css">
-<script src="lib/codemirror/codemirror.js"></script>
-<script src="lib/codemirror/javascript.js"></script>
-<script src="lib/codemirror/simple.js"></script>
-<script src="lib/codemirror/elmer-cm.js"></script>
-<script src="elmer.js"></script>
-<script>
-  var elmer = new Elmer();
-  registerCodeMirror(elmer);
-  $(document).ready(elmer.start);
-</script>
+  <script type="text/javascript" src="salix/salix.js"></script>
+  <link rel="stylesheet" href="salix/demo/todomvc/style.css">
+</head>
+
 <body>
-<div class="container">
-  <div id="root">
-  </div>
+<div id="root">
 </div>
 </body>
-
+<script>
+  $(document).ready(new Salix().start);
+</script>
 </html>

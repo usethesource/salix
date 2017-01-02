@@ -1,9 +1,9 @@
-module lib::Debug
+module salix::lib::Debug
 
-import gui::HTML;
-import gui::App;
-import gui::Core;
-import gui::Node; // for null()...
+import salix::HTML;
+import salix::App;
+import salix::Core;
+import salix::Node; // for null()...
 import List;
 
 alias DebugModel[&T]
