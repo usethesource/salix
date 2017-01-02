@@ -32,7 +32,7 @@ Model init() = <
 >;
 
 App[Model] shopApp() 
-  = app(init(), shopDemoView, update, |http://localhost:9170|, |project://elmer/src/examples|);
+  = app(init(), shopDemoView, update, |http://localhost:9170|, |project://salix/src|);
 
 data Msg
   = editName(int idx, str name)

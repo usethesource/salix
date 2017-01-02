@@ -30,7 +30,7 @@ data Msg
 // , so it's fine to use switch.
 
 App[Model] randomApp()
-  = app(init(), view, update, |http://localhost:9098|, |project://elmer/src/examples|); 
+  = app(init(), view, update, |http://localhost:9098|, |project://salix/src|); 
 
 WithCmds[Model] init() = noCmds(<1>);
 

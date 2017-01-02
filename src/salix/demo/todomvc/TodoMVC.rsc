@@ -20,7 +20,7 @@ alias Entry = tuple[str description, bool completed, bool editing, int id];
 
 
 App[Model] todoMVC() 
-  = app(emptyModel(), view, update, |http://localhost:9180|, |project://elmer/src/examples|);
+  = app(emptyModel(), view, update, |http://localhost:9180|, |project://salix/src|);
   
 Model emptyModel() = <[], "", 0, "All">;
 
