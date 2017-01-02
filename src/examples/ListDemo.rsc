@@ -14,6 +14,10 @@ data Msg
   = changeText(str x)
   ;
 
+str initStr(int i) = "Edit string <i>";
+
+str editStr(changeText(str x), str _) = x;
+
 void view(ListModel[str] m) {
   div(() {
     h2("Editable list demo");
@@ -25,6 +29,3 @@ void strView(str x) {
   input(\type("text"), \value(x), onInput(changeText));
 }
 
-str initStr(int i) = "Edit string <i>";
-
-str editStr(changeText(str x), str _) = x;

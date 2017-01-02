@@ -1,4 +1,10 @@
 
+/*
+ * CodeMirror sometimes generates 2 events in a row (very quickly)
+ * As a result, they're flushed... We need an async event queue, which
+ * will never be flushed. This is compatible with the idea that natives
+ * manage their own state more or less. 
+ */
 
 function registerCodeMirror(elmer) {
 	

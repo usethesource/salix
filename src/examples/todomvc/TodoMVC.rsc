@@ -3,7 +3,7 @@ module examples::todomvc::TodoMVC
 import gui::HTML;
 import gui::App;
 import gui::Render;
-import gui::Decode;
+import gui::Comms;
 
 import List;
 
@@ -47,48 +47,53 @@ data Msg
 
 Msg(str) updateEntry(int id) = Msg(str x) { return updateEntry(id, x); };
 
-Model update(noOp(), Model model) = model;
+Model update(Msg msg, Model model) {
+  switch (msg) {
+    case update(noOp()) : 
+      ;
+      
+    case add(): {
+      model.uid += 1;
+      if (model.field != "") {
+        model.entries += [newEntry(model.field, model.uid)];
+        model.field = "";
+      }
+    }
 
-Model update(add(), Model model)
-  = model[uid=model.uid + 1][field=""]
-      [entries=model.field == "" 
-         ? model.entries 
-         : model.entries + [newEntry(model.field, model.uid)]];
+    case updateField(str s):
+      model.field = s;
 
-Model update(updateField(str s), Model model) = model[field=s];
+    case editingEntry(int id, bool isEditing): 
+      if (int i <- [0..size(model.entries)], model.entries[i].id == id) {
+        model.entries[i].editing = isEditing;
+      }
+         //batch([attempt(Msg(value x) { return noOp(); }, focus /* ??? */)])>;
+         
+    case updateEntry(int id, str task): 
+      if (int i <- [0..size(model.entries)], model.entries[i].id == id) {
+        model.entries[i].description = task;
+      }
+     
+    case delete(int id):
+      model.entries = [ e | Entry e <- model.entries, e.id != id ];
+       
+    case deleteComplete():
+      model.entries =  [ e | e <- model.entries, !e.completed ];
 
-Model update(editingEntry(int id, bool isEditing), Model model) {
-  Entry updateEntry(Entry t) = t.id == id ? t[editing=isEditing] : t;
+    case check(int id, bool isCompleted):
+      if (int i <- [0..size(model.entries)], model.entries[i].id == id) {
+        model.entries[i].completed = isCompleted;
+      }
+      
+    case checkAll(bool isCompleted): 
+      model.entries= [ e[completed=isCompleted] | Entry e <- model.entries ];
   
-  return model[entries=[ updateEntry(e) | e <- model.entries ]];
-         //batch([attempt(Msg(value x) { return noOp(); }, focus /* ??? */)])>; 
-}
-
-Model update(updateEntry(int id, str task), Model model) {
-  Entry updateEntry(Entry t) = t.id == id ? t[description=task] : t; 
-  return model[entries=[ updateEntry(e) | e <- model.entries ]];
-}
-
-// BUG: model[entries = [ e | Entry e <- model.entries, e.id != id ]];
-// eval returns type error when comprehension returns empty list.
-Model update(delete(int id), Model model)
-  = model[entries = l]
-  when list[Entry] l := [ e | Entry e <- model.entries, e.id != id ];
-
-Model update(deleteComplete(), Model model)
-  = model[entries = l]
-  when list[Entry] l := [ e | e <- model.entries, !e.completed ];
-
-Model update(check(int id, bool isCompleted), Model model) {
-  Entry updateEntry(Entry t) = t.id == id ? t[completed=isCompleted] : t;
-  return model[entries=[ updateEntry(e) | e <- model.entries ]];
-}
-
-Model update(checkAll(bool isCompleted), Model model) 
-  = model[entries=[ e[completed=isCompleted] | e <- model.entries ]];
+    case changeVisibility(str visibility):
+      model.visibility = visibility;
+  }
   
-Model update(changeVisibility(str visibility), Model model)
-  = model[visibility=visibility]; 
+  return model;
+} 
 
 // VIEW
 

@@ -7,8 +7,6 @@ import gui::Render;
 import gui::Comms;
 import util::Math;
 
-// bigger example: https://github.com/pghalliday/elm-introduction/blob/master/clock.elm
-
 alias Model = tuple[int time, bool running];
 
 Model init() = <1, false>;
@@ -20,8 +18,12 @@ data Msg
 
 list[Sub] subs(Model m) = [timeEvery(tick, 1000) | m.running ];
 
-Model update(tick(int time), Model t) = t[time=time];
-Model update(toggle(), Model t) = t[running=!t.running];
+Model update(Msg msg, Model t) {
+  switch (msg) {
+   case tick(int time): t.time = time;
+   case toggle(): t.running = !t.running;
+  }
+}
 
 App[Model] clockApp() = 
   app(init(), examples::Clock::view, examples::Clock::update, 

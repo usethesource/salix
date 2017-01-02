@@ -260,10 +260,6 @@ function Elmer(aRootId) {
 		}
 	}
 	
-	function patchNative(dom, edits) {
-		dom.elmer_native.patch(edits);
-	}
-
 	function patch(dom, tree) {
 		var newDom = dom.elmer_native 
 		  	? dom.elmer_native.patch(tree.patch.edits)

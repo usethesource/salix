@@ -45,8 +45,12 @@ real toReal_(str s) {
     return 0.0;
 }
 
-real update(c(str new), real _) = toReal_(new);
-
-real update(f(str new), real _) = toC(toReal_(new));
+real update(Msg msg, real model) {
+  switch (msg) {
+    case c(str new): model = toReal_(new);
+    case f(str new): model = toC(toReal_(new));
+  }
+  return model;
+}
 
 

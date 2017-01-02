@@ -2,7 +2,7 @@ module examples::shop::Shop
 
 import gui::HTML;
 import gui::App;
-import gui::Decode;
+import gui::Comms;
 import String;
 import List;
 import IO;
@@ -56,54 +56,52 @@ Msg(str) editPrice(int idx) = Msg(str s) { return editPrice(idx, s); };
 
 Article findArticle(int id, Model m) = [ a | Article a <- m.articles, a.id == id][0];
 
-Model update(editName(int idx, str name), Model m) {
-  m.articles[idx].newName = name;
-  return m;
-}
-Model update(editPrice(int idx, str price), Model m) {
-  m.articles[idx].newPrice = toReal(price);
-  return m;
-}
-
-Model update(save(int idx), Model m) {
-  m.articles[idx].price = m.articles[idx].newPrice;
-  m.articles[idx].name = m.articles[idx].newName;
-  return m;
-}
+Model update(Msg msg, str name) {
+  switch (msg) {
   
-Model update(addToCart(int idx), Model m) {
-  Article a = m.articles[idx];
-  for (int i <- [0..size(m.cart)]) {
-    if (m.cart[i].id == a.id) {
-      m.cart[i] = m.cart[i][amount = m.cart[i].amount + 1];
-      return m;
+    case editName(int idx, str name):
+      m.articles[idx].newName = name;
+      
+    case editPrice(int idx, str price):
+      m.articles[idx].newPrice = toReal(price);
+    
+    case save(int idx): {
+      m.articles[idx].price = m.articles[idx].newPrice;
+      m.articles[idx].name = m.articles[idx].newName;
     }
+    
+    case addToCart(int idx): {
+      Article a = m.articles[idx];
+      if (int i <- [0..size(m.cart)], m.cart[i].id == a.id) {
+        m.cart[i] = m.cart[i][amount = m.cart[i].amount + 1];
+      }
+      else {
+	      m.cart += [entry(m.articles[idx].id, 1)];
+	    }
+    }
+    
+    case removeFromCart(int idx): {
+      Entry e = m.cart[idx];
+      if (e.amount == 1) {
+        m.cart = delete(m.cart, idx); 
+      }
+      else {
+        m.cart[idx] = e.amount -= 1;
+      }
+    }
+    
+    case newPrice(str price):
+      m.newPrice = toReal(price);
+
+    case newName(str name):
+      m.newName = name;
+
+    case newArticle(): 
+      m.articles += [Article::article(m.newName, m.newPrice, nextId())];
   }
-  return m[cart = m.cart + [entry(m.articles[idx].id, 1)]];
-} 
- 
-
-Model update(removeFromCart(int idx), Model m) {
-  Entry e = m.cart[idx];
-  if (e.amount == 1) {
-    return m[cart = delete(m.cart, idx)]; 
-  }
-  m.cart[idx] = e[amount=e.amount - 1];
-  return m;
-}
-
-Model update(newPrice(str price), Model m)
-  = m[newPrice = toReal(price)];
-
-Model update(newName(str name), Model m)
-  = m[newName = name];
   
-Model update(newArticle(), Model m) 
-  = m[articles = m.articles + [Article::article(m.newName, m.newPrice, nextId())]]; 
-
-Model update(updateSome(), Model m) = m;
-Model update(createLots(), Model m) = m;
-
+  return m;
+} 
 
 
 void shopDemoView(Model m) {
