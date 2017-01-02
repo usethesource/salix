@@ -61,7 +61,7 @@ Msg nothingParser(Handle h, map[str, str] p)
   = applyMaps(h, decode(h.id, #Msg)); 
 
 Msg stringParser(Handle h, map[str,str] p) 
-  = applyMaps(h, decode(h.id, #Msg(str))(p["string"]));
+  = applyMaps(h, decode(h.id, #Msg(str))(p["strVal"]));
 
 Msg booleanParser(Handle h, map[str,str] p) 
   = applyMaps(h, decode(h.id, #Msg(bool))(p["boolVal"] == true));

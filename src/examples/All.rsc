@@ -38,7 +38,7 @@ App[AllModel] allApp()
         |http://localhost:9203|, |project://elmer/src|,
         subs = allSubs); 
 
-App[DebugModel[AllModel]] debugAllApp() 
+App[AllModel] debugAllApp() 
   = debug(initAll(), viewAll, editAll, 
         |http://localhost:9203|, |project://elmer/src|,
         subs = allSubs); 

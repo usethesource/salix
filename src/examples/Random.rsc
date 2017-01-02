@@ -65,8 +65,9 @@ data TwiceModel
   = twice(Model model1, Model model2);
 
 WithCmds[TwiceModel] twiceInit() {
-  <m1, cmds1> = x;
- twice(init(), init());
+  <m1, _> = init(); // todo: need mapping of cmds, outside of update
+  <m2, _> = init();
+ return noCmds(twice(m1, m2));
 }
 
 data Msg = sub1(Msg msg) | sub2(Msg msg);

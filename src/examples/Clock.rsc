@@ -23,6 +23,7 @@ Model update(Msg msg, Model t) {
    case tick(int time): t.time = time;
    case toggle(): t.running = !t.running;
   }
+  return t;
 }
 
 App[Model] clockApp() = 

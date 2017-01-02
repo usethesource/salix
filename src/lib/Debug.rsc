@@ -6,7 +6,6 @@ import gui::Comms;
 import gui::Render; // for null()...
 import List;
 
-
 alias DebugModel[&T]
   = tuple[int current, list[&T] models, list[Msg] messages, WithCmds[&T](Msg, &T) update]
   ;
@@ -84,7 +83,7 @@ WithCmds[DebugModel[&T]] debugUpdate(Msg msg, DebugModel[&T] m) {
       <newModel, cmds> = mapping.cmds(Msg::sub, s, m.models[m.current], m.update);
       m.models += [newModel];
       m.messages += [s];
-      m.current = size(m.models);
+      m.current += 1;
     }
 
     case goto(int v): 
