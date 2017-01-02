@@ -7,6 +7,8 @@ import lib::codemirror::CodeMirror;
 import lib::Mode;
 import util::Maybe;
 import ParseTree;
+import String;
+import List;
 
 
 App[Model] ideApp() 
@@ -56,11 +58,23 @@ Model update(Msg msg, Model model) {
   
   switch (msg) {
   
-    case myChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed): 
-      ;
+    case myChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed): { 
+      model.src = updateSrc(model.src, fromLine, fromCol, toLine, toCol, text, removed);
+      if (just(start[Controller] ctl) := maybeParse(model.src)) {
+        model.lastParse = just(ctl);
+      }  
+    }
   }
   
   return model;
+}
+
+str updateSrc(str src, int fromLine, int fromCol, int toLine, int toCol, str text, str removed) {
+  list[str] lines = split("\n", src);
+  int from = ( 0 | it + size(l) + 1 | str l <- lines[..fromLine] ) + fromCol;
+  int to = from + size(removed);
+  str newSrc = src[..from] + text + src[to..];
+  return newSrc;  
 }
 
 void view(Model model) {
