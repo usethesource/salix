@@ -204,20 +204,18 @@ TBD: mapping.commands
 
 ### Guide to the modules
 
-- App: contains the top-level `app` function and `App[&T]` data type.
+- `App`: contains the top-level `app` function and `App[&T]` data type.
 
-- HTML: defines all HTML5 elements and attributes as convenient functions. All element functions (such as `div`, `h2`, etc.) accept a variable sequence of `value`s (i.e. they are "vararg" functions). All values can be attributes (as, e.g., produced by `onClick`, `class` etc.). The last value (if any) can also be either a block (of type `void()`), a `Node`, or a plain Rascal value. In the latter case, it's converted to a string and rendered as an HTML text node.  
+- `HTML`, `SVG`: defines all HTML5 resp. SVG elements and attributes as convenient functions. All element functions (such as `div`, `h2`, etc.) accept a variable sequence of `value`s (i.e. they are "vararg" functions). All values can be attributes (as, e.g., produced by `onClick`, `class` etc.). The last value (if any) can also be either a block (of type `void()`), a `Node`, or a plain Rascal value. In the latter case, it's converted to a string and rendered as an HTML text node.  
 
-- SVG: same as HTML, but for SVG. 
+- `Core`: contains the logic of representing and mapping handlers, commands, and subscriptions in such a way that they can be sent to and received from the browser. Import this if you use subscriptions, if you need mapping (see above), or if you're defining your own events, commands or subscriptions. 
 
-- Node: defines the rendering logic to convert "views" to HTML `Node`s. Only needed if you define your own attributes or elements, or if you need to call `render` explicitly. 
+- `Node`: defines the rendering logic to convert "views" to HTML `Node`s. Only needed if you define your own attributes or elements, or if you need to call `render` explicitly. 
 
-- Core: contains the logic of representing and mapping handlers, commands, and subscriptions in such a way that they can be sent to and received from the browser. Import this if you use subscriptions, if you need mapping (see above), or if you're defining your own events, commands or subscriptions. 
-
-- Diff & Patch: internal modules for diffing and patching `Node`. You should never have to import these modules. 
+- `Diff`, `Patch`: internal modules for diffing and patching `Node`. You should never have to import these modules. 
 
 
-### Extending the Framework
+### (TODO: OUT OF DATE) Extending the Framework
 
 Extending the framework with new events, commands or subscriptions is facilitated by Rascal's extensible data types. In all cases, you define new constructors for handlers (`Hnd`), commands (`Cmd`) or subscriptions (`Sub`). Since all three of those values are sent over the write, they have to be encoded. The framework provides functions to do so. Handlers, commands and subscriptions produce results, which are sent back to the server. This means that you'll also have to write a `Result` decoder, if the type of data is unsupported. In some cases the Javascript needs to be modified in order to accommodate the construct. 
 
