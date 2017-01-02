@@ -39,7 +39,7 @@ Model init() {
   model.src = doors();
   model.lastParse = maybeParse(model.src);
   if (just(start[Controller] ctl) := model.lastParse) {
-    if (examples::statemachine::StateMachine::State s <- ctl.top.states) {
+    if (salix::demo::ide::StateMachine::State s <- ctl.top.states) {
       model.currentState = just("<s.name>");
     }
   }  
@@ -83,7 +83,7 @@ Model update(Msg msg, Model model) {
     
     case fireEvent(str event): {
       if (just(start[Controller] ctl) := model.lastParse) {
-        if (just(examples::statemachine::StateMachine::State s) := lookupCurrentState(ctl, model)) { 
+        if (just(salix::demo::ide::StateMachine::State s) := lookupCurrentState(ctl, model)) { 
           if (Transition t <- s.transitions, "<t.event>" == event) {
             model.currentState = just("<t.state>");
             if (just(Event e) := lookupEvent(ctl, event)) {
@@ -114,14 +114,14 @@ str updateSrc(str src, int fromLine, int fromCol, int toLine, int toCol, str tex
 }
 
 Maybe[str] initialState(start[Controller] ctl) {
-  if (examples::statemachine::StateMachine::State s <- ctl.top.states) {
+  if (salix::demo::ide::StateMachine::State s <- ctl.top.states) {
 	  return just("<s.name>");
   }
   return nothing();
 }
  
-Maybe[examples::statemachine::StateMachine::State] lookupCurrentState(start[Controller] ctl, Model model) {
-  if (examples::statemachine::StateMachine::State s <- ctl.top.states, isCurrentState(s, model)) {
+Maybe[salix::demo::ide::StateMachine::State] lookupCurrentState(start[Controller] ctl, Model model) {
+  if (salix::demo::ide::StateMachine::State s <- ctl.top.states, isCurrentState(s, model)) {
     return just(s);
   }
   return nothing();
@@ -135,9 +135,9 @@ Maybe[Event] lookupEvent(start[Controller] ctl, str event) {
 } 
  
 bool staleCurrentState(start[Controller] ctl, Model model) 
-  = !any(examples::statemachine::StateMachine::State s <- ctl.top.states, isCurrentState(s, model));
+  = !any(salix::demo::ide::StateMachine::State s <- ctl.top.states, isCurrentState(s, model));
  
-bool isCurrentState(examples::statemachine::StateMachine::State s, Model model)
+bool isCurrentState(salix::demo::ide::StateMachine::State s, Model model)
   = just(str current) := model.currentState && current == "<s.name>";
 
 void view(Model model) {
@@ -160,7 +160,7 @@ void view(Model model) {
           div(() {
             h4("Current state of state machine");
             ul(() {
-              for (examples::statemachine::StateMachine::State s <- ctl.top.states) {
+              for (salix::demo::ide::StateMachine::State s <- ctl.top.states) {
                 li(() {
                   span(isCurrentState(s, model) ? style(<"font-weight", "bold">) : null(), "<s.name>: ");
                   for (Transition t <- s.transitions) {
