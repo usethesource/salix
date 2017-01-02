@@ -1,4 +1,4 @@
-module gui::SVG
+module salix::SVG
 
 import salix::Node;
 import salix::Core;

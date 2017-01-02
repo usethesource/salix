@@ -15,7 +15,7 @@ Processing: sub(clock(tick(1483357119)))
  */
 
 
-function Elmer(aRootId) {
+function Salix(aRootId) {
 	var rootId = aRootId || 'root';
 	
 	var async_queue = [];
@@ -269,7 +269,7 @@ function Elmer(aRootId) {
 				
 			case 'removeEvent': // goes to native if dom was native
 				// todo: refactor
-				var handler = dom.elmer_handlers[edit[type].name];
+				var handler = dom.salix_handlers[edit[type].name];
 				dom.removeEventListener(edit[type].name, handler);
 				break;
 				
@@ -281,8 +281,8 @@ function Elmer(aRootId) {
 	}
 	
 	function patch(dom, tree) {
-		var newDom = dom.elmer_native 
-		  	? dom.elmer_native.patch(tree.patch.edits)
+		var newDom = dom.salix_native 
+		  	? dom.salix_native.patch(tree.patch.edits)
 		  	: patchThis(dom, tree.patch.edits);
 		
 		if (newDom) {
@@ -299,12 +299,12 @@ function Elmer(aRootId) {
 	}
 
 	function withCleanListeners(dom, key, handler) {
-		var allHandlers = dom.elmer_handlers || {};
+		var allHandlers = dom.salix_handlers || {};
 		if (allHandlers.hasOwnProperty(key)) {
 			dom.removeEventListener(key, allHandlers[key]);
 		}
 		allHandlers[key] = handler;
-		dom.elmer_handlers = allHandlers;
+		dom.salix_handlers = allHandlers;
 		return handler;
 	}
 

@@ -1,4 +1,4 @@
-module salix::demo::CodeMirror
+module salix::demo::basic::CodeMirror
 
 import salix::HTML;
 import salix::App;

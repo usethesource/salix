@@ -1,4 +1,4 @@
-module salix::demo::ListDemo
+module salix::demo::basic::ListDemo
 
 import salix::HTML;
 import salix::App;

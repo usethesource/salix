@@ -1,4 +1,4 @@
-module demo::basic::Celsius
+module salix::demo::basic::Celsius
 
 import salix::HTML;
 import salix::App;

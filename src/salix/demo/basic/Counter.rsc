@@ -1,4 +1,4 @@
-module salix::demo::Counter
+module salix::demo::basic::Counter
 
 import salix::HTML;
 import salix::App;

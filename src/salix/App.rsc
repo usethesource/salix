@@ -67,9 +67,9 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   // BUG: mixes with constructors that are in scope!!!
   Response _handle(Request req) {
     // publish my encoder and decoder to gui::Encode.
-    // todo: make a function.
-    gui::Core::_encode = myEncode;
-    gui::Core::_decode = myDecode;
+    // todo: make a function. or move to App so that it is private.
+    salix::Core::_encode = myEncode;
+    salix::Core::_decode = myDecode;
 
     // initially, just render the view, for the current model.
     if (get("/init") := req) {

@@ -1,4 +1,5 @@
-module demo::basic::Clock
+module salix::demo::basic::Clock
+
 
 import salix::SVG;
 import salix::HTML;

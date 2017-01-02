@@ -1,4 +1,4 @@
-module salix::demo::Random
+module salix::demo::basic::Random
 
 import salix::HTML;
 import salix::Core;

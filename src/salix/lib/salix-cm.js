@@ -6,7 +6,7 @@
  * manage their own state more or less. 
  */
 
-function registerCodeMirror(elmer) {
+function registerCodeMirror(salix) {
 	
 	
 	function parseSimpleMode(mode) {
@@ -32,11 +32,11 @@ function registerCodeMirror(elmer) {
 	
 	
 	function dec2handler(decoder) {
-		switch (elmer.nodeType(decoder)) {
+		switch (salix.nodeType(decoder)) {
 		
 		case 'codeMirrorChange':
 			return function (editor, change) {
-				elmer.scheduleAsync(decoder.codeMirrorChange.handle.handle,  {
+				salix.scheduleAsync(decoder.codeMirrorChange.handle.handle,  {
 					type: 'codeMirrorChange', 
 					fromLine: change.from.line, fromCol: change.from.ch,
 					toLine: change.to.line, toCol: change.to.ch,
@@ -50,7 +50,7 @@ function registerCodeMirror(elmer) {
 				var position = editor.getCursor();
 				var line = position.line;
 				var token = editor.getTokenAt(position);
-				elmer.scheduleAsync(decoder.cursorActivity.handle.handle, 
+				salix.scheduleAsync(decoder.cursorActivity.handle.handle, 
 					{type: 'cursorActivity', line: line, start: token.start, 
 					end: token.end, string: token.string, tokenType: token.type});
 			};
@@ -113,12 +113,12 @@ function registerCodeMirror(elmer) {
 
 			for (var i = 0; i < edits.length; i++) {
 				var edit = edits[i];
-				var type = elmer.nodeType(edit);
+				var type = salix.nodeType(edit);
 
 				switch (type) {
 				
 				case 'replace':
-					return elmer.build(edit[type].html);
+					return salix.build(edit[type].html);
 
 				case 'setProp': 
 					var key = edit[type].name;
@@ -187,9 +187,9 @@ function registerCodeMirror(elmer) {
 		}
 		
 		var dom = cm.getWrapperElement();
-		dom.elmer_native = {patch: patch};
+		dom.salix_native = {patch: patch};
 		return dom;
 	}
 	
-	elmer.registerNative('codeMirror', codeMirror);
+	salix.registerNative('codeMirror', codeMirror);
 };
