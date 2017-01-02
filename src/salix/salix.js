@@ -1,9 +1,9 @@
 
 
 /*
- *
- * Here's another problem of ordering:
- * 
+
+TODO (?): ordering issue with subscriptions
+
 Processing: sub(clock(tick(1483357114)))
 Processing: sub(clock(tick(1483357115)))
 Processing: sub(clock(tick(1483357116)))
@@ -39,11 +39,6 @@ function Salix(aRootId) {
 			return; 
 		}
 		
-//		if (waitingForResponse()) { 
-//			flushUIEvents();
-//			return;
-//		}
-		
 		processMessage(nextMessage());
 	}
 
@@ -54,11 +49,6 @@ function Salix(aRootId) {
 	function nextMessage() {
 		return event_queue.length > 0 ? event_queue.shift().result : other_queue.shift();
 	}
-
-//	function flushUIEvents() {
-//		console.log("Flushing pending events: " + JSON.stringify(event_queue));
-//		event_queue = [];
-//	}
 
 	function buildInitialView() {
 		send('/init', {}, function (work) {
@@ -169,9 +159,16 @@ function Salix(aRootId) {
 
 	function scheduleEvent(event, handle, data) {
 		var result = makeResult(handle, data);
+		// record event type and dom element to be able to detect
+		// when the event should be discarded during dom patching.
 		event_queue.push({type: event.type, target: event.target, result: result});
 	}
 
+	function scheduleOther(handle, data) {
+		other_queue.push(makeResult(handle, data));
+	}
+
+	
 	function makeResult(handle, data) {
 		var result = {id: handle.id};
 		if (handle.maps) {
@@ -185,14 +182,7 @@ function Salix(aRootId) {
 		return result;
 	}
 
-	function scheduleOther(handle, data) {
-		schedule(other_queue, handle, data);
-	}
-
-	function schedule(queue, handle, data) {
-		queue.push(makeResult(handle, data));
-	}
-
+	
 	// this needs adaptation if new kinds of data are required. 
 	function dec2handler(decoder) {
 		switch (nodeType(decoder)) {
