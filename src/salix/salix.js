@@ -28,14 +28,11 @@ function Salix(aRootId) {
 
 	function start() {
 		buildInitialView();
-
-		window.requestAnimationFrame(render);
 	}
 
 	function render(timestamp) {
-		window.requestAnimationFrame(render);
-
 		if (!pendingWork()) {
+			window.requestAnimationFrame(render);
 			return; 
 		}
 		
@@ -66,16 +63,11 @@ function Salix(aRootId) {
 		});
 	}
 
-	var waiting = false;
-
-	function waitingForResponse() {
-		return waiting;
-	}
-
 	function send(url, message, handle) {
-		waiting = true;
 		$.get(url, message, handle, 'json').always(function () {
-			waiting = false;
+			// request the frame after work has been done by handle
+			// this ensures the event_queue has been pruned of stale events.
+			window.requestAnimationFrame(render);
 		});
 	}
 
