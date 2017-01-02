@@ -18,7 +18,7 @@ Processing: sub(clock(tick(1483357119)))
 function Salix(aRootId) {
 	var rootId = aRootId || 'root';
 	
-	var async_queue = [];
+	//var async_queue = [];
 	var event_queue = [];
 	var other_queue = [];
 
@@ -39,28 +39,26 @@ function Salix(aRootId) {
 			return; 
 		}
 		
-		if (waitingForResponse()) { 
-			flushUIEvents();
-			return;
-		}
+//		if (waitingForResponse()) { 
+//			flushUIEvents();
+//			return;
+//		}
 		
 		processMessage(nextMessage());
 	}
 
 	function pendingWork() {
-		return async_queue.length > 0 || event_queue.length > 0 || other_queue.length > 0;
+		return event_queue.length > 0 || other_queue.length > 0;
 	}
 
 	function nextMessage() {
-		return async_queue.length > 0 ? async_queue.shift() 
-				  : (event_queue.length > 0 ? event_queue.shift() 
-						  : other_queue.shift());
+		return event_queue.length > 0 ? event_queue.shift().result : other_queue.shift();
 	}
 
-	function flushUIEvents() {
-		console.log("Flushing pending events: " + JSON.stringify(event_queue));
-		event_queue = [];
-	}
+//	function flushUIEvents() {
+//		console.log("Flushing pending events: " + JSON.stringify(event_queue));
+//		event_queue = [];
+//	}
 
 	function buildInitialView() {
 		send('/init', {}, function (work) {
@@ -112,7 +110,7 @@ function Salix(aRootId) {
 			
 			case 'random':
 				var random = Math.floor(Math.random() * (cmd.random.to - cmd.random.from + 1)) + cmd.random.from;
-				schedule(other_queue, cmd.random.handle.handle, {type: 'integer', intVal: random});
+				scheduleOther(cmd.random.handle.handle, {type: 'integer', intVal: random});
 				break;
 			
 			}
@@ -126,7 +124,7 @@ function Salix(aRootId) {
 		case 'timeEvery':
 			var timer = setInterval(function() {
 				var data = {type: 'integer', intVal: (new Date().getTime() / 1000) | 0};
-				schedule(other_queue, sub.timeEvery.handle.handle, data); 
+				scheduleOther(sub.timeEvery.handle.handle, data); 
 			}, sub.timeEvery.interval);
 			return function () {
 				clearInterval(timer);
@@ -169,15 +167,12 @@ function Salix(aRootId) {
 		}
 	}
 
-	function scheduleEvent(handle, data) {
-		schedule(event_queue, handle, data);
+	function scheduleEvent(event, handle, data) {
+		var result = makeResult(handle, data);
+		event_queue.push({type: event.type, target: event.target, result: result});
 	}
 
-	function scheduleAsync(handle, data) {
-		schedule(async_queue, handle, data);
-	}
-
-	function schedule(queue, handle, data) {
+	function makeResult(handle, data) {
 		var result = {id: handle.id};
 		if (handle.maps) {
 			result.maps = handle.maps.join(';'); 
@@ -187,7 +182,15 @@ function Salix(aRootId) {
 				result[k] = data[k];
 			}
 		}
-		queue.push(result);
+		return result;
+	}
+
+	function scheduleOther(handle, data) {
+		schedule(other_queue, handle, data);
+	}
+
+	function schedule(queue, handle, data) {
+		queue.push(makeResult(handle, data));
 	}
 
 	// this needs adaptation if new kinds of data are required. 
@@ -197,21 +200,42 @@ function Salix(aRootId) {
 		case 'succeed':
 			return function (event) {	
 				// TODO: change 'nothing' to 'ok'
-				schedule(event_queue, decoder.succeed.handle.handle, {type: 'nothing'});
+				scheduleEvent(event, decoder.succeed.handle.handle, {type: 'nothing'});
 			};
 			
 		case 'targetValue':
 			return function (event) {
-				schedule(event_queue, decoder.targetValue.handle.handle, 
+				scheduleEvent(event, decoder.targetValue.handle.handle, 
 						{type: 'string', strVal: event.target.value});
 			};
 			
 		case 'targetChecked':
 			return function (event) {	
-				schedule(event_queue, decoder.targetChecked.handle.handle, 
+				scheduleEvent(event, decoder.targetChecked.handle.handle, 
 						{type: 'boolean', boolVal: event.target.checked});
 			};
 			
+		}
+	}
+	
+	function flushEvents(dom, eventName) {
+		var del = [];
+		for (var i = 0; i < event_queue.length; i++) {
+			var queuedEvent = event_queue[i];
+			if (queuedEvent.target === dom) {
+				if (eventName !== undefined) {
+					if (queuedEvent.type === eventName) {
+						del.push(i);
+					}
+				}
+				else {
+					del.push(i);
+				}
+			}
+		}
+		for (var i = 0; i < del.length; i++) {
+			console.log("Discarding stale event: " + JSON.stringify(event_queue[i].result));
+			event_queue.splice(i, 1);
 		}
 	}
 
@@ -225,6 +249,7 @@ function Salix(aRootId) {
 			switch (type) {
 			
 			case 'replace':
+				flushEvents(dom);
 				return build(edit[type].html);
 
 			case 'setText': // can't happen if dom is native
@@ -255,6 +280,7 @@ function Salix(aRootId) {
 				
 			case 'setEvent': // goes to native if dom was native (TODO)
 				var key = edit[type].name;
+				flushEvents(dom, key);
 				var handler = dec2handler(edit[type].handler);
 				dom.addEventListener(key, withCleanListeners(dom, key, handler));
 				break
@@ -267,10 +293,11 @@ function Salix(aRootId) {
 				delete dom[edit[type].name];
 				break;
 				
-			case 'removeEvent': // goes to native if dom was native
-				// todo: refactor
-				var handler = dom.salix_handlers[edit[type].name];
-				dom.removeEventListener(edit[type].name, handler);
+			case 'removeEvent': 
+				var key = edit[type].name;
+				flushEvents(dom, key);
+				var handler = dom.salix_handlers[key];
+				dom.removeEventListener(key, handler);
 				break;
 				
 			default: 
@@ -380,7 +407,7 @@ function Salix(aRootId) {
 			build: build,
 			nodeType: nodeType,
 			scheduleEvent: scheduleEvent,
-			scheduleAsync: scheduleAsync};
+			scheduleOther: scheduleOther};
 }
 
 
