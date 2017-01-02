@@ -1,5 +1,7 @@
 
-## Salix: Elm-style Web GUIs in Rascal
+## Salix: Elm-style Web GUIs in Rascal (work in progress)
+
+© Tijs van der Storm [@tvdstorm](https://twitter.com/tvdstorm) 
 
 Salix is Rascal library for developing Web-based GUI programs. It emulates the [Elm Architecture](https://guide.elm-lang.org/architecture/), but since Rascal does not run in the browser (yet), all user code written in Rascal is executed on the server. HTML is sent to the browser and the browser sends messages back to the server, where they are interpreted on the model, to construct the new view. 
 
