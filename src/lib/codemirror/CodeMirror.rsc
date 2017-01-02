@@ -45,8 +45,8 @@ Attr onChange(Msg(int, int, int, int, str, str) ch2msg)
 // Special cased
 // http://codemirror.net/doc/manual.html#setSize
 
-Attr width(int pxOrPerc) = prop("width", "<pxOrPerc>");
-Attr height(int pxOrPerc) = prop("height", "<pxOrPerc>");
+Attr width(int px) = prop("width", "<px>");
+Attr height(int px) = prop("height", "<px>");
 
 
 Attr \value(str val) = prop("value", val);

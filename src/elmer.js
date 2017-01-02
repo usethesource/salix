@@ -18,6 +18,7 @@ Processing: sub(clock(tick(1483357119)))
 function Elmer(aRootId) {
 	var rootId = aRootId || 'root';
 	
+	var async_queue = [];
 	var event_queue = [];
 	var other_queue = [];
 
@@ -47,15 +48,17 @@ function Elmer(aRootId) {
 	}
 
 	function pendingWork() {
-		return event_queue.length > 0 || other_queue.length > 0;
+		return async_queue.length > 0 || event_queue.length > 0 || other_queue.length > 0;
 	}
 
 	function nextMessage() {
-		return event_queue.length > 0 ? event_queue.shift() : other_queue.shift();
+		return async_queue.length > 0 ? async_queue.shift() 
+				  : (event_queue.length > 0 ? event_queue.shift() 
+						  : other_queue.shift());
 	}
 
 	function flushUIEvents() {
-		console.log("Flushing pending events." + JSON.stringify(event_queue));
+		console.log("Flushing pending events: " + JSON.stringify(event_queue));
 		event_queue = [];
 	}
 
@@ -169,7 +172,11 @@ function Elmer(aRootId) {
 	function scheduleEvent(handle, data) {
 		schedule(event_queue, handle, data);
 	}
-	
+
+	function scheduleAsync(handle, data) {
+		schedule(async_queue, handle, data);
+	}
+
 	function schedule(queue, handle, data) {
 		var result = {id: handle.id};
 		if (handle.maps) {
@@ -372,7 +379,8 @@ function Elmer(aRootId) {
 			registerNative: registerNative,
 			build: build,
 			nodeType: nodeType,
-			scheduleEvent: scheduleEvent};
+			scheduleEvent: scheduleEvent,
+			scheduleAsync: scheduleAsync};
 }
 
 

@@ -1,6 +1,6 @@
 module examples::statemachine::StateMachine
 
-start syntax Controller = controller: Events events ResetEvents? resets Commands? commands State+ states;
+start syntax Controller = controller: Events events ResetEvents? resets Commands? commands State* states;
 
 syntax Events = @Foldable "events" Event* "end";
 syntax ResetEvents = @Foldable "resetEvents" Id* "end"; 
@@ -11,7 +11,7 @@ syntax Event = event: Id name Id token;
 
 syntax State = @Foldable state: 
   "state" Id name Actions? 
-    Transition* 
+    Transition* transitions 
   "end";
 syntax Actions = "actions" "{" Id+ "}";
 

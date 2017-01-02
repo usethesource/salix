@@ -36,7 +36,7 @@ function registerCodeMirror(elmer) {
 		
 		case 'codeMirrorChange':
 			return function (editor, change) {
-				elmer.scheduleEvent(decoder.codeMirrorChange.handle.handle,  {
+				elmer.scheduleAsync(decoder.codeMirrorChange.handle.handle,  {
 					type: 'codeMirrorChange', 
 					fromLine: change.from.line, fromCol: change.from.ch,
 					toLine: change.to.line, toCol: change.to.ch,
@@ -50,7 +50,7 @@ function registerCodeMirror(elmer) {
 				var position = editor.getCursor();
 				var line = position.line;
 				var token = editor.getTokenAt(position);
-				elmer.scheduleEvent(decoder.cursorActivity.handle.handle, 
+				elmer.scheduleAsync(decoder.cursorActivity.handle.handle, 
 					{type: 'cursorActivity', line: line, start: token.start, 
 					end: token.end, string: token.string, tokenType: token.type});
 			};
@@ -124,16 +124,19 @@ function registerCodeMirror(elmer) {
 					var key = edit[type].name;
 					var val = edit[type].val;
 					if (key === 'value') {
-						if (cm.getValue() !== val) {
-							var hasChange = myHandlers.hasOwnProperty('change');
-							if (hasChange) { 
-								cm.off('change', myHandlers.change);	
-							}
-							cm.setValue(val);
-							if (hasChange) {
-								cm.on('change', myHandlers.change);
-							}
-						}
+						// ignore value changes
+						
+//						if (cm.getValue() !== val) {
+//							var hasChange = myHandlers.hasOwnProperty('change');
+//							if (hasChange) { 
+//								cm.off('change', myHandlers.change);	
+//							}
+//							cm.setValue(val);
+//							if (hasChange) {
+//								cm.on('change', myHandlers.change);
+//							}
+//						}
+						
 					}
 					else if (key === 'width') {
 						cm.setSize(val, null);
