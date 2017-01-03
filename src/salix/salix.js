@@ -195,12 +195,24 @@ function Salix(aRootId) {
 		return isStale(dom.parentNode);
 	}
 	
+	function pruneEventQueue(type, dom) {
+		var offset = 0;
+		for (var i = 0; i < event_queue.length; i = i + 1 - offset) {
+			var event = event_queue[i];
+			if (event.type === type && event.target === dom) {
+				console.log("Pruning stale event: " + JSON.stringify(event.result));
+				event_queue.splice(i, 1);
+				offset++;
+			}
+		}
+	}
+	
 	
 	function scheduleEvent(event, handle, data) {
 		var result = makeResult(handle, data);
 		// return target dom element to be able to detect
 		// if the event should be discarded processing
-		event_queue.push({target: event.target, result: result});
+		event_queue.push({type: event.type, target: event.target, result: result});
 	}
 
 	function scheduleCommand(handle, data) {
@@ -310,6 +322,7 @@ function Salix(aRootId) {
 				var key = edit[type].name;
 				var handler = dom.salix_handlers[key];
 				dom.removeEventListener(key, handler);
+				pruneEventQueue(dom, key);
 				break;
 				
 			default: 
@@ -341,6 +354,7 @@ function Salix(aRootId) {
 		var allHandlers = dom.salix_handlers || {};
 		if (allHandlers.hasOwnProperty(key)) {
 			dom.removeEventListener(key, allHandlers[key]);
+			pruneEventQueue(key, dom);
 		}
 		allHandlers[key] = handler;
 		dom.salix_handlers = allHandlers;
