@@ -217,6 +217,8 @@ Node _summary(list[Node] kids, list[Attr] attrs) = element("summary", kids, attr
 Node _menuitem(list[Node] kids, list[Attr] attrs) = element("menuitem", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 Node _menu(list[Node] kids, list[Attr] attrs) = element("menu", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
+Node _shadow(list[Node] kids, list[Attr] attrs) = shadow(kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
+
 /*
  * Attributes
  */

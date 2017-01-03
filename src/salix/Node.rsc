@@ -15,6 +15,8 @@ data Node
   // Natives don't have attrs, since we don't manage the DOM for it;
   // properties are handled however the internals wish to.
   | native(str kind, map[str, str] props, map[str, Hnd] events, map[str,value] extra = ())
+  // TODO:
+  | shadow(list[Node] kids, map[str, str] attrs, map[str, str] props, map[str, Hnd] events)
   | txt(str contents)
   ;  
 

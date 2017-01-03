@@ -20,7 +20,9 @@ void view(Model m) {
   div(() {
     h3("Self-imploding text field");
     if (!m.deleted) {
-      input(\type("text"), \value(m.txt), onInput(updateTxt));
+      div(() {
+        input(\type("text"), \value(m.txt), onInput(updateTxt));
+      });
     }
   });
 }

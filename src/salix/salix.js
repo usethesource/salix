@@ -18,55 +18,85 @@ Processing: sub(clock(tick(1483357119)))
 function Salix(aRootId) {
 	var rootId = aRootId || 'root';
 	
-	//var async_queue = [];
 	var event_queue = [];
+	var command_queue = [];
+	var subscription_queue = [];
 	var other_queue = [];
 
-	var natives = {};
-	var subscriptions = {};
+	// 'native 'dom elements
 	var builders = {};
 
+	var subscriptions = {};
+
 	function start() {
-		buildInitialView();
+		send('/init', {}, function (work) {
+			step(work[2], work[1], work[0], true);
+		});
 	}
 
 	function render(timestamp) {
-		if (!pendingWork()) {
-			window.requestAnimationFrame(render);
-			return; 
-		}
 		
-		processMessage(nextMessage());
+		// commands are always processed first.
+		if (command_queue.length > 0) { // could we do all at once in one frame??
+			var cmd = command_queue.shift();
+			console.log("Processing command: " + JSON.stringify(cmd));
+			processMessage(cmd);
+		}
+		else if (event_queue.length > 0) {
+			var event = event_queue.shift();
+			
+			while (event && isStale(event.target)) {
+				console.log('Discarding: ' + JSON.stringify(event.result));
+				event = event_queue.shift();
+			}
+			
+			if (event) {
+				console.log('Processing event: ' + JSON.stringify(event.result));
+				processMessage(event.result);
+			}
+			else {
+				// all events turned out to be stale.
+				window.requestAnimationFrame(render);
+			}
+		}
+		else if (other_queue.length > 0) {
+			processMessage(other_queue.shift());
+		}
+		else if (subscription_queue.length > 0) {
+			processMessage(subscription_queue.shift());
+		}
+		else {
+			window.requestAnimationFrame(render);
+		}
 	}
 
-	function pendingWork() {
-		return event_queue.length > 0 || other_queue.length > 0;
-	}
-
-	function nextMessage() {
-		return event_queue.length > 0 ? event_queue.shift().result : other_queue.shift();
-	}
-
-	function buildInitialView() {
-		send('/init', {}, function (work) {
-			doCommands(work[2]);
-			subscribe(work[1]); 
-			replace(root(), build(work[0]));
-		});
+	function step(cmds, subs, vdomOrPatch, init) {
+		if (cmds.length > 0) {
+			doCommands(cmds);
+			// skip doing subscriptions and building dom;
+			// need to wait for effect of commands
+		}
+		else {
+			subscribe(subs);
+			if (init) {
+				replace(root(), build(vdomOrPatch));
+			}
+			else {
+				patch(root(), vdomOrPatch, dec2handler);
+			}
+		}
 	}
 
 	function processMessage(msg) {
 		send('/msg', msg, function (work) {
-			doCommands(work[2]);
-			subscribe(work[1]);
-			patch(root(), work[0], dec2handler);
+			step(work[2], work[1], work[0], false);
 		});
 	}
 
 	function send(url, message, handle) {
 		$.get(url, message, handle, 'json').always(function () {
 			// request the frame after work has been done by handle
-			// this ensures the event_queue has been pruned of stale events.
+			// this ensures "synchronous" processing of messages
 			window.requestAnimationFrame(render);
 		});
 	}
@@ -92,7 +122,7 @@ function Salix(aRootId) {
 			
 			case 'random':
 				var random = Math.floor(Math.random() * (cmd.random.to - cmd.random.from + 1)) + cmd.random.from;
-				scheduleOther(cmd.random.handle.handle, {type: 'integer', intVal: random});
+				scheduleCommand(cmd.random.handle.handle, {type: 'integer', intVal: random});
 				break;
 			
 			}
@@ -106,7 +136,7 @@ function Salix(aRootId) {
 		case 'timeEvery':
 			var timer = setInterval(function() {
 				var data = {type: 'integer', intVal: (new Date().getTime() / 1000) | 0};
-				scheduleOther(sub.timeEvery.handle.handle, data); 
+				scheduleSubscription(sub.timeEvery.handle.handle, data); 
 			}, sub.timeEvery.interval);
 			return function () {
 				clearInterval(timer);
@@ -149,15 +179,40 @@ function Salix(aRootId) {
 		}
 	}
 
+	function isStale(dom) {
+		/*
+		 * an event may become stale when
+		 * - 1. its dom (or any parent) is removed between the time of queueing the event, and 
+		 *   removing it from the queue (i.e. here), OR
+		 * - 2. the event handler does not exist on the dom anymore (TODO)
+		 */
+		if (dom === null) {
+			return true;
+		}
+		if (dom === document) {
+			return false;
+		}
+		return isStale(dom.parentNode);
+	}
+	
+	
 	function scheduleEvent(event, handle, data) {
 		var result = makeResult(handle, data);
-		// record event type and dom element to be able to detect
-		// when the event should be discarded during dom patching.
-		event_queue.push({type: event.type, target: event.target, result: result});
+		// return target dom element to be able to detect
+		// if the event should be discarded processing
+		event_queue.push({target: event.target, result: result});
+	}
+
+	function scheduleCommand(handle, data) {
+		command_queue.push(makeResult(handle, data));
 	}
 
 	function scheduleOther(handle, data) {
 		other_queue.push(makeResult(handle, data));
+	}
+
+	function scheduleSubscription(handle, data) {
+		subscription_queue.push(makeResult(handle, data));
 	}
 
 	
@@ -174,7 +229,6 @@ function Salix(aRootId) {
 		return result;
 	}
 
-	
 	// this needs adaptation if new kinds of data are required. 
 	function dec2handler(decoder) {
 		switch (nodeType(decoder)) {
@@ -200,29 +254,6 @@ function Salix(aRootId) {
 		}
 	}
 	
-	function flushEvents(dom, eventName) {
-		var del = [];
-		for (var i = 0; i < event_queue.length; i++) {
-			var queuedEvent = event_queue[i];
-			if (queuedEvent.target === dom) {
-				if (eventName !== undefined) {
-					if (queuedEvent.type === eventName) {
-						del.push(i);
-					}
-				}
-				else {
-					del.push(i);
-				}
-			}
-		}
-		var offset = 0;
-		for (var i = 0; i < del.length; i++) {
-			console.log("Discarding stale event: " + JSON.stringify(event_queue[i - offset].result));
-			event_queue.splice(i - offset, 1);
-			offset += 1;
-		}
-	}
-
 	function patchThis(dom, edits) {
 		edits = edits || [];
 
@@ -233,19 +264,17 @@ function Salix(aRootId) {
 			switch (type) {
 			
 			case 'replace':
-				flushEvents(dom);
 				return build(edit[type].html);
 
-			case 'setText': // can't happen if dom is native
+			case 'setText': 
 				dom.nodeValue = edit[type].contents;
 				break;			
 				
-			case 'removeNode': // can't happen if dom is native
-				flushEvents(dom.lastChild);
+			case 'removeNode': 
 				dom.removeChild(dom.lastChild);
 				break;
 				
-			case 'appendNode': // can't happen if dom is native
+			case 'appendNode':
 				var kid = build(edit[type].html);
 				if (typeof kid === 'function') {
 					kid(dom);
@@ -255,32 +284,30 @@ function Salix(aRootId) {
 				}
 				break;
 				
-			case 'setAttr': // can't happen if dom is native
+			case 'setAttr': 
 				dom.setAttribute(edit[type].name, edit[type].val);
 				break;
 				
-			case 'setProp': // goes to native if dom was native
+			case 'setProp': 
 				dom[edit[type].name] = edit[type].val;
 				break;
 				
-			case 'setEvent': // goes to native if dom was native (TODO)
+			case 'setEvent':
 				var key = edit[type].name;
-				flushEvents(dom, key);
 				var handler = dec2handler(edit[type].handler);
 				dom.addEventListener(key, withCleanListeners(dom, key, handler));
 				break
 			
-			case 'removeAttr': // can't happen if dom is native
+			case 'removeAttr': 
 				dom.removeAttribute(edit[type].name);
 				break;
 				
-			case 'removeProp': // goes to native if dom was native
+			case 'removeProp': 
 				delete dom[edit[type].name];
 				break;
 				
 			case 'removeEvent': 
 				var key = edit[type].name;
-				flushEvents(dom, key);
 				var handler = dom.salix_handlers[key];
 				dom.removeEventListener(key, handler);
 				break;
@@ -392,7 +419,9 @@ function Salix(aRootId) {
 			build: build,
 			nodeType: nodeType,
 			scheduleEvent: scheduleEvent,
-			scheduleOther: scheduleOther};
+			scheduleSubscription: scheduleSubscription,
+			scheduleOther: scheduleOther,
+			scheduleCommand: scheduleCommand};
 }
 
 
