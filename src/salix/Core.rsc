@@ -1,7 +1,6 @@
 module salix::Core
 
-// import this if you need commands/subscriptions, or define your
-// own event handling parsers.
+import salix::Node;
 
 import List;
 import String;
@@ -23,22 +22,119 @@ data Handle
   ;
 
 
-@doc{The encoding interface between an App and this library.
-An app set this variable to its encapsulated encoder before
-rendering. This ensures that encoding is relative to app and not global.
-Encoding produces handles for arbitrary values, at some path,
-recording the list of active message transformers at the moment of call.} 
-public int(value) _encode;
+/*
+ * Encoding/decoding
+ */
+ 
+// the "current" top-level view; set by render
+private value viewContext; 
 
-public &T(int,type[&T]) _decode;
+// a bidirectional map from values (functions) to ints, with an id counter.
+alias Encoding = tuple[int id, map[int, value] from, map[value, int] to]; 
+
+alias RenderState = map[value viewContext, Encoding encoding];
+
+private RenderState state = (); 
+
+private void initViewContext(void(&T) view) {
+  viewContext = view;
+  state[viewContext] = <0, (), ()>;
+}
+ 
+ // encode functions (for handlers) as integers
+private int _encode(value x) {
+  Encoding enc = state[viewContext];
+  if (x notin enc.to) {
+    enc.id += 1;
+    enc.from[enc.id] = x;
+    enc.to[x] = enc.id;
+    state[viewContext] = enc; 
+  }
+  return enc.to[x];
+}
+
+// retrieve the actual function corresponding to a handle identity.
+private &U _decode(int id, type[&U] t) = d
+  when &U d := state[viewContext].from[id];
+
 
 @doc{The stack of active msg transformers at some point during rendering.}
 private list[Msg(Msg)] mappers = [];
 
+// `encode` encodes its argument and all active mappers into a handle.
 Handle encode(value x)
   = handle(_encode(x), maps=[ _encode(f) | Msg(Msg) f <- mappers ]);
 
+&T decode(Handle h, type[&T] t) = decode(h.id, t); 
+
 &T decode(int id, type[&T] t) = _decode(id, t); 
+
+/*
+ * Rendering
+ */
+ 
+@doc{The html element stack used during rendering.}
+private list[list[Node]] stack = [];
+
+@doc{Basic stack management functions.}
+private void add(Node h) = push(pop() + [h]);
+
+private void push(list[Node] l) { stack += [l]; }
+
+private list[Node] top() = stack[-1];
+
+private list[Node] pop() {
+  list[Node] elts = top();
+  stack = stack[..-1];
+  return elts;
+}
+
+
+@doc{Render turns void returning views for a model &T into an Node node.}  
+Node render(&T model, void(&T) block) {
+  initViewContext(block);
+  push([]); 
+  block(model);
+  // TODO: throw exception if top is empty or
+  // size > 1
+  return pop()[0];
+}
+
+
+@doc{The basic build function to construct html elements on the stack.
+The list of argument values can contain any number of Attr values.
+The last argument (if any) can be a block, an Node node, or a value.
+In the latter case it is converted to a txt node.}
+void build(list[value] vals, Node(list[Node], list[Attr]) elt) {
+  
+  push([]); // start a new scope for this element's children
+  
+  if (vals != []) { 
+    if (void() block := vals[-1]) { // argument block is just called
+      block();
+    }
+    else if (Node h := vals[-1]) { // a computed node is simply added
+      add(h);
+    }
+    else if (Attr _ !:= vals[-1]) { // else (if not Attr), render as text.
+      _text(vals[-1]);
+    }
+  }
+  
+  // construct the `elt` using the kids at the top of the stack
+  // and any attributes in vals and add it to the parent's list of children.
+  add(elt(pop(), [ a | Attr a <- vals ]));
+  
+}
+
+@doc{Create a text node from an arbitrary value.}
+void _text(value v) = add(txt("<v>")); // TODO: HTML encode.
+
+
+/*
+ * Subscriptions and commands
+ */
+
  
 @doc{Subs are like events: they are sent to JS, and Results are sent back.}
 data Sub // Subscriptions
@@ -48,6 +144,11 @@ data Sub // Subscriptions
 @doc{Smart constructors for constructing encoded subscriptions.}
 Sub timeEvery(Msg(int) int2msg, int interval)
   = timeEvery(encode(int2msg), interval);
+
+alias Subs[&T] = list[Sub](&T);
+
+list[Sub] noSubs(&T t) = [];
+
 
 @doc{Commands represent actions that need to be performed at the client.}
 data Cmd  // Commands
@@ -64,10 +165,10 @@ alias WithCmds[&T] = tuple[&T model, list[Cmd] commands];
 WithCmds[&T] noCmds(&T model) = <model, []>;
 WithCmds[&T] withCmds(&T model, list[Cmd] cmds) = <model, cmds>;
 
-alias Subs[&T] = list[Sub](&T);
 
-list[Sub] noSubs(&T t) = [];
-
+/*
+ * Event decoders
+ */
 
 @doc{Handlers are what is sent to the client for handling user events.}
 data Hnd // Handlers for events
@@ -85,12 +186,16 @@ Hnd targetChecked(Msg(bool) bool2msg) = targetChecked(encode(bool2msg));
 
 Hnd keyCode(Msg(int) int2msg) = keyCode(encode(int2msg)); 
 
+/*
+ * Message parsing
+ */  
   
 @doc{Convert request parameters to a Msg value. Active mappers at `path`
 transform the message according to f.}
 Msg params2msg(map[str, str] params) 
   = msgParsers[params["type"]](toHandle(params), params);
 
+@doc{Register a message parser for type `typ`.}
 void msgParser(str typ, Msg(Handle, map[str,str]) parser) {
   msgParsers[typ] = parser;
 }
@@ -102,16 +207,16 @@ Handle toHandle(map[str, str] params)
 list[int] toMaps(str x) = [ toInt(i) | str i <- split(";", x), i != "" ];
 
 Msg nothingParser(Handle h, map[str, str] p) 
-  = applyMaps(h, decode(h.id, #Msg)); 
+  = applyMaps(h, decode(h, #Msg)); 
 
 Msg stringParser(Handle h, map[str,str] p) 
-  = applyMaps(h, decode(h.id, #Msg(str))(p["strVal"]));
+  = applyMaps(h, decode(h, #Msg(str))(p["strVal"]));
 
 Msg booleanParser(Handle h, map[str,str] p) 
-  = applyMaps(h, decode(h.id, #Msg(bool))(p["boolVal"] == true));
+  = applyMaps(h, decode(h, #Msg(bool))(p["boolVal"] == true));
 
 Msg integerParser(Handle h, map[str,str] p) 
-  = applyMaps(h, decode(h.id, #Msg(int))(toInt(p["intVal"])));
+  = applyMaps(h, decode(h, #Msg(int))(toInt(p["intVal"])));
 
 
 Msg applyMaps(Handle h, Msg msg) = ( msg | decode(m, #(Msg(Msg)))(it) | int m <- h.maps );
@@ -123,7 +228,9 @@ private map[str, Msg(Handle, map[str, str])] msgParsers = (
   "integer": integerParser
 );
 
-// MAPPING
+/*
+ * Mapping
+ */
 
 private &T withMapper(Msg(Msg) f, &T() block) {
   mappers = [f] + mappers;
@@ -134,21 +241,15 @@ private &T withMapper(Msg(Msg) f, &T() block) {
 
 // bug: if same name as other mapped, if calling the other
 // it can call this one...
-private list[Sub] mappedSubs(Msg(Msg) f, &T t, list[Sub](&T) subs) 
+list[Sub] mapSubs(Msg(Msg) f, &T t, list[Sub](&T) subs) 
   = withMapper(f, list[Sub]() { return subs(t); });
 
-private tuple[&T,list[Cmd]] mappedCmds(Msg(Msg) f, Msg msg, &T t, tuple[&T, list[Cmd]](Msg, &T) upd) 
+tuple[&T,list[Cmd]] mapCmds(Msg(Msg) f, Msg msg, &T t, tuple[&T, list[Cmd]](Msg, &T) upd) 
   = withMapper(f, tuple[&T, list[Cmd]]() { return upd(msg, t); });
 
 @doc{Record mapper to transform messages produced in block according f.}
-private void mappedView(Msg(Msg) f, &T t, void(&T) block) { 
+void mapView(Msg(Msg) f, &T t, void(&T) block) { 
    withMapper(f, value() { block(t); return 0; });
 }
 
-alias Mapping = tuple[
-  list[Sub](Msg(Msg), &T, list[Sub](&T)) subs,
-  tuple[&T, list[Cmd]](Msg(Msg), Msg, &T, tuple[&T, list[Cmd]](Msg, &T)) cmds,
-  void(Msg(Msg), &T, void(&T)) view
-];
 
-public /*const*/ Mapping mapping = <mappedSubs, mappedCmds, mappedView>;
