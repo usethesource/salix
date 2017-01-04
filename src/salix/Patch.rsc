@@ -13,7 +13,7 @@ patches for those kids will not end up in the patch at ll.
 At each level a list of edits can be applied.
 A root patch will have pos - 1.}
 data Patch
-  = patch(int pos, list[Patch] patches, list[Edit] edits)
+  = patch(int pos, list[Patch] patches = [], list[Edit] edits = [])
   ;
 
 @doc{Primitive edit constructs.}

@@ -37,7 +37,7 @@ App[AllModel] allApp()
   = app(initAll(), viewAll, editAll, |http://localhost:9213|, |project://salix/src|, subs = allSubs); 
 
 App[AllModel] debugAllApp() 
-  = debug(initAll(), viewAll, editAll, |http://localhost:9204|, |project://salix/src|, subs = allSubs); 
+  = debug(initAll(), myDebugView, editAll, |http://localhost:9213|, |project://salix/src|, subs = allSubs); 
   
 WithCmds[AllModel] initAll() = noCmds(<
   37.0, 
@@ -50,14 +50,18 @@ WithCmds[AllModel] initAll() = noCmds(<
   
 list[Sub] allSubs(AllModel m) 
   = mapSubs(Msg::clock, m.clock, salix::demo::basic::Clock::subs);
+
+void myDebugView(DebugModel[AllModel] m) {
+  debugView(m, viewAll);
+}
   
 void viewAll(AllModel m) {
   div(() {
      mapView(Msg::celsius, m.celsius, salix::demo::basic::Celsius::view);
      mapView(Msg::counter, m.counter, salix::demo::basic::Counter::view);
-     mapView(Msg::listDemo, m.listDemo, salix::demo::basic::ListDemo::view);
+     //mapView(Msg::listDemo, m.listDemo, salix::demo::basic::ListDemo::view);
      mapView(Msg::random, m.random, salix::demo::basic::Random::twiceView);
-     mapView(Msg::codeMirror, m.codeMirror, salix::demo::basic::CodeMirror::view);
+     //mapView(Msg::codeMirror, m.codeMirror, salix::demo::basic::CodeMirror::view);
      mapView(Msg::clock, m.clock, salix::demo::basic::Clock::view);
   });
 }

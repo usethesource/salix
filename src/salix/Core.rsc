@@ -272,7 +272,8 @@ void _reset() {
 bool _printState() {
   println("Function table for <viewContext>: ");
   for (int k <- state[viewContext].from) {
-    println("  <k>: <state[viewContext].from[k]>");
+    print("  <k>: ");
+    println(state[viewContext].from[k]);
   }
   return true;
 }

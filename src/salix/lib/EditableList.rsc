@@ -16,6 +16,8 @@ data Msg
   | elemMsg(int i, Msg msg)
   ;
 
+// Ouch, this makes closures of course.
+// Means we can only nest static components...
 Msg(Msg) toSub(int i) = Msg(Msg msg) { return elemMsg(i, msg); };
 
 void listView(ListModel[&T] m, void(&T) display) {

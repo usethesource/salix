@@ -50,7 +50,6 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
       list[Sub] mySubs = subs(model);
       list[Cmd] myCmds = modelWithCmds.commands;
       current = asRoot(render(model, view));
-      current = asRoot(current);
       return response([current, mySubs, myCmds]);
     }
     
@@ -66,22 +65,26 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
       // update the model
       // NB: update might modify the encoding table, because of commands!!!
       <model, myCmds> = update(msg, model);
-      
-      //println("Rendering new view");
-      // compute the new view
-      Node newView = asRoot(render(model, view));
-      
-      // compute the patch to be sent to the browser
-      Patch myPatch = diff(current, newView);
-      
-      // update the current view
-      current = newView;
-      
+
       list[Sub] mySubs = subs(model);
-      //println("Mysubs: <mySubs>");
-      
-      // send the patch.
-      return response([myPatch, mySubs, myCmds]); 
+        
+      if (myCmds != []) {
+        // don't compute new view, handle commands first.
+        return response([patch(-1), mySubs, myCmds]);        
+      }
+      else {
+	      // compute the new view
+	      Node newView = asRoot(render(model, view));
+	      
+	      // compute the patch to be sent to the browser
+	      Patch myPatch = diff(current, newView);
+	      
+	      // update the current view
+	      current = newView;
+	      
+	      // send the patch.
+	      return response([myPatch, mySubs, myCmds]); 
+	    }
     }
     
     // everything else is considered static files.

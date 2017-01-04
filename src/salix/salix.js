@@ -352,6 +352,10 @@ function Salix(aRootId) {
 		var patches = tree.patch.patches || [];
 		for (var i = 0; i < patches.length; i++) {
 			var p = patches[i];
+			var kid = dom.childNodes[p.patch.pos];
+			if (kid === undefined) {
+				console.log("BANG!");
+			}
 			patch(dom.childNodes[p.patch.pos], p);
 		}
 		

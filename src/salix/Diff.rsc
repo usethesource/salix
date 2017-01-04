@@ -12,25 +12,25 @@ Patch diff(Node old, Node new) = diff(old, new, -1);
 
 Patch diff(Node old, Node new, int idx) {
   if (getName(old) != getName(new)) {
-    return patch(idx, [], [replace(new)]);
+    return patch(idx, edits = [replace(new)]);
   }
   
   if (old is txt, new is txt) {
     if (old.contents != new.contents) {
-      return patch(idx, [], [setText(new.contents)]);
+      return patch(idx, edits = [setText(new.contents)]);
     }
-    return patch(idx, [], []);
+    return patch(idx);
   }
   
   if (old is native, new is native) {
     // todo: extra data 
     edits = diffMap(old.props, new.props, setProp, removeProp)
       + diffMap(old.events, new.events, setEvent, removeEvent);
-    return patch(idx, [], edits);  
+    return patch(idx, edits = edits);  
   }
   
   if (old is element, old.tagName != new.tagName) {
-    return patch(idx, [], [replace(new)]);
+    return patch(idx, edits = [replace(new)]);
   }
 
   // same kind of elements
@@ -38,7 +38,7 @@ Patch diff(Node old, Node new, int idx) {
     + diffMap(old.props, new.props, setProp, removeProp)  
     + diffMap(old.events, new.events, setEvent, removeEvent);
   
-  return diffKids(old.kids, new.kids, patch(idx, [], edits));
+  return diffKids(old.kids, new.kids, patch(idx, edits = edits));
 }
 
 Patch diffKids(list[Node] oldKids, list[Node] newKids, Patch myPatch) {

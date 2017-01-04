@@ -4,6 +4,7 @@ import salix::HTML;
 import salix::App;
 import salix::Core;
 import salix::Node; // for null()...
+
 import List;
 
 alias DebugModel[&T]
@@ -17,13 +18,11 @@ data Msg
   | goto(int version)
   ;
 
-//App[DebugModel[&T]] debug(&T model, void(&T) view, &T(Msg, &T) upd, loc http, loc static)
-//  = app(wrapModel(model, upd), wrapView(view), debugUpdate, http, static); 
-
-App[DebugModel[&T]] debug(WithCmds[&T] model, void(&T) view, 
+App[DebugModel[&T]] debug(WithCmds[&T] model, 
+                          void(DebugModel[&T]) view, // // can't wrap view implicitly, because it'll lead to closures... 
                           WithCmds[&T](Msg, &T) upd, loc http, loc static,
                           Subs[&T] subs = noSubs, str root = "root")
-  = app(wrapModel(model, upd), wrapView(view), debugUpdate, http, static,
+  = app(wrapModel(model, upd), view, debugUpdate, http, static,
         subs = wrapSubs(subs), root = root); 
 
 
@@ -32,9 +31,6 @@ Subs[DebugModel[&T]] wrapSubs(Subs[&T] subs)
 
 WithCmds[DebugModel[&T]] wrapModel(WithCmds[&T] model, WithCmds[&T](Msg, &T) upd) 
   = withCmds(<0, [model.model], [], upd>, model.commands);
-
-void(DebugModel[&T]) wrapView(void(&T) view) 
-  = void(DebugModel[&T] d) { debugView(d, view); };
 
 
 void debugView(DebugModel[&T] model, void(&T) subView) {
@@ -70,20 +66,20 @@ void debugView(DebugModel[&T] model, void(&T) subView) {
 
 WithCmds[DebugModel[&T]] debugUpdate(Msg msg, DebugModel[&T] m) {
   list[Cmd] cmds = [];
-  
+
   switch (msg) {
   
     case next():
       m.current = m.current < size(m.models) - 1 ? m.current + 1 : m.current;
        
-    case prev():
+    case prev(): 
       m.current = m.current > 0 ? m.current - 1 : m.current;
       
     case sub(Msg s): {
       <newModel, cmds> = mapCmds(Msg::sub, s, m.models[m.current], m.update);
       m.models += [newModel];
-      m.messages += [s];
-      m.current += 1;
+      m.messages += [msg];
+      m.current = size(m.models) - 1;
     }
 
     case goto(int v): 
