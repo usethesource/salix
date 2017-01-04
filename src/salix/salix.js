@@ -184,7 +184,7 @@ function Salix(aRootId) {
 		 * an event may become stale when
 		 * - 1. its dom (or any parent) is removed between the time of queueing the event, and 
 		 *   removing it from the queue (i.e. here), OR
-		 * - 2. the event handler does not exist on the dom anymore (TODO)
+		 * - 2. the event handler does not exist on the dom anymore (this is done in pruneEventQueue)
 		 */
 		if (dom === null) {
 			return true;
@@ -196,14 +196,15 @@ function Salix(aRootId) {
 	}
 	
 	function pruneEventQueue(type, dom) {
-		var offset = 0;
-		for (var i = 0; i < event_queue.length; i = i + 1 - offset) {
+		var i = 0;
+		while (i < event_queue.length) {
 			var event = event_queue[i];
 			if (event.type === type && event.target === dom) {
 				console.log("Pruning stale event: " + JSON.stringify(event.result));
 				event_queue.splice(i, 1);
-				offset++;
+				i--;
 			}
+			i++;
 		}
 	}
 	
@@ -322,7 +323,7 @@ function Salix(aRootId) {
 				var key = edit[type].name;
 				var handler = dom.salix_handlers[key];
 				dom.removeEventListener(key, handler);
-				pruneEventQueue(dom, key);
+				pruneEventQueue(key, dom);
 				break;
 				
 			default: 

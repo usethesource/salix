@@ -8,11 +8,12 @@ import String;
 
 alias Model = tuple[str txt, bool deleted];
 
-App[str] theApp() = app(<"some text", false>, view, update, |http://localhost:7000|, |project://salix/src|);
+App[str] theApp() = app(<"0", false>, view, update, |http://localhost:7000|, |project://salix/src|);
 
 data Msg
   = updateTxt(str s)
   | updateTxt2(str s)
+  | goBack(str s)
   ;
   
 Model update(updateTxt(str s), Model _) 
@@ -20,6 +21,9 @@ Model update(updateTxt(str s), Model _)
 
 Model update(updateTxt2(str s), Model _) 
   = <s, size(s) > 10>;
+
+Model update(goBack(str s), Model m) 
+  = <toInt(s) <= 50 ? s : m.txt, size(s) > 10>;
   
 void view(Model m) {
   div(() {
@@ -34,6 +38,15 @@ void view(Model m) {
         input(\type("text"), \value(m.txt), onInput(updateTxt));
       });
     }
+    
+    div(() {
+      if (toInt(m.txt) > 50) {
+        input(\type("range"), \value(m.txt), min("0"), max("100"), onInput(goBack));
+      }
+      else {
+        input(\type("range"), \value(m.txt), min("0"), max("100"), onInput(updateTxt));
+      }
+    });
     
   });
 }
