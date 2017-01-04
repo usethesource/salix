@@ -63,8 +63,7 @@ App[&T] app(WithCmd[&T] withCmd, void(&T) view, WithCmd[&T](Msg, &T) update, loc
     
     // initially, just render the view, for the current model.
     if (get("/init") := req) {
-      <newModel, myCmd> = withCmd;
-      return transition(newModel, myCmd);
+      return transition(withCmd.model, withCmd.command);
     }
     
     

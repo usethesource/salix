@@ -120,6 +120,9 @@ function Salix(aRootId) {
 			var random = Math.floor(Math.random() * (cmd.random.to - cmd.random.from + 1)) + cmd.random.from;
 			scheduleCommand(cmd.random.handle.handle, {type: 'integer', intVal: random});
 			break;
+			
+		case 'batch':
+			// TODO
 		
 		}
 	}

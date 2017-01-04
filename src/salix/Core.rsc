@@ -161,6 +161,7 @@ list[Sub] noSubs(&T t) = [];
 @doc{Commands represent actions that need to be performed at the client.}
 data Cmd  // Commands
   = random(Handle handle, int from, int to)
+  | batch(list[Cmd] commands) // TODO
   | none()
   ;
   
@@ -173,6 +174,7 @@ alias WithCmd[&T] = tuple[&T model, Cmd command];
 // functions to hide the representation of WithCmd.
 WithCmd[&T] noCmd(&T model) = <model, none()>;
 WithCmd[&T] withCmd(&T model, Cmd cmd) = <model, cmd>;
+WithCmd[&T] withCmds(&T model, list[Cmd] cmds) = <model, batch(cmds)>;
 
 
 /*
