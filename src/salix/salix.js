@@ -30,9 +30,16 @@ function Salix(aRootId) {
 
 	function start() {
 		send('/init', {}, function (work) {
-			step(work[2], work[1], work[0], true);
+			step(work[0], work[1], work[2], true);
 		});
 	}
+
+	function processMessage(msg) {
+		send('/msg', msg, function (work) {
+			step(work[0], work[1], work[2]);
+		});
+	}
+
 
 	function render(timestamp) {
 		
@@ -70,27 +77,18 @@ function Salix(aRootId) {
 		}
 	}
 
-	function step(cmds, subs, vdomOrPatch, init) {
+	function step(cmds, subs, myPatch) {
 		if (cmds.length > 0) {
 			doCommands(cmds);
 			// skip doing subscriptions and building dom;
 			// need to wait for effect of commands
+			// technically unneeded, because server should guarantee that
+			// cmds.length > 0 implies subs = [], myPatch = empty.
 		}
 		else {
 			subscribe(subs);
-			if (init) {
-				replace(root(), build(vdomOrPatch));
-			}
-			else {
-				patch(root(), vdomOrPatch, dec2handler);
-			}
+			patch(root(), myPatch, dec2handler);
 		}
-	}
-
-	function processMessage(msg) {
-		send('/msg', msg, function (work) {
-			step(work[2], work[1], work[0], false);
-		});
 	}
 
 	function send(url, message, handle) {

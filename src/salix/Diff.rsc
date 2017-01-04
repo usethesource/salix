@@ -11,6 +11,10 @@ bool sanity(Node h1, Node h2) = apply(diff(h1, h2), h1) == h2;
 Patch diff(Node old, Node new) = diff(old, new, -1);
 
 Patch diff(Node old, Node new, int idx) {
+  if (old is empty) {
+    return patch(idx, edits =[replace(new)]);
+  }
+
   if (getName(old) != getName(new)) {
     return patch(idx, edits = [replace(new)]);
   }

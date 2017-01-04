@@ -36,21 +36,35 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
 
   Node asRoot(Node h) = h[attrs=h.attrs + ("id": root)];
 
-  Node current;
-  Encoding encoding;
- 
-  &T model;
+  Node currentView = empty();
+  
+  &T currentModel;
+  
+  Response transition(&T newModel, list[Cmd] myCmds) {
+    
+    if (myCmds != []) {
+      return response([myCmds, [], patch(-1)]);
+    }
+    
+    list[Sub] mySubs = subs(newModel);
+    
+    Node newView = asRoot(render(newModel, view));
+    Patch myPatch = diff(currentView, newView);
+
+    currentView = newView;
+    currentModel = newModel;
+    
+    return response([[], mySubs, myPatch]);
+  }
 
   // the main handler to interpret http requests.
   // BUG: mixes with constructors that are in scope!!!
   Response _handle(Request req) {
+    
     // initially, just render the view, for the current model.
     if (get("/init") := req) {
-      model = modelWithCmds.model;
-      list[Sub] mySubs = subs(model);
-      list[Cmd] myCmds = modelWithCmds.commands;
-      current = asRoot(render(model, view));
-      return response([current, mySubs, myCmds]);
+      <newModel, myCmds> = modelWithCmds;
+      return transition(newModel, myCmds);
     }
     
     
@@ -58,33 +72,9 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
     if (get("/msg") := req) {
       //println("Parsing request");
       Msg msg = params2msg(req.parameters);
-      
       println("Processing: <msg>");
-      
-      //println("Updating the model");
-      // update the model
-      // NB: update might modify the encoding table, because of commands!!!
-      <model, myCmds> = update(msg, model);
-
-      list[Sub] mySubs = subs(model);
-        
-      if (myCmds != []) {
-        // don't compute new view, handle commands first.
-        return response([patch(-1), mySubs, myCmds]);        
-      }
-      else {
-	      // compute the new view
-	      Node newView = asRoot(render(model, view));
-	      
-	      // compute the patch to be sent to the browser
-	      Patch myPatch = diff(current, newView);
-	      
-	      // update the current view
-	      current = newView;
-	      
-	      // send the patch.
-	      return response([myPatch, mySubs, myCmds]); 
-	    }
+      <newModel, myCmds> = update(msg, currentModel);
+      return transition(newModel, myCmds);
     }
     
     // everything else is considered static files.

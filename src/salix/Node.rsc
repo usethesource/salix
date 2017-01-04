@@ -18,6 +18,7 @@ data Node
   // TODO:
   | shadow(list[Node] kids, map[str, str] attrs, map[str, str] props, map[str, Hnd] events)
   | txt(str contents)
+  | empty() 
   ;  
 
 @doc{An abstract type for represent event handlers.}
