@@ -100,12 +100,12 @@ As an example, let's consider an app that contains the counter app twice. Clicki
     // define the view
     void viewTwice(ModelTwice model) {
       div(() {
-        mapping.view(sub1, model.counter1, view);
-        mapping.view(sub2, model.counter2, view);
+        mapView(sub1, model.counter1, view);
+        mapView(sub2, model.counter2, view);
       });
     }
 
-The important bit here is that the `view` function of the counter app is embedded twice, via the special `mapping.view` function. It takes as its first argument a function of type `Msg(Msg)` (i.e., a message transformer), a model as its second argument, and a view (of type `void(&T)`) as its last argument. In this case we provide the `sub1` and `sub2` constructors as message transformers. The function `mapping.view` now ensures that whenever a message is received that originates from the first counter it is wrapped in `sub1`, and that any message from the second counter is wrapped in `sub2`. For instance, `inc()` from the first counter will be wrapped as `sub1(inc())` and passed to `updateTwice` who will route it to `update` on `m.counter1`. Same for the second counter.
+The important bit here is that the `view` function of the counter app is embedded twice, via the special `mapView` function. It takes as its first argument a function of type `Msg(Msg)` (i.e., a message transformer), a model as its second argument, and a view (of type `void(&T)`) as its last argument. In this case we provide the `sub1` and `sub2` constructors as message transformers. The function `mapView` now ensures that whenever a message is received that originates from the first counter it is wrapped in `sub1`, and that any message from the second counter is wrapped in `sub2`. For instance, `inc()` from the first counter will be wrapped as `sub1(inc())` and passed to `updateTwice` who will route it to `update` on `m.counter1`. Same for the second counter.
 
 If we didn't use mapping here, the function `updateTwice` could directly interpret `inc()` and `dec()`, but it wouldn't know which counter model to update! Alternatively, however, you shouldn't use mapping if you *want* two views sharing the same model. In this case, there's no need for routing of messages, and the two `view` functions can be simply called twice, on the same model. For instance, like this:
 
@@ -121,6 +121,8 @@ If we didn't use mapping here, the function `updateTwice` could directly interpr
 You'd think it would easy to realize mapping just using a standard `map` function, or comprehensions. You could just simply transform an embedded function, say of type `Msg(int)` using a transformer `Msg(Msg)`. The transformed function would simply be attached at right position in the `Node` tree, -- nothing special.
 
 Unfortunately, such transformed embedded functions can't be serialized over the wire. That's why they are encoded. When receiving a result, the encoding is used to find the original function again. This requires equality on functions. Function equality in Rascal is tricky: two functions are considered equal if they correspond to the same declaration, or if they are *exactly* the same closure (i.e. created at the same execution point). This basically means that you cannot use inline closures as handlers, because on every render, they will lead to new identities, and hence, spurious event handler updates in the browser.  
+
+The same holds for arguments to the mapping functions. Basically this means that you only nest components that are statically known :-(.
 
 ### Subscriptions
 
@@ -155,11 +157,11 @@ Finally modify the invocation to `app` as follows:
 
 	App[Model] counterApp() = app(..., subs = counterSubs);
       
-If your nested components have subscriptions, you need to map them in the same way as views are mapped, but this time using `mapping.subs`. For instance, here's how to map the subscriptions of each counter to combine them into a list of subscriptions of `counterTwice`, assuming the counter app defines its list of subscriptions for a model as `counterSubs(Model m)`:
+If your nested components have subscriptions, you need to map them in the same way as views are mapped, but this time using `mapSubs`. For instance, here's how to map the subscriptions of each counter to combine them into a list of subscriptions of `counterTwice`, assuming the counter app defines its list of subscriptions for a model as `counterSubs(Model m)`:
 
 	list[Sub] subsTwice(ModelTwice m)
-	  = mapping.subs(sub1, m.counter1, counterSubs)
-	  + mapping.subs(sub2, m.counter2, counterSubs);
+	  = mapSubs(sub1, m.counter1, counterSubs)
+	  + mapSubs(sub2, m.counter2, counterSubs);
 
 
 ### Commands
@@ -202,7 +204,7 @@ Here's how:
 
 We've added a new message, `jitter` with an integer argument. The `update` function is modified so that whenever the counter is incremented, we'll do that, but also produce a command, in this case the predefined `random` command which will generate a random integer in the provided range. The result is sent back and mapped into the `jitter` message. The `update` function uses this message to add "jitter" to the counter value.
 
-TBD: mapping.commands
+TBD: mapCmds
 
 ### Guide to the modules
 
@@ -217,9 +219,9 @@ TBD: mapping.commands
 - `Diff`, `Patch`: internal modules for diffing and patching `Node`. You should never have to import these modules. 
 
 
-### (TODO: OUT OF DATE) Extending the Framework
+### Extending the Framework
 
-Extending the framework with new events, commands or subscriptions is facilitated by Rascal's extensible data types. In all cases, you define new constructors for handlers (`Hnd`), commands (`Cmd`) or subscriptions (`Sub`). Since all three of those values are sent over the write, they have to be encoded. The framework provides functions to do so. Handlers, commands and subscriptions produce results, which are sent back to the server. This means that you'll also have to write a `Result` decoder, if the type of data is unsupported. In some cases the Javascript needs to be modified in order to accommodate the construct. 
+Extending the framework with new events, commands or subscriptions is facilitated by Rascal's extensible data types. In all cases, you define new constructors for handlers (`Hnd`), commands (`Cmd`) or subscriptions (`Sub`). Since all three of those values are sent over the wire, they have to be encoded. The framework provides functions to do so. Handlers, commands and subscriptions produce results, which are sent back to the server. This means that you'll also have to write a parser to turn received data into a proper message of type `Msg`, if the type of data is not supported by the built-in parser (i.e. `nothing`, `string`, `integer`, or `boolean`). In some cases the Javascript needs to be modified in order to accommodate the construct. 
 
 #### Events
 
@@ -244,14 +246,16 @@ The type `Handle` is an opaque type representing the handler function in seriali
 
 The reverse is also needed: turning a handle received from the client into the corresponding message as produced by the handler function. This is performed by interpreting `Result`s. Such a result is then converted to a message on the server. For instance, the result of `targetValue` is represented using the `Result` constructor `string(Handle,str)`. Here's how such a result is turned into a message:
 
-	Msg toMsg(string(Handle handle, str s), &T(Handle,type[&T]) decode) 
-	  =  decode(handle, #Msg(str))(s);
+	Msg stringParser(Handle h, map[str,str] p) 
+    = applyMaps(h, decode(h, #Msg(str))(p["strVal"]));
 
-The function `toMsg` receives two parameters: first, the `Result` as received from the client, and second, a function to magically turn a handle into an arbitray type (as specified by the reified type). How and why this function is provided is irrelevant here; suffice it to say that the `decode` function captures some local state to perform its parsing magic which prevents it from being an ordinary function. The handle is decoded into a function `Msg(str)`, which is applied to the value component in the `string` result. 
 
-Values of type `Hnd` are are interpreted in the client to produce `Result` values. Therefore, adding your own handlers requires changing the Javascript code to support the new kind.
+The function `stringParser` receives two parameters: first, the `Handle` as received from the client, and second the map of request data that was received from the client.  The `decode` function is used to decode into a function `Msg(str)`, which is then applied to the request parameter `strVal` to obtain a message. The function `applyMaps` then transforms the resulting message according to the mappers that were active at the time this handle was produced. 
 
-#### Subscriptions & Commands
+You can define a new parser in a way similar to `stringParser`. In that case, however, it needs to be registered to the framework by calling `msgParser(str typ, Msg(Handle, map[str,str]) parser)`; 
+Values of type `Hnd` are interpreted in the client to produce attributes in the request (such as `strVal`). Therefore, adding your own handlers requires changing the Javascript code to support the new kind. 
+
+#### Subscriptions & Commands (TODO)
 
 Extend `Sub` with new constructor for sending to client.
 extend decoder to represent a decoder for this subscription
@@ -272,7 +276,7 @@ For instance, the `random` command is defined as follows:
 	Cmd random(Msg(int) f, int from, int to) = random(encode(f), from, to);
 
 
-New subscriptions and commands always require modifying the Javascript to interpret them. 
+New subscriptions and commands always require modifying the Javascript to interpret them (like `Hnd` extensions). The results sent back to the server follow the pattern of event results.  In this case, for instance, the `random` command will produce results which will be parsed by `intParser`.
 
 #### Interop with JS
 
