@@ -41,6 +41,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   &T currentModel;
   
   Response transition(&T newModel, list[Cmd] myCmds) {
+    currentModel = newModel;
     
     if (myCmds != []) {
       return response([myCmds, [], patch(-1)]);
@@ -52,7 +53,6 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
     Patch myPatch = diff(currentView, newView);
 
     currentView = newView;
-    currentModel = newModel;
     
     return response([[], mySubs, myPatch]);
   }
