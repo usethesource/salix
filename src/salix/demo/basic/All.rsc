@@ -15,7 +15,7 @@ import salix::demo::basic::Random;
 
 
 alias AllModel = tuple[
-  real celsius, 
+  salix::demo::basic::Celsius::Model celsius, 
   salix::demo::basic::Counter::Model counter, 
   salix::demo::basic::Random::TwiceModel random,
   salix::demo::basic::CodeMirror::Model codeMirror,
@@ -37,7 +37,7 @@ App[AllModel] debugAllApp()
   = debug(initAll(), myDebugView, editAll, |http://localhost:9213|, |project://salix/src|, subs = allSubs); 
   
 WithCmds[AllModel] initAll() = noCmds(<
-  37.0, 
+  salix::demo::basic::Celsius::init(), 
   salix::demo::basic::Counter::init(), 
   salix::demo::basic::Random::twiceInit().model,
   salix::demo::basic::CodeMirror::init(),

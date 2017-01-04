@@ -1,24 +1,25 @@
 module salix::demo::basic::Celsius
 
-import salix::HTML;
 import salix::App;
-import salix::lib::Debug;
+import salix::HTML;
 import String;
 import util::Math;
 
+
+alias Model = real;
 
 data Msg
   = c(str c)
   | f(str f)
   ;
 
-App[real] celsiusApp() = 
-  celsiusApp(37.0, |http://localhost:9193|, |project://salix/src|); 
+App[Model] celsiusApp() = 
+  app(init(), |http://localhost:9193|, |project://salix/src|); 
 
-App[real] celsiusApp(real m, loc http, loc static) 
-  = app(m, view, update, http, static); 
 
-void view(real m) { 
+Model init() = 37.0;
+
+void view(Model m) { 
   div(() {
     h2("Celsius to fahrenheit converter");
     p(() {
@@ -45,7 +46,7 @@ real toReal_(str s) {
     return 0.0;
 }
 
-real update(Msg msg, real model) {
+real update(Msg msg, Model model) {
   switch (msg) {
     case c(str new): model = toReal_(new);
     case f(str new): model = toC(toReal_(new));
