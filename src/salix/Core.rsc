@@ -4,6 +4,7 @@ import salix::Node;
 
 import List;
 import String;
+import IO;
 
 @doc{This is the basic Message data type that clients
 will extend with concrete constructors.
@@ -38,7 +39,12 @@ private RenderState state = ();
 
 private void initViewContext(void(&T) view) {
   viewContext = view;
-  state[viewContext] = <0, (), ()>;
+  // NB: don't initialize to empty, because subs/commands also
+  // might change the encoding table during `update`.
+  value x = view; // workaround bug.
+  if (x notin state) {
+    state[x] = <0, (), ()>;
+  }
 }
  
  // encode functions (for handlers) as integers
@@ -55,7 +61,8 @@ private int _encode(value x) {
 
 // retrieve the actual function corresponding to a handle identity.
 private &U _decode(int id, type[&U] t) = d
-  when &U d := state[viewContext].from[id];
+  when
+    &U d := state[viewContext].from[id];
 
 
 @doc{The stack of active msg transformers at some point during rendering.}
@@ -92,6 +99,7 @@ private list[Node] pop() {
 
 @doc{Render turns void returning views for a model &T into an Node node.}  
 Node render(&T model, void(&T) block) {
+  //println("Rendering <model> through <block>");
   initViewContext(block);
   push([]); 
   block(model);
@@ -233,6 +241,7 @@ private map[str, Msg(Handle, map[str, str])] msgParsers = (
  */
 
 private &T withMapper(Msg(Msg) f, &T() block) {
+  // NB: prepend f to mappers, not append to get appropriate innermost mapping order.
   mappers = [f] + mappers;
   &T result = block();
   mappers = mappers[1..];
@@ -252,4 +261,19 @@ void mapView(Msg(Msg) f, &T t, void(&T) block) {
    withMapper(f, value() { block(t); return 0; });
 }
 
+// Some debugging utils
+
+void _reset() {
+  state = ();
+  mappers = [];
+  stack = [];
+}
+
+bool _printState() {
+  println("Function table for <viewContext>: ");
+  for (int k <- state[viewContext].from) {
+    println("  <k>: <state[viewContext].from[k]>");
+  }
+  return true;
+}
 

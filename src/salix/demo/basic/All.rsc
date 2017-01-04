@@ -34,7 +34,7 @@ data Msg
   ;
 
 App[AllModel] allApp() 
-  = app(initAll(), viewAll, editAll, |http://localhost:9203|, |project://salix/src|, subs = allSubs); 
+  = app(initAll(), viewAll, editAll, |http://localhost:9213|, |project://salix/src|, subs = allSubs); 
 
 App[AllModel] debugAllApp() 
   = debug(initAll(), viewAll, editAll, |http://localhost:9204|, |project://salix/src|, subs = allSubs); 
@@ -49,16 +49,16 @@ WithCmds[AllModel] initAll() = noCmds(<
 >);  
   
 list[Sub] allSubs(AllModel m) 
-  = mapping.subs(Msg::clock, m.clock, salix::demo::basic::Clock::subs);
+  = mapSubs(Msg::clock, m.clock, salix::demo::basic::Clock::subs);
   
 void viewAll(AllModel m) {
   div(() {
-     mapping.view(Msg::celsius, m.celsius, salix::demo::basic::Celsius::view);
-     mapping.view(Msg::counter, m.counter, salix::demo::basic::Counter::view);
-     mapping.view(Msg::listDemo, m.listDemo, salix::demo::basic::ListDemo::view);
-     mapping.view(Msg::random, m.random, salix::demo::basic::Random::twiceView);
-     mapping.view(Msg::codeMirror, m.codeMirror, salix::demo::basic::CodeMirror::view);
-     mapping.view(Msg::clock, m.clock, salix::demo::basic::Clock::view);
+     mapView(Msg::celsius, m.celsius, salix::demo::basic::Celsius::view);
+     mapView(Msg::counter, m.counter, salix::demo::basic::Counter::view);
+     mapView(Msg::listDemo, m.listDemo, salix::demo::basic::ListDemo::view);
+     mapView(Msg::random, m.random, salix::demo::basic::Random::twiceView);
+     mapView(Msg::codeMirror, m.codeMirror, salix::demo::basic::CodeMirror::view);
+     mapView(Msg::clock, m.clock, salix::demo::basic::Clock::view);
   });
 }
 
@@ -75,7 +75,7 @@ WithCmds[AllModel] editAll(Msg msg, AllModel m) {
       m.listDemo = editList(msg, m.listDemo);
       
     case random(Msg msg): 
-      <m.random, cmds> = mapping.cmds(Msg::random, msg, m.random, twiceUpdate);
+      <m.random, cmds> = mapCmds(Msg::random, msg, m.random, twiceUpdate);
     
     case codeMirror(Msg msg):
       m.codeMirror = salix::demo::basic::CodeMirror::update(msg, m.codeMirror);

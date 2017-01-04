@@ -114,6 +114,7 @@ function Salix(aRootId) {
 		return type;
 	}
 
+	// Execute commands, and schedule the result on the command queue.
 	function doCommands(cmds) {
 		for (var i = 0; i < cmds.length; i++) {
 			var cmd = cmds[i];
@@ -130,6 +131,8 @@ function Salix(aRootId) {
 		}
 	}
 
+	// Initialize a subscription of the provided type, returning
+	// a closure to cancel it when unsubscribing.
 	function sub2handler(sub) {
 		switch (nodeType(sub)) {
 		
@@ -179,13 +182,15 @@ function Salix(aRootId) {
 		}
 	}
 
+	/*
+	 * An event may become stale when
+	 * - 1. its dom (or any parent) is removed between the time of queueing the event, and 
+	 *   removing it from the queue in render, OR
+	 * - 2. the event handler has been removed from before removing event from the queue 
+	 *   (such stale events are discarded in in pruneEventQueue)
+	 */
+	
 	function isStale(dom) {
-		/*
-		 * an event may become stale when
-		 * - 1. its dom (or any parent) is removed between the time of queueing the event, and 
-		 *   removing it from the queue (i.e. here), OR
-		 * - 2. the event handler does not exist on the dom anymore (this is done in pruneEventQueue)
-		 */
 		if (dom === null) {
 			return true;
 		}
@@ -211,8 +216,6 @@ function Salix(aRootId) {
 	
 	function scheduleEvent(event, handle, data) {
 		var result = makeResult(handle, data);
-		// return target dom element to be able to detect
-		// if the event should be discarded processing
 		event_queue.push({type: event.type, target: event.target, result: result});
 	}
 
@@ -242,7 +245,10 @@ function Salix(aRootId) {
 		return result;
 	}
 
-	// this needs adaptation if new kinds of data are required. 
+	// This function returns an event handler closure, which, when the event
+	// happens, schedules it on the queue, interpreting event data according
+	// to the decoder's type. 
+	// This needs adaptation if new kinds of data are required. 
 	function dec2handler(decoder) {
 		switch (nodeType(decoder)) {
 		
@@ -351,6 +357,7 @@ function Salix(aRootId) {
 		
 	}
 
+	// ensure that only one handler exists for any event type
 	function withCleanListeners(dom, key, handler) {
 		var allHandlers = dom.salix_handlers || {};
 		if (allHandlers.hasOwnProperty(key)) {

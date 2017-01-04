@@ -77,10 +77,10 @@ WithCmds[TwiceModel] twiceUpdate(Msg msg, TwiceModel m) {
   
   switch (msg) {
     case sub1(Msg s):
-      <m.model1, cmds> = mapping.cmds(sub1, s, m.model1, update);
+      <m.model1, cmds> = mapCmds(sub1, s, m.model1, update);
       
     case sub2(Msg s):
-      <m.model2, cmds> = mapping.cmds(sub2, s, m.model2, update);
+      <m.model2, cmds> = mapCmds(sub2, s, m.model2, update);
   }
   
   return withCmds(m, cmds);
@@ -89,8 +89,8 @@ WithCmds[TwiceModel] twiceUpdate(Msg msg, TwiceModel m) {
 void twiceView(TwiceModel m) {
   div(() {
     h2("Two times roll a die");
-    mapping.view(sub1, m.model1, view);
-    mapping.view(sub2, m.model2, view);
+    mapView(sub1, m.model1, view);
+    mapView(sub2, m.model2, view);
   });
 }
 

@@ -37,7 +37,8 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   Node asRoot(Node h) = h[attrs=h.attrs + ("id": root)];
 
   Node current;
-
+  Encoding encoding;
+ 
   &T model;
 
   // the main handler to interpret http requests.
@@ -49,19 +50,24 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
       list[Sub] mySubs = subs(model);
       list[Cmd] myCmds = modelWithCmds.commands;
       current = asRoot(render(model, view));
+      current = asRoot(current);
       return response([current, mySubs, myCmds]);
     }
     
     
     // if receiving an (encoded) message
     if (get("/msg") := req) {
+      //println("Parsing request");
       Msg msg = params2msg(req.parameters);
       
       println("Processing: <msg>");
       
+      //println("Updating the model");
       // update the model
+      // NB: update might modify the encoding table, because of commands!!!
       <model, myCmds> = update(msg, model);
       
+      //println("Rendering new view");
       // compute the new view
       Node newView = asRoot(render(model, view));
       

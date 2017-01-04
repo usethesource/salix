@@ -26,7 +26,7 @@ void listView(ListModel[&T] m, void(&T) display) {
       }
       for (int i <- [0..size(m.lst)]) {
         li(() {
-          mapping.view(toSub(i), m.lst[i], display);
+          mapView(toSub(i), m.lst[i], display);
           if (i > 0) {
             button(onClick(moveUp(i)), "^");
           }

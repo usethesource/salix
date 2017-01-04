@@ -28,7 +28,7 @@ App[DebugModel[&T]] debug(WithCmds[&T] model, void(&T) view,
 
 
 Subs[DebugModel[&T]] wrapSubs(Subs[&T] subs) 
-  = list[Sub](DebugModel[&T] m) { return mapping.subs(Msg::sub, m.models[m.current], subs); };
+  = list[Sub](DebugModel[&T] m) { return mapSubs(Msg::sub, m.models[m.current], subs); };
 
 WithCmds[DebugModel[&T]] wrapModel(WithCmds[&T] model, WithCmds[&T](Msg, &T) upd) 
   = withCmds(<0, [model.model], [], upd>, model.commands);
@@ -47,7 +47,7 @@ void debugView(DebugModel[&T] model, void(&T) subView) {
         button(onClick(next()), "Next");
         
         div(style(<"border", "1px solid">), () {
-          mapping.view(Msg::sub, model.models[model.current], subView);
+          mapView(Msg::sub, model.models[model.current], subView);
         });
       
       });
@@ -80,7 +80,7 @@ WithCmds[DebugModel[&T]] debugUpdate(Msg msg, DebugModel[&T] m) {
       m.current = m.current > 0 ? m.current - 1 : m.current;
       
     case sub(Msg s): {
-      <newModel, cmds> = mapping.cmds(Msg::sub, s, m.models[m.current], m.update);
+      <newModel, cmds> = mapCmds(Msg::sub, s, m.models[m.current], m.update);
       m.models += [newModel];
       m.messages += [s];
       m.current += 1;
