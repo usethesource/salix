@@ -9,7 +9,6 @@ import IO;
 
 import salix::demo::basic::Celsius;
 import salix::demo::basic::Counter;
-import salix::demo::basic::ListDemo;
 import salix::demo::basic::CodeMirror;
 import salix::demo::basic::Clock;
 import salix::demo::basic::Random;
@@ -18,7 +17,6 @@ import salix::demo::basic::Random;
 alias AllModel = tuple[
   real celsius, 
   salix::demo::basic::Counter::Model counter, 
-  ListModel[str] listDemo,
   salix::demo::basic::Random::TwiceModel random,
   salix::demo::basic::CodeMirror::Model codeMirror,
   salix::demo::basic::Clock::Model clock
@@ -27,7 +25,6 @@ alias AllModel = tuple[
 data Msg
   = celsius(Msg msg)
   | counter(Msg msg)
-  | listDemo(Msg msg)
   | random(Msg msg)
   | codeMirror(Msg msg)
   | clock(Msg msg)
@@ -42,7 +39,6 @@ App[AllModel] debugAllApp()
 WithCmds[AllModel] initAll() = noCmds(<
   37.0, 
   salix::demo::basic::Counter::init(), 
-  <["hello", "world!"], editStr, initStr>,
   salix::demo::basic::Random::twiceInit().model,
   salix::demo::basic::CodeMirror::init(),
   salix::demo::basic::Clock::init() 
@@ -59,9 +55,8 @@ void viewAll(AllModel m) {
   div(() {
      mapView(Msg::celsius, m.celsius, salix::demo::basic::Celsius::view);
      mapView(Msg::counter, m.counter, salix::demo::basic::Counter::view);
-     //mapView(Msg::listDemo, m.listDemo, salix::demo::basic::ListDemo::view);
      mapView(Msg::random, m.random, salix::demo::basic::Random::twiceView);
-     //mapView(Msg::codeMirror, m.codeMirror, salix::demo::basic::CodeMirror::view);
+     mapView(Msg::codeMirror, m.codeMirror, salix::demo::basic::CodeMirror::view);
      mapView(Msg::clock, m.clock, salix::demo::basic::Clock::view);
   });
 }
@@ -75,9 +70,6 @@ WithCmds[AllModel] editAll(Msg msg, AllModel m) {
     case counter(Msg msg):
       m.counter = salix::demo::basic::Counter::update(msg, m.counter);
     
-    case listDemo(Msg msg):
-      m.listDemo = editList(msg, m.listDemo);
-      
     case random(Msg msg): 
       <m.random, cmds> = mapCmds(Msg::random, msg, m.random, twiceUpdate);
     
