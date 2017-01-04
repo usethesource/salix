@@ -1,15 +1,19 @@
 module salix::demo::basic::Counter
 
-import salix::HTML;
 import salix::App;
-import salix::lib::Debug;
+import salix::HTML;
 
 import String;
 import IO;
 
+
 alias Model = tuple[int count];
 
 Model init() = <0>;
+
+
+App[Model] counterApp()
+  = app(init(), view, update, |http://localhost:7000|, |project://salix/src|);
 
 data Msg
   = inc()
