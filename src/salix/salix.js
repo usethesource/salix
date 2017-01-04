@@ -77,9 +77,9 @@ function Salix(aRootId) {
 		}
 	}
 
-	function step(cmds, subs, myPatch) {
-		if (cmds.length > 0) {
-			doCommands(cmds);
+	function step(cmd, subs, myPatch) {
+		if (nodeType(cmd) !== 'none') {
+			doCommand(cmd);
 			// skip doing subscriptions and building dom;
 			// need to wait for effect of commands
 			// technically unneeded, because server should guarantee that
@@ -113,19 +113,14 @@ function Salix(aRootId) {
 	}
 
 	// Execute commands, and schedule the result on the command queue.
-	function doCommands(cmds) {
-		for (var i = 0; i < cmds.length; i++) {
-			var cmd = cmds[i];
-			
-			switch (nodeType(cmd)) {
-			
-			case 'random':
-				var random = Math.floor(Math.random() * (cmd.random.to - cmd.random.from + 1)) + cmd.random.from;
-				scheduleCommand(cmd.random.handle.handle, {type: 'integer', intVal: random});
-				break;
-			
-			}
-			
+	function doCommand(cmd) {
+		switch (nodeType(cmd)) {
+		
+		case 'random':
+			var random = Math.floor(Math.random() * (cmd.random.to - cmd.random.from + 1)) + cmd.random.from;
+			scheduleCommand(cmd.random.handle.handle, {type: 'integer', intVal: random});
+			break;
+		
 		}
 	}
 

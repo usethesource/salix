@@ -161,17 +161,18 @@ list[Sub] noSubs(&T t) = [];
 @doc{Commands represent actions that need to be performed at the client.}
 data Cmd  // Commands
   = random(Handle handle, int from, int to)
+  | none()
   ;
   
 @doc{Smart constructors for constructing encoded commands.}
 Cmd random(Msg(int) f, int from, int to)
   = random(encode(f), from, to);
 
-alias WithCmds[&T] = tuple[&T model, list[Cmd] commands];  
+alias WithCmd[&T] = tuple[&T model, Cmd command];  
 
-// functions to hide the representation of WithCmds.
-WithCmds[&T] noCmds(&T model) = <model, []>;
-WithCmds[&T] withCmds(&T model, list[Cmd] cmds) = <model, cmds>;
+// functions to hide the representation of WithCmd.
+WithCmd[&T] noCmd(&T model) = <model, none()>;
+WithCmd[&T] withCmd(&T model, Cmd cmd) = <model, cmd>;
 
 
 /*
@@ -253,8 +254,8 @@ private &T withMapper(Msg(Msg) f, &T() block) {
 list[Sub] mapSubs(Msg(Msg) f, &T t, list[Sub](&T) subs) 
   = withMapper(f, list[Sub]() { return subs(t); });
 
-tuple[&T,list[Cmd]] mapCmds(Msg(Msg) f, Msg msg, &T t, tuple[&T, list[Cmd]](Msg, &T) upd) 
-  = withMapper(f, tuple[&T, list[Cmd]]() { return upd(msg, t); });
+tuple[&T,Cmd] mapCmd(Msg(Msg) f, Msg msg, &T t, tuple[&T, Cmd](Msg, &T) upd) 
+  = withMapper(f, tuple[&T, Cmd]() { return upd(msg, t); });
 
 @doc{Record mapper to transform messages produced in block according f.}
 void mapView(Msg(Msg) f, &T t, void(&T) block) { 

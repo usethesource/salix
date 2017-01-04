@@ -3,7 +3,6 @@ module salix::demo::basic::All
 import salix::HTML;
 import salix::App;
 import salix::Core; 
-import salix::lib::EditableList;
 import salix::lib::Debug;
 import IO;
 
@@ -36,7 +35,7 @@ App[AllModel] allApp()
 App[AllModel] debugAllApp() 
   = debug(initAll(), myDebugView, editAll, |http://localhost:9213|, |project://salix/src|, subs = allSubs); 
   
-WithCmds[AllModel] initAll() = noCmds(<
+WithCmd[AllModel] initAll() = noCmd(<
   salix::demo::basic::Celsius::init(), 
   salix::demo::basic::Counter::init(), 
   salix::demo::basic::Random::twiceInit().model,
@@ -61,8 +60,8 @@ void viewAll(AllModel m) {
   });
 }
 
-WithCmds[AllModel] editAll(Msg msg, AllModel m) {
-  list[Cmd] cmds = [];
+WithCmd[AllModel] editAll(Msg msg, AllModel m) {
+  Cmd cmd = none();
   switch (msg) {
     case celsius(Msg msg):
       m.celsius = salix::demo::basic::Celsius::update(msg, m.celsius);
@@ -71,7 +70,7 @@ WithCmds[AllModel] editAll(Msg msg, AllModel m) {
       m.counter = salix::demo::basic::Counter::update(msg, m.counter);
     
     case random(Msg msg): 
-      <m.random, cmds> = mapCmds(Msg::random, msg, m.random, twiceUpdate);
+      <m.random, cmd> = mapCmd(Msg::random, msg, m.random, twiceUpdate);
     
     case codeMirror(Msg msg):
       m.codeMirror = salix::demo::basic::CodeMirror::update(msg, m.codeMirror);
@@ -80,5 +79,5 @@ WithCmds[AllModel] editAll(Msg msg, AllModel m) {
       m.clock = salix::demo::basic::Clock::update(msg, m.clock);
   }
   
-  return withCmds(m, cmds);
+  return withCmd(m, cmd);
 }

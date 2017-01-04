@@ -19,19 +19,19 @@ data Msg;
 alias App[&T] = tuple[void() serve, void() stop];
 
 
-WithCmds[&T](Msg, &T) emptyCmds(&T(Msg, &T) update)
-  = WithCmds[&T](Msg m, &T t) { return noCmds(update(m, t)); };
+WithCmd[&T](Msg, &T) withoutCmd(&T(Msg, &T) update)
+  = WithCmd[&T](Msg m, &T t) { return noCmd(update(m, t)); };
 
 
 @doc{Helper function for apps that don't need commands.}
 App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
             Subs[&T] subs = noSubs, str root = "root") 
- = app(noCmds(model), view, emptyCmds(update), http, static, subs = subs, root = root);
+ = app(noCmds(model), view, withoutCmd(update), http, static, subs = subs, root = root);
 
 @doc{Construct an App over model type &T, providing a view, a model update,
 a http loc to serve the app to, and a location to resolve static files.
 The keyword param root identifies the root element in the html document.}
-App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) update, loc http, loc static, 
+App[&T] app(WithCmd[&T] withCmd, void(&T) view, WithCmd[&T](Msg, &T) update, loc http, loc static, 
             Subs[&T] subs = noSubs, str root = "root") {
 
   Node asRoot(Node h) = h[attrs=h.attrs + ("id": root)];
@@ -40,11 +40,11 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
   
   &T currentModel;
   
-  Response transition(&T newModel, list[Cmd] myCmds) {
+  Response transition(&T newModel, Cmd cmd) {
     currentModel = newModel;
     
-    if (myCmds != []) {
-      return response([myCmds, [], patch(-1)]);
+    if (cmd != none()) {
+      return response([cmd, [], patch(-1)]);
     }
     
     list[Sub] mySubs = subs(newModel);
@@ -54,7 +54,7 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
 
     currentView = newView;
     
-    return response([[], mySubs, myPatch]);
+    return response([cmd, mySubs, myPatch]);
   }
 
   // the main handler to interpret http requests.
@@ -63,8 +63,8 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
     
     // initially, just render the view, for the current model.
     if (get("/init") := req) {
-      <newModel, myCmds> = modelWithCmds;
-      return transition(newModel, myCmds);
+      <newModel, myCmd> = withCmd;
+      return transition(newModel, myCmd);
     }
     
     
@@ -73,8 +73,8 @@ App[&T] app(WithCmds[&T] modelWithCmds, void(&T) view, WithCmds[&T](Msg, &T) upd
       //println("Parsing request");
       Msg msg = params2msg(req.parameters);
       println("Processing: <msg>");
-      <newModel, myCmds> = update(msg, currentModel);
-      return transition(newModel, myCmds);
+      <newModel, myCmd> = update(msg, currentModel);
+      return transition(newModel, myCmd);
     }
     
     // everything else is considered static files.
