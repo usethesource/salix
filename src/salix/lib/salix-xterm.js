@@ -2,44 +2,121 @@
 
 function registerXTerm(salix) {
 	
-	function dec2handler(decoder) {
-		switch (salix.nodeType(decoder)) {
+	var xterms = {};
+	
+	function val2result(x) {
+		if (typeof x === 'undefined') {
+			return {type: 'nothing'};
+		}
+		if (typeof x === 'string') {
+			return {type: 'string', strVal: x}
+		}
+		if (typeof x === 'number') {
+			return {type: 'integer', intVal: x};
+		}
+		if (typeof x === 'boolean') {
+			return {type: 'boolean', boolVal: x};
+		}
+	}
+	
+	function schedule(type, cmd, value) {
+		salix.scheduleCommand(cmd[type].handle.handle, val2result(value));
+	}
+	
+	function doCommand(cmd) {
+		var type = salix.nodeType(cmd);
+		var term = xterms[cmd[type].id];
 		
-		// for now: schedule on the other queue, because we don't 
-		// want to ever discard events (code mirror manages own state).
+		if (!term) {
+			return;
+		}
+		
+		switch (type) {
+		
+		case 'getOption':
+			schedule(type, schedule, term.getOption(cmd.getOption.key));
+			break
+
+		case 'setOption':
+			term.setOption(cmd.setOption.key, cmd.setOption.val);
+			schedule(type, cmd, undefined);
+			break
+
+		case 'refresh':
+			term.refresh(cmd.refresh.start, cmd.refresh.end, cmd.refresh.queue);
+			schedule(type, cmd, undefined);
+			break
+
+		case 'resize':
+			term.resize(cmd.resize.x, cmd.resize.y);
+			schedule(type, cmd, undefined);
+			break;
+
+		case 'scrollDisp':
+			term.scrollDisp(cmd.scrollDisp.n);
+			schedule(type, cmd, undefined);
+			break;
+
+		case 'scrollPages':
+			term.scrollPages(cmd.scrollPages.n);
+			schedule(type, cmd, undefined);
+			break;
+
+		case 'write':
+			term.write(cmd.write.text);
+			schedule(type, cmd, undefined);
+			break;
+			
+		case 'writeln':
+			term.writeln(cmd.writeln.text);
+			schedule(type, cmd, undefined);
+			break;
+		
+		default:
+			term[type]();
+			schedule(type, cmd, undefined);
+		}
+	}
+	
+	function scheduleEvent(type, dec, result) {
+		salix.scheduleOther(dec[type].handle.handle, result);
+	}
+	
+	function dec2handler(decoder) {
+		var type = salix.nodeType(decoder);
+		switch (type) {
 		
 		case 'eventData':
-			return function (editor, change) {
-				salix.scheduleOther(decoder.eventData.handle.handle,  {
-					// todo
-				});
+			return function (data) {
+				scheduleEvent(type, decoder, val2result(data));
 			};
 			
 		case 'keyName':
-			return function (editor) {
-				salix.scheduleOther(decoder.keyName.handle.handle); // todo 
+			return function (key, event) {
+				scheduleEvent(type, decoder, val2result(key)); 
 			};
 		
 		case 'startEnd':
-			return function (editor) {
-				salix.scheduleOther(decoder.startEnd.handle.handle); // todo 
+			return function (data) {
+				scheduleEvent(type, decoder, 
+					{type: 'int-int', intVal1: data.start, intVal2: data.end}); 
 			};
 		
 		case 'colsRows':
-			return function (editor) {
-				salix.scheduleOther(decoder.colsRows.handle.handle); // todo 
+			return function (data) {
+				scheduleEvent(type, decoder, 
+					{type: 'int-int', intVal1: data.cols, intVal2: data.rows}); 
 			};
 		
 		case 'ydisp':
-			return function (editor) {
-				salix.scheduleOther(decoder.ydisp.handle.handle); // todo 
+			return function (n) {
+				scheduleEvent(type, decoder, val2result(n)); 
 			};
-		
 
 		}
 	}
 	
-	function myXterm(attach, props, events, extra) {
+	function myXterm(attach, id, attrs, props, events, extra) {
 		var rows = parseInt(props['rows']);
 		var cols = parseInt(props['cols']);
 		var term = new Terminal({
@@ -48,39 +125,17 @@ function registerXTerm(salix) {
 			cursorBlink: props['cursorBlink'] === 'true'
 		});
 		
-        var shellprompt = '$ ';
+		xterms[id] = term;
+		
+		var div = document.createElement('div');
+		attach(div);
 
-        term.prompt = function () {
-        	term.write('\r\n' + shellprompt);
-        };
-        
-        term.on('key', function (key, ev) {
-        	console.log("The key: " + key);
-            var printable = (
-              !ev.altKey && !ev.altGraphKey && !ev.ctrlKey && !ev.metaKey
-            );
+		term.open(div);
 
-            if (ev.keyCode == 13) {
-            	console.log("Adding prompt");
-            	term.prompt();
-            } else if (ev.keyCode == 8) {
-             // Do not delete the prompt
-              if (term.x > 2) {
-                term.write('\b \b');
-              }
-            } else if (printable) {
-              term.write(key);
-            }
-        });
-
-        term.on('paste', function (data, ev) {
-            term.write(data);
-        });
-        
 		var myHandlers = {};
 		
 		for (var key in events) {
-			// TODO: shared with setEvent
+			// TODO: code is dupe of setEvent
 			if (events.hasOwnProperty(key)) {
 				var handler = dec2handler(events[key]);
 				myHandlers[key] = handler;
@@ -100,10 +155,17 @@ function registerXTerm(salix) {
 				case 'replace':
 					return salix.build(edit[type].html, attach);
 
+				case 'setAttr':
+					term.element.setAttribute(edit[type].name, edit[type].val);
+					break;
+					
 				case 'setProp':
 					var key = edit[type].name;
-					if (key === 'style') {
-						term.element.style = edit[type].value;
+					if (key === 'cols') {
+						term.resize(parseInt(props.cols), term.y);
+					}
+					else if (key === 'rows') {
+						term.resize(term.y, parseInt(props.rows));
 					}
 					else {
 						term.setOption(key, val);
@@ -116,16 +178,18 @@ function registerXTerm(salix) {
 					myHandlers[key] = handler;
 					term.on(key, handler);
 					break
-				
-				case 'removeProp':
-					if (key === 'style') {
-						term.element.style = '';
-					}
-					else {
-						cm.setOption(key, undefined);
-					}
+
+				case 'removeAttr': 
+					term.element.removeAttribute(edit[type].name);
 					break;
-					
+
+				case 'removeProp':
+					if (key === 'cursorBlink') {
+						cm.setOption(key, false);
+					}
+					// else do nothing
+					break;
+										
 				case 'removeEvent':
 					var key = edit[type].name
 					term.off(key, myHandlers[key]);
@@ -139,21 +203,10 @@ function registerXTerm(salix) {
 			}
 		}
 		
-		var div = document.createElement('div');
-		attach(div);
-
-		term.open(div);
-		term.prompt();
-		
-		//term.fit();
-		//term.prompt();
-//		term.prompt();
-//		term.reset();
-        
         
 		div.salix_native = {patch: patch};
 		return div;
 	}
 	
-	salix.registerNative('xterm', myXterm);
+	salix.registerNative('xterm', {build: myXterm, doCommand: doCommand});
 };

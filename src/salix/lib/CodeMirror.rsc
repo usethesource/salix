@@ -19,17 +19,16 @@ Msg codeMirrorChangeParser(Handle h, map[str, str] p)
            toInt(p["toLine"]), toInt(p["toCol"]),
            p["text"], p["removed"]));
 
-void codeMirror(value vals...) = build(vals, _codeMirror);
+void codeMirror(str id, value vals...) 
+  = build(vals,  Node(list[Node] _, list[Attr] attrs) { 
+      return native("codeMirror", id, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
+   });
+ 
+void codeMirrorWithMode(str id, Mode mode, value vals...) 
+  = build(vals,  Node(list[Node] _, list[Attr] attrs) { 
+      return native("codeMirror", id, attrsOf(attrs), propsOf(attrs), eventsOf(attrs), extra = ("mode": mode));
+   });
 
-void codeMirrorWithMode(Mode mode, value vals...) = build(vals, _codeMirrorWithMode(mode));
-
-Node(list[Node],list[Attr]) _codeMirrorWithMode(Mode mode)
-  = Node(list[Node] _, list[Attr] attrs) { 
-      return native("codeMirror",  propsOf(attrs), eventsOf(attrs), extra = ("mode": mode));
-   };
-
-Node _codeMirror(list[Node] _, list[Attr] attrs)
-  = native("codeMirror",  propsOf(attrs), eventsOf(attrs));
 
 // hack to make something run on import
 // NB: bug, after decl!!

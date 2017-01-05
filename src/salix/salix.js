@@ -78,9 +78,11 @@ function Salix(aRootId) {
 	}
 
 	function step(cmd, subs, myPatch) {
-		doCommand(cmd);
 		subscribe(subs);
 		patch(root(), myPatch, replacer(root().parentNode, root()));
+		// commands on natives require the natives to have been built...
+		// so therefore commands after patch.
+		doCommand(cmd);
 	}
 
 	function send(url, message, handle) {
@@ -114,6 +116,13 @@ function Salix(aRootId) {
 				doCommand(cmd.batch.commands[i]);
 			}
 			break;
+			
+		default: 
+			for (var k in builders) {
+				if (builders.hasOwnProperty(k)) {
+					builders[k].doCommand(cmd);
+				}
+			}
 		}
 	}
 
@@ -367,28 +376,31 @@ function Salix(aRootId) {
 	        attach(document.createTextNode(vdom.txt.contents));
 	        return;
 	    }
-	    
+
+	    var type = nodeType(vdom);
+	    var vattrs = vdom[type].attrs || {};
+	    var vprops = vdom[type].props || {};
+	    var vevents = vdom[type].events || {};
+
 	    if (vdom.native) {
 	    	var native = vdom.native;
-	    	builders[native.kind](attach, native.props, native.events, native.extra);
+	    	builders[native.kind].build(attach, native.id, vattrs, vprops, vevents, native.extra);
 	    	return;
 	    }
 
-	    var vattrs = vdom.element.attrs || {};
-	    var vprops = vdom.element.props || {};
-	    var vevents = vdom.element.events || {};
-	    
+	    // an element
 	    
 	    var elt = vprops.namespace != undefined
 	            ? document.createElementNS(vprops.namespace, vdom.element.tagName)
 	            : document.createElement(vdom.element.tagName);
 	    
-	    attach(elt);
 	    updateAttrsPropsAndEvents(elt, vattrs, vprops, vevents);       
-        
+	    
+	    attach(elt);
 	    for (var i = 0; i < vdom.element.kids.length; i++) {
 	    	build(vdom.element.kids[i], function (kid) { elt.appendChild(kid); });
 	    }
+	    
 	}
 	
 	function updateAttrsPropsAndEvents(elt, vattrs, vprops, vevents) {

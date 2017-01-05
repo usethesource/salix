@@ -8,11 +8,12 @@
 
 function registerCodeMirror(salix) {
 	
+	var codeMirrors = {};
 	
 	function parseSimpleMode(mode) {
-		console.log(JSON.stringify(mode, 2));
 		
 		var jsMode = {};
+		
 		for (var i = 0; i < mode.mode.states.length; i++) {
 			var state = mode.mode.states[i]
 			var name = state.state.name;
@@ -25,7 +26,6 @@ function registerCodeMirror(salix) {
 						token: token});
 			}
 		}
-		console.log(JSON.stringify(jsMode, 2));
 		
 		return jsMode;
 	}
@@ -61,10 +61,10 @@ function registerCodeMirror(salix) {
 		}
 	}
 	
-	function codeMirror(attach, props, events, extra) {
-		var ta = document.createElement('textarea');
-		attach(ta);
-		var cm = CodeMirror.fromTextArea(ta, {});
+	function codeMirror(attach, id, attrs, props, events, extra) {
+		var cm = CodeMirror(function(elt) { attach(elt); }, {});
+		
+		codeMirrors[id] = cm;
 
 		// for remove event.
 		var myHandlers = {};
@@ -192,9 +192,13 @@ function registerCodeMirror(salix) {
 			}
 		}
 		
-		var dom = cm.getWrapperElement().parentNode;
+		var dom = cm.getWrapperElement();
 		dom.salix_native = {patch: patch};
 	}
 	
-	salix.registerNative('codeMirror', codeMirror);
+	function doCommand(cmd) {
+		// TODO
+	}
+	
+	salix.registerNative('codeMirror', {build: codeMirror, doCommand: doCommand});
 };

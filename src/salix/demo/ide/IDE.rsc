@@ -3,6 +3,7 @@ module salix::demo::ide::IDE
 import salix::App;
 import salix::HTML;
 import salix::Node;
+import salix::Core;
 import salix::demo::ide::StateMachine;
 import salix::lib::CodeMirror;
 import salix::lib::XTerm;
@@ -33,7 +34,7 @@ Maybe[start[Controller]] maybeParse(str src) {
   }
 }  
   
-Model init() {
+WithCmd[Model] init() {
   registerCodeMirror();
   registerXTerm();
   Model model = <"", nothing(), nothing(), []>;
@@ -45,7 +46,7 @@ Model init() {
       model.currentState = just("<s.name>");
     }
   }  
-  return model;
+  return withCmd(model, write(noOp(), "myXterm", "\r\n$ "));
 }
 
 str doors() = 
@@ -67,9 +68,11 @@ Mode stmMode() = grammar2mode("statemachine", #Controller);
 data Msg
   = myChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed)
   | fireEvent(str name)
+  | noOp()
   ;
 
-Model update(Msg msg, Model model) {
+WithCmd[Model] update(Msg msg, Model model) {
+  Cmd cmd = none();
   
   switch (msg) {
   
@@ -97,7 +100,7 @@ Model update(Msg msg, Model model) {
     }
   }
   
-  return model;
+  return withCmd(model, cmd);
 }
 
 list[str] mySplit(str sep, str s) {
@@ -153,7 +156,7 @@ void view(Model model) {
     div(class("row"), () {
       div(class("col-md-6"), () {
         h4("Edit the state machine.");
-        codeMirrorWithMode(stmMode(), onChange(myChange), height(300), 
+        codeMirrorWithMode("myCodeMirror", stmMode(), onChange(myChange), height(300), 
             mode("statemachine"), indentWithTabs(false), lineNumbers(true), \value(model.src));
       });
         
@@ -184,7 +187,7 @@ void view(Model model) {
     
     div(class("row"), () {
       div(class("col-md-9"), () {
-        xterm(cursorBlink(true), cols(50), rows(10));      
+        xterm("myXterm", cursorBlink(true), prompt("\> "), cols(50), rows(10));      
       });
     });    
   });

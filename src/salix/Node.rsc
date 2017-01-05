@@ -12,11 +12,7 @@ import IO;
 elements, text nodes, and native nodes (which are managed in js).}
 data Node
   = element(str tagName, list[Node] kids, map[str, str] attrs, map[str, str] props, map[str, Hnd] events)
-  // Natives don't have attrs, since we don't manage the DOM for it;
-  // properties are handled however the internals wish to.
-  | native(str kind, map[str, str] props, map[str, Hnd] events, map[str,value] extra = ())
-  // TODO:
-  | shadow(list[Node] kids, map[str, str] attrs, map[str, str] props, map[str, Hnd] events)
+  | native(str kind, str id, map[str,str] attrs, map[str, str] props, map[str, Hnd] events, map[str,value] extra = ())
   | txt(str contents)
   | empty() 
   ;  
