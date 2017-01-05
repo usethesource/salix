@@ -69,6 +69,7 @@ data Msg
   = myChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed)
   | fireEvent(str name)
   | noOp()
+  | xtermData(str txt)
   ;
 
 WithCmd[Model] update(Msg msg, Model model) {
@@ -97,6 +98,15 @@ WithCmd[Model] update(Msg msg, Model model) {
           }
         }
       } 
+    }
+    
+    case xtermData(str s): {
+      if (s == "\r") {
+        cmd = writeln(noOp(), "myXterm", "\r");
+      }
+      else {
+        cmd = write(noOp(), "myXterm", s);
+      }
     }
   }
   
@@ -187,7 +197,7 @@ void view(Model model) {
     
     div(class("row"), () {
       div(class("col-md-9"), () {
-        xterm("myXterm", cursorBlink(true), prompt("\> "), cols(50), rows(10));      
+        xterm("myXterm", cursorBlink(true), onData(xtermData), cols(50), rows(10));      
       });
     });    
   });
