@@ -161,7 +161,7 @@ list[Sub] noSubs(&T t) = [];
 @doc{Commands represent actions that need to be performed at the client.}
 data Cmd  // Commands
   = random(Handle handle, int from, int to)
-  | batch(list[Cmd] commands) // TODO
+  | batch(list[Cmd] commands) // TODO (but how?)
   | none()
   ;
   

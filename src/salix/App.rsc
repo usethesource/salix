@@ -26,7 +26,7 @@ WithCmd[&T](Msg, &T) withoutCmd(&T(Msg, &T) update)
 @doc{Helper function for apps that don't need commands.}
 App[&T] app(&T model, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
             Subs[&T] subs = noSubs, str root = "root") 
- = app(noCmds(model), view, withoutCmd(update), http, static, subs = subs, root = root);
+ = app(noCmd(model), view, withoutCmd(update), http, static, subs = subs, root = root);
 
 @doc{Construct an App over model type &T, providing a view, a model update,
 a http loc to serve the app to, and a location to resolve static files.
@@ -40,13 +40,17 @@ App[&T] app(WithCmd[&T] withCmd, void(&T) view, WithCmd[&T](Msg, &T) update, loc
   
   &T currentModel;
   
+  
+  // TODO: we have to somehow know whether we're still responding
+  // to cmd message (and hence not send any UI updates).
+  // [apparently Elm does not serialize them, but runs them in parallel.
+  //  I wonder if this is correct...]
+  list[Cmd] pendingCommands = [];
+  
+  
   Response transition(&T newModel, Cmd cmd) {
     currentModel = newModel;
-    
-    if (cmd != none()) {
-      return response([cmd, [], patch(-1)]);
-    }
-    
+
     list[Sub] mySubs = subs(newModel);
     
     Node newView = asRoot(render(newModel, view));
@@ -63,6 +67,7 @@ App[&T] app(WithCmd[&T] withCmd, void(&T) view, WithCmd[&T](Msg, &T) update, loc
     
     // initially, just render the view, for the current model.
     if (get("/init") := req) {
+      currentView = empty();
       return transition(withCmd.model, withCmd.command);
     }
     

@@ -5,6 +5,7 @@ import salix::HTML;
 import salix::Node;
 import salix::demo::ide::StateMachine;
 import salix::lib::CodeMirror;
+import salix::lib::XTerm;
 import salix::lib::Mode;
 import util::Maybe;
 import ParseTree;
@@ -34,6 +35,7 @@ Maybe[start[Controller]] maybeParse(str src) {
   
 Model init() {
   registerCodeMirror();
+  registerXTerm();
   Model model = <"", nothing(), nothing(), []>;
   
   model.src = doors();
@@ -151,7 +153,7 @@ void view(Model model) {
     div(class("row"), () {
       div(class("col-md-6"), () {
         h4("Edit the state machine.");
-        codeMirrorWithMode(stmMode(), onChange(myChange), height(500), 
+        codeMirrorWithMode(stmMode(), onChange(myChange), height(300), 
             mode("statemachine"), indentWithTabs(false), lineNumbers(true), \value(model.src));
       });
         
@@ -177,6 +179,12 @@ void view(Model model) {
             });   
           });
         }
+      });
+    });
+    
+    div(class("row"), () {
+      div(class("col-md-9"), () {
+        xterm(cursorBlink(true), cols(50), rows(10));      
       });
     });    
   });

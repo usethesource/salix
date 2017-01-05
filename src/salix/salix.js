@@ -27,7 +27,7 @@ function Salix(aRootId) {
 	var builders = {};
 
 	var subscriptions = {};
-
+	
 	function start() {
 		send('/init', {}, function (work) {
 			step(work[0], work[1], work[2], true);
@@ -46,19 +46,19 @@ function Salix(aRootId) {
 		// commands are always processed first.
 		if (command_queue.length > 0) { // could we do all at once in one frame??
 			var cmd = command_queue.shift();
-			console.log("Processing command: " + JSON.stringify(cmd));
+			//console.log("Processing command: " + JSON.stringify(cmd));
 			processMessage(cmd);
 		}
 		else if (event_queue.length > 0) {
 			var event = event_queue.shift();
 			
 			while (event && isStale(event.target)) {
-				console.log('Discarding: ' + JSON.stringify(event.result));
+				//console.log('Discarding: ' + JSON.stringify(event.result));
 				event = event_queue.shift();
 			}
 			
 			if (event) {
-				console.log('Processing event: ' + JSON.stringify(event.result));
+				//console.log('Processing event: ' + JSON.stringify(event.result));
 				processMessage(event.result);
 			}
 			else {
@@ -78,17 +78,9 @@ function Salix(aRootId) {
 	}
 
 	function step(cmd, subs, myPatch) {
-		if (nodeType(cmd) !== 'none') {
-			doCommand(cmd);
-			// skip doing subscriptions and building dom;
-			// need to wait for effect of commands
-			// technically unneeded, because server should guarantee that
-			// cmds.length > 0 implies subs = [], myPatch = empty.
-		}
-		else {
-			subscribe(subs);
-			patch(root(), myPatch, dec2handler);
-		}
+		doCommand(cmd);
+		subscribe(subs);
+		patch(root(), myPatch, replacer(root().parentNode, root()));
 	}
 
 	function send(url, message, handle) {
@@ -101,10 +93,6 @@ function Salix(aRootId) {
 
 	function root() {
 		return document.getElementById('root');
-	}
-
-	function replace(dom, newDom) {
-		dom.parentNode.replaceChild(newDom, dom);
 	}
 
 	function nodeType(node) {
@@ -122,14 +110,16 @@ function Salix(aRootId) {
 			break;
 			
 		case 'batch':
-			// TODO
-		
+			for (var i = 0; i < cmd.batch.commands.length; i++) {
+				doCommand(cmd.batch.commands[i]);
+			}
+			break;
 		}
 	}
 
 	// Initialize a subscription of the provided type, returning
 	// a closure to cancel it when unsubscribing.
-	function sub2handler(sub) {
+	function installSubscription(sub) {
 		switch (nodeType(sub)) {
 		
 		case 'timeEvery':
@@ -152,7 +142,7 @@ function Salix(aRootId) {
 			if (subscriptions.hasOwnProperty(id)) {
 				continue;
 			}
-			subscriptions[id] = sub2handler(sub);
+			subscriptions[id] = installSubscription(sub);
 		}
 
 		unsubscribeStaleSubs(subs);
@@ -179,7 +169,7 @@ function Salix(aRootId) {
 	}
 
 	/*
-	 * An event may become stale when
+	 * A user event may become stale when
 	 * - 1. its dom (or any parent) is removed between the time of queueing the event, and 
 	 *   removing it from the queue in render, OR
 	 * - 2. the event handler has been removed from before removing event from the queue 
@@ -201,7 +191,6 @@ function Salix(aRootId) {
 		while (i < event_queue.length) {
 			var event = event_queue[i];
 			if (event.type === type && event.target === dom) {
-				console.log("Pruning stale event: " + JSON.stringify(event.result));
 				event_queue.splice(i, 1);
 				i--;
 			}
@@ -269,7 +258,7 @@ function Salix(aRootId) {
 		}
 	}
 	
-	function patchThis(dom, edits) {
+	function patchThis(dom, edits, attach) {
 		edits = edits || [];
 
 		for (var i = 0; i < edits.length; i++) {
@@ -279,7 +268,7 @@ function Salix(aRootId) {
 			switch (type) {
 			
 			case 'replace':
-				return build(edit[type].html);
+				build(edit[type].html, attach);
 
 			case 'setText': 
 				dom.nodeValue = edit[type].contents;
@@ -290,13 +279,7 @@ function Salix(aRootId) {
 				break;
 				
 			case 'appendNode':
-				var kid = build(edit[type].html);
-				if (typeof kid === 'function') {
-					kid(dom);
-				}
-				else {
-					dom.appendChild(kid);
-				}
+				build(edit[type].html, function (kid) { dom.appendChild(kid); });
 				break;
 				
 			case 'setAttr': 
@@ -335,14 +318,22 @@ function Salix(aRootId) {
 		}
 	}
 	
-	function patch(dom, tree) {
-		var newDom = dom.salix_native 
-		  	? dom.salix_native.patch(tree.patch.edits)
-		  	: patchThis(dom, tree.patch.edits);
-		
-		if (newDom) {
-			replace(dom, newDom);
-			return;
+	function replace(dom, newDom) {
+		dom.parentNode.replaceChild(newDom, dom);
+	}
+
+	function replacer(dom, oldKid) {
+		return function (newKid) {
+			dom.replaceChild(newKid, oldKid);
+		}
+	}
+	
+	function patch(dom, tree, attach) {
+		if (dom.salix_native) {
+			dom.salix_native.patch(tree.patch.edits, attach)
+		} 
+		else {
+			patchThis(dom, tree.patch.edits, attach);
 		}
 		
 		var patches = tree.patch.patches || [];
@@ -352,7 +343,7 @@ function Salix(aRootId) {
 			if (kid === undefined) {
 				console.log("BANG!");
 			}
-			patch(dom.childNodes[p.patch.pos], p);
+			patch(kid, p, replacer(dom, kid));
 		}
 		
 	}
@@ -369,17 +360,18 @@ function Salix(aRootId) {
 		return handler;
 	}
 
-	function build(vdom) {
-	    if (vdom === undefined) {
-	        return document.createTextNode('');
+	
+	
+	function build(vdom, attach) {
+	    if (vdom.txt) {
+	        attach(document.createTextNode(vdom.txt.contents));
+	        return;
 	    }
 	    
-	    if (vdom.txt !== undefined) {
-	        return document.createTextNode(vdom.txt.contents);
-	    }
-	    
-	    if (vdom.native !== undefined) {
-	    	return makeNative(vdom.native);
+	    if (vdom.native) {
+	    	var native = vdom.native;
+	    	builders[native.kind](attach, native.props, native.events, native.extra);
+	    	return;
 	    }
 
 	    var vattrs = vdom.element.attrs || {};
@@ -391,19 +383,12 @@ function Salix(aRootId) {
 	            ? document.createElementNS(vprops.namespace, vdom.element.tagName)
 	            : document.createElement(vdom.element.tagName);
 	    
+	    attach(elt);
 	    updateAttrsPropsAndEvents(elt, vattrs, vprops, vevents);       
         
 	    for (var i = 0; i < vdom.element.kids.length; i++) {
-	    	var kid = build(vdom.element.kids[i]);
-	    	if (typeof kid === 'function') {
-	    		kid(elt);
-	    	}
-	    	else {
-	    		elt.appendChild(kid);
-	    	}
+	    	build(vdom.element.kids[i], function (kid) { elt.appendChild(kid); });
 	    }
-	    
-	    return elt;    
 	}
 	
 	function updateAttrsPropsAndEvents(elt, vattrs, vprops, vevents) {
@@ -430,12 +415,6 @@ function Salix(aRootId) {
 		builders[kind] = builder;
 	}
 	
-	function makeNative(native) {
-		return function (parent) {
-			return builders[native.kind](parent, native.props, native.events, native.extra);
-		}
-	}
-
 	return {start: start, 
 			registerNative: registerNative,
 			build: build,

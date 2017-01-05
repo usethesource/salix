@@ -61,8 +61,11 @@ function registerCodeMirror(salix) {
 		}
 	}
 	
-	function codeMirror(parent, props, events, extra) {
-		var cm = CodeMirror(parent, {});
+	function codeMirror(attach, props, events, extra) {
+		var ta = document.createElement('textarea');
+		attach(ta);
+		var cm = CodeMirror.fromTextArea(ta, {});
+
 		// for remove event.
 		var myHandlers = {};
 		
@@ -111,7 +114,7 @@ function registerCodeMirror(salix) {
         }, 100);
 		
 		
-		function patch(edits) {
+		function patch(edits, attach) {
 			edits = edits || [];
 
 			for (var i = 0; i < edits.length; i++) {
@@ -121,7 +124,7 @@ function registerCodeMirror(salix) {
 				switch (type) {
 				
 				case 'replace':
-					return salix.build(edit[type].html);
+					return salix.build(edit[type].html, attach);
 
 				case 'setProp': 
 					var key = edit[type].name;
@@ -189,9 +192,8 @@ function registerCodeMirror(salix) {
 			}
 		}
 		
-		var dom = cm.getWrapperElement();
+		var dom = cm.getWrapperElement().parentNode;
 		dom.salix_native = {patch: patch};
-		return dom;
 	}
 	
 	salix.registerNative('codeMirror', codeMirror);
