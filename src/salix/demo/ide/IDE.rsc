@@ -95,6 +95,7 @@ WithCmd[Model] update(Msg msg, Model model) {
             model.currentState = just("<t.state>");
             if (just(Event e) := lookupEvent(ctl, event)) {
               model.output += ["<e.token>"];
+              cmd = write(noOp(), "myXterm", "\u001B[31m<e.token>\u001B[0m\r\n$ ");
             }
           }
         }
@@ -106,7 +107,10 @@ WithCmd[Model] update(Msg msg, Model model) {
         cmd = write(fireEvent(model.currentCommand), "myXterm", "\r\n$ ");
         model.currentCommand = "";
       }
-      else {
+      else if (s == "\a7f") {
+        cmd = write(noOp(), "myXterm", "\b");
+      }
+      else if (/[a-zA-Z0-9_]/ := s) {
         model.currentCommand += s;
         cmd = write(noOp(), "myXterm", s);
       }
@@ -187,21 +191,12 @@ void view(Model model) {
                 });   
               }
             });
-            h4("Output");
-            ul(() {
-              for (str token <- model.output) {
-                li(token);
-              }
-            });   
+            h4("Command line");
+            xterm("myXterm", cursorBlink(true), onData(xtermData), cols(25), rows(10));       
           });
         }
       });
     });
     
-    div(class("row"), () {
-      div(class("col-md-9"), () {
-        xterm("myXterm", cursorBlink(true), onData(xtermData), cols(50), rows(10));      
-      });
-    });    
   });
 }
