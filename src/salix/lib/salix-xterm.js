@@ -9,23 +9,23 @@ function registerXTerm(salix) {
 			return {type: 'nothing'};
 		}
 		if (typeof x === 'string') {
-			return {type: 'string', strVal: x}
+			return {type: 'string', value: x}
 		}
 		if (typeof x === 'number') {
-			return {type: 'integer', intVal: x};
+			return {type: 'integer', value: x};
 		}
 		if (typeof x === 'boolean') {
-			return {type: 'boolean', boolVal: x};
+			return {type: 'boolean', value: x};
 		}
 	}
 	
-	function schedule(type, cmd, value) {
-		salix.scheduleCommand(cmd[type].handle.handle, val2result(value));
+	function schedule(cmd, value) {
+		salix.scheduleCommand(cmd.command.handle.handle, val2result(value));
 	}
 	
 	function doCommand(cmd) {
-		var type = salix.nodeType(cmd);
-		var term = xterms[cmd[type].id];
+		var type = cmd.command.name;
+		var term = xterms[cmd.command.args.id];
 		
 		if (!term) {
 			return;
@@ -34,83 +34,83 @@ function registerXTerm(salix) {
 		switch (type) {
 		
 		case 'getOption':
-			schedule(type, schedule, term.getOption(cmd.getOption.key));
+			schedule(schedule, term.getOption(cmd.getOption.key));
 			break
 
 		case 'setOption':
-			term.setOption(cmd.setOption.key, cmd.setOption.val);
-			schedule(type, cmd, undefined);
+			term.setOption(cmd.command.args.key, cmd.command.args.val);
+			schedule(cmd, undefined);
 			break
 
 		case 'refresh':
-			term.refresh(cmd.refresh.start, cmd.refresh.end, cmd.refresh.queue);
-			schedule(type, cmd, undefined);
+			term.refresh(cmd.command.args.start, cmd.command.args.end, cmd.command.args.queue);
+			schedule(cmd, undefined);
 			break
 
 		case 'resize':
-			term.resize(cmd.resize.x, cmd.resize.y);
-			schedule(type, cmd, undefined);
+			term.resize(cmd.command.args.x, cmd.command.args.y);
+			schedule(cmd, undefined);
 			break;
 
 		case 'scrollDisp':
-			term.scrollDisp(cmd.scrollDisp.n);
-			schedule(type, cmd, undefined);
+			term.scrollDisp(cmd.command.args.n);
+			schedule(cmd, undefined);
 			break;
 
 		case 'scrollPages':
-			term.scrollPages(cmd.scrollPages.n);
-			schedule(type, cmd, undefined);
+			term.scrollPages(cmd.command.args.n);
+			schedule(cmd, undefined);
 			break;
 
 		case 'write':
-			term.write(cmd.write.text);
-			schedule(type, cmd, undefined);
+			term.write(cmd.command.args.text);
+			schedule(cmd, undefined);
 			break;
 			
 		case 'writeln':
-			term.writeln(cmd.writeln.text);
-			schedule(type, cmd, undefined);
+			term.writeln(cmd.command.args.text);
+			schedule(cmd, undefined);
 			break;
 		
 		default:
 			term[type]();
-			schedule(type, cmd, undefined);
+			schedule(cmd, undefined);
 		}
 	}
 	
-	function scheduleEvent(type, dec, result) {
-		salix.scheduleOther(dec[type].handle.handle, result);
+	function scheduleEvent(hnd, result) {
+		salix.scheduleOther(hnd.handler.handle.handle, result);
 	}
 	
-	function dec2handler(decoder) {
-		var type = salix.nodeType(decoder);
+	function dec2handler(hnd) {
+		var type = hnd.handler.name;
 		switch (type) {
 		
 		case 'eventData':
 			return function (data) {
-				scheduleEvent(type, decoder, val2result(data));
+				scheduleEvent(hnd, val2result(data));
 			};
 			
 		case 'keyName':
 			return function (key, event) {
-				scheduleEvent(type, decoder, val2result(key)); 
+				scheduleEvent(hnd, val2result(key)); 
 			};
 		
 		case 'startEnd':
 			return function (data) {
-				scheduleEvent(type, decoder, 
-					{type: 'int-int', intVal1: data.start, intVal2: data.end}); 
+				scheduleEvent(hnd, 
+					{type: 'int-int', value1: data.start, value2: data.end}); 
 			};
 		
 		case 'colsRows':
 			return function (data) {
-				scheduleEvent(type, decoder, 
-					{type: 'int-int', intVal1: data.cols, intVal2: data.rows}); 
+				scheduleEvent(hnd, 
+					{type: 'int-int', value1: data.cols, value2: data.rows}); 
 			};
 		
 		case 'ydisp':
 			return function (n) {
-				scheduleEvent(type, decoder, val2result(n)); 
+				scheduleEvent(hnd, val2result(n)); 
 			};
 
 		}

@@ -16,7 +16,8 @@ import IO;
 
 
 App[Model] ideApp() 
-  = app(init, view, update, |http://localhost:8001|, |project://salix/src|); 
+  = app(init, view, update, |http://localhost:8001|, |project://salix/src|
+       parser = parseMsg); 
 
 alias Model = tuple[
   str src, 
@@ -36,8 +37,6 @@ Maybe[start[Controller]] maybeParse(str src) {
 }  
   
 WithCmd[Model] init() {
-  registerCodeMirror();
-  registerXTerm();
   Model model = <"", nothing(), nothing(), [], "">;
   
   model.src = doors();
