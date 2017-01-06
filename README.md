@@ -242,11 +242,11 @@ TBD: mapCmds
 
 - `App`: contains the top-level `app` function and `App[&T]` data type.
 
-- `HTML`, `SVG`: defines all HTML5 resp. SVG elements and attributes as convenient functions. All element functions (such as `div`, `h2`, etc.) accept a variable sequence of `value`s (i.e. they are "vararg" functions). All values can be attributes (as, e.g., produced by `onClick`, `class` etc.). The last value (if any) can also be either a block (of type `void()`), a `Node`, or a plain Rascal value. In the latter case, it's converted to a string and rendered as an HTML text node.  
+- `HTML`, `SVG`: define all HTML5 resp. SVG elements and attributes as convenient functions. All element functions (such as `div`, `h2`, etc.) accept a variable sequence of `value`s (i.e. they are "vararg" functions). All values can be attributes (as, e.g., produced by `onClick`, `class` etc.). The last value (if any) can also be either a block (of type `void()`), a `Node`, or a plain Rascal value. In the latter case, it's converted to a string and rendered as an HTML text node.  
 
 - `Core`: contains the logic of representing and mapping handlers, commands, and subscriptions in such a way that they can be sent to and received from the browser. Import this if you use subscriptions, if you need mapping (see above), or if you're defining your own events, commands or subscriptions. 
 
-- `Node`: defines the rendering logic to convert "views" to HTML `Node`s. Only needed if you define your own attributes or elements, or if you need to call `render` explicitly. 
+- `Node`: defines the `Node` data type for representing views. Only needed if you define your own attributes or elements. 
 
 - `Diff`, `Patch`: internal modules for diffing and patching `Node`. You should never have to import these modules. 
 
