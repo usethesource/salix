@@ -30,10 +30,10 @@ data Msg
   ;
 
 App[AllModel] allApp() 
-  = app(initAll(), viewAll, editAll, |http://localhost:9213|, |project://salix/src|, subs = allSubs); 
+  = app(initAll, viewAll, editAll, |http://localhost:9213|, |project://salix/src|, subs = allSubs); 
 
 App[AllModel] debugAllApp() 
-  = debug(initAll(), myDebugView, editAll, |http://localhost:9213|, |project://salix/src|, subs = allSubs); 
+  = debug(initAll, myDebugView, editAll, |http://localhost:9213|, |project://salix/src|, subs = allSubs); 
   
 WithCmd[AllModel] initAll() = noCmd(<
   salix::demo::basic::Celsius::init(), 

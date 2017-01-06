@@ -18,7 +18,7 @@ data Msg
   | goto(int version)
   ;
 
-App[DebugModel[&T]] debug(WithCmd[&T] model, 
+App[DebugModel[&T]] debug(WithCmd[&T]() model, 
                           void(DebugModel[&T]) view, // // can't wrap view implicitly, because it'll lead to closures... 
                           WithCmd[&T](Msg, &T) upd, loc http, loc static,
                           Subs[&T] subs = noSubs, str root = "root")
@@ -29,8 +29,11 @@ App[DebugModel[&T]] debug(WithCmd[&T] model,
 Subs[DebugModel[&T]] wrapSubs(Subs[&T] subs) 
   = list[Sub](DebugModel[&T] m) { return mapSubs(Msg::sub, m.models[m.current], subs); };
 
-WithCmd[DebugModel[&T]] wrapModel(WithCmd[&T] model, WithCmd[&T](Msg, &T) upd) 
-  = withCmd(<0, [model.model], [], upd>, model.command);
+WithCmd[DebugModel[&T]] wrapModel(WithCmd[&T]() model, WithCmd[&T](Msg, &T) upd) 
+  = WithCmd[DebugModel[&T]]() {
+      <m, c> = model(); 
+      return withCmd(<0, [m], [], upd>, c);
+    };
 
 
 void debugView(DebugModel[&T] model, void(&T) subView) {
