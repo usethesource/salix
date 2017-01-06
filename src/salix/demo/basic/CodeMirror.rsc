@@ -32,7 +32,7 @@ void view(Model model) {
   div(() {
     h2("Code Mirror demo");
     div(() {
-      codeMirror(style(("height": "auto")), onChange(myChange), 
+      codeMirror("cm", style(("height": "auto")), onChange(myChange), 
         mode("javascript"), lineNumbers(true), \value(model.src));
     });
     for (Msg m <- model.changes) {
