@@ -170,6 +170,7 @@ Commands are used to trigger side-effects. Instead of simply returning a new mod
 
 As an example, here's the counter's `init` and `update` functions modified to cater for commands:
 
+```rascal
 	WithCmd[Model] init() = noCmd(0);
 	
 	WithCmd[Model] update(Msg msg, Model model) {
@@ -179,7 +180,8 @@ As an example, here's the counter's `init` and `update` functions modified to ca
 	  }
 	  return noCmd(model);
 	}
-	
+```
+
 Of course, nothing changes in the behavior yet. Let's add some additional logic: whenever you press the increment button, we'll generate a command to add some random "jitter" to the counter value.
 Here's how:
 
