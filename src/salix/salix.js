@@ -48,7 +48,7 @@ function Salix(aRootId) {
 	}
 
 	function render(timestamp) {
-		frameRequested = false;
+		frameRequested = false; // because we're in the requested frame...
 		
 		// so if nothing is done in this render invocation
 		// (i.e. no subs/commands and no events, there will be a new
@@ -225,26 +225,40 @@ function Salix(aRootId) {
 		}
 	}
 	
+	// send requests a nextFrame, but only if there's work to be done
+	// whenever an event happens after handling a message completes, though,
+	// we need to enter the render loop again.
+	
 	function scheduleEvent(event, handle, data) {
 		var result = makeResult(handle, data);
 		event_queue.push({type: event.type, target: event.target, result: result});
 		nextFrame();
 	}
 
-	// command/sub schedule don't need nextFrame as per
-	// processmessage.
-	function scheduleCommand(handle, data) {
-		command_queue.push(makeResult(handle, data));
-	}
-
-	function scheduleSubscription(handle, data) {
-		subscription_queue.push(makeResult(handle, data));
-	}
-
+	// this function schedules events that are out of reach of salix
+	// for instance from natives; we can't detect staleness for those
+	// so events on the other queue are never discarded.
 	function scheduleOther(handle, data) {
 		other_queue.push(makeResult(handle, data));
 		nextFrame();
 	}
+	
+//	// subscriptions also ask for a new frame, since they work like events.
+	function scheduleSubscription(handle, data) {
+		subscription_queue.push(makeResult(handle, data));
+		nextFrame();
+	}
+	
+	// command schedule don't need nextFrame as per
+	// processmessage: results are always scheduled during
+	// "step".
+	function scheduleCommand(handle, data) {
+		command_queue.push(makeResult(handle, data));
+	}
+
+	
+
+	
 
 
 	
