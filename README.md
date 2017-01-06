@@ -204,6 +204,8 @@ Here's how:
 
 We've added a new message, `jitter` with an integer argument. The `update` function is modified so that whenever the counter is incremented, we'll do that, but also produce a command, in this case the predefined `random` command which will generate a random integer in the provided range. The result is sent back and wrapped into a `jitter` message. The `update` function uses this message to add "jitter" to the counter value.
 
+NB: in Elm you can `batch` multiple commands in a single one. For now, this is supported by Salix, since I don't understand the semantics of multiple commands resulting from a single `update` invocation.  
+
 TBD: mapCmds
 
 ### Guide to the modules
