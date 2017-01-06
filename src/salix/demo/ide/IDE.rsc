@@ -24,7 +24,8 @@ alias Model = tuple[
   Maybe[start[Controller]] lastParse,
   Maybe[str] currentState,
   list[str] output,
-  str currentCommand
+  str currentCommand,
+  Mode mode // put it here, so not regenerated at every click..
 ];
   
 Maybe[start[Controller]] maybeParse(str src) {
@@ -37,7 +38,7 @@ Maybe[start[Controller]] maybeParse(str src) {
 }  
   
 WithCmd[Model] init() {
-  Model model = <"", nothing(), nothing(), [], "">;
+  Model model = <"", nothing(), nothing(), [], "", grammar2mode("statemachine", #Controller)>;
   
   model.src = doors();
   model.lastParse = maybeParse(model.src);
@@ -62,8 +63,6 @@ str doors() =
     'state opened
     '  close =\> closed
     'end";
-
-Mode stmMode() = grammar2mode("statemachine", #Controller);
 
 data Msg
   = myChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed)
@@ -172,7 +171,7 @@ void view(Model model) {
     div(class("row"), () {
       div(class("col-md-6"), () {
         h4("Edit the state machine.");
-        codeMirrorWithMode("myCodeMirror", stmMode(), onChange(myChange), height(300), 
+        codeMirrorWithMode("myCodeMirror", model.mode, onChange(myChange), height(300), 
             mode("statemachine"), indentWithTabs(false), lineNumbers(true), \value(model.src));
       });
         

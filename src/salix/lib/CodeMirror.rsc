@@ -8,6 +8,8 @@ import IO;
 import String;
 import List;
 
+Attr onChange(Msg(int, int, int, int, str, str) ch2msg)
+  = event("change", handler("codeMirrorChange", encode(ch2msg)));
 
 Msg parseMsg("codeMirrorChange", Handle h, map[str, str] p)
   = applyMaps(h, decode(h.id, #Msg(int, int, int, int, str, str))(
@@ -20,14 +22,13 @@ void codeMirror(str id, value vals...)
       return native("codeMirror", id, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
    });
  
+
 void codeMirrorWithMode(str id, Mode mode, value vals...) 
   = build(vals, Node(list[Node] _, list[Attr] attrs) { 
       return native("codeMirror", id, attrsOf(attrs), propsOf(attrs), eventsOf(attrs), extra = ("mode": mode));
    });
 
 
-Attr onChange(Msg(int, int, int, int, str, str) ch2msg)
-  = event("change", handler("codeMirrorChange", encode(ch2msg)));
 
 // Special cased
 // http://codemirror.net/doc/manual.html#setSize
