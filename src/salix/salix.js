@@ -30,7 +30,7 @@ function Salix(aRootId) {
 	
 	function start() {
 		send('/init', {}, function (work) {
-			step(work[0], work[1], work[2], true);
+			step(work[0], work[1], work[2]);
 		});
 	}
 
@@ -40,8 +40,19 @@ function Salix(aRootId) {
 		});
 	}
 
+	function stillWorkToBeDone() {
+		return command_queue.length > 0 
+			|| event_queue.length > 0
+			|| other_queue.length > 0
+			|| subscription_queue.length > 0;
+	}
 
 	function render(timestamp) {
+		frameRequested = false;
+		
+		// so if nothing is done in this render invocation
+		// (i.e. no subs/commands and no events, there will be a new
+		// render frame only when the user clicks something.
 		
 		// commands are always processed first.
 		if (command_queue.length > 0) { // could we do all at once in one frame??
@@ -61,19 +72,12 @@ function Salix(aRootId) {
 				//console.log('Processing event: ' + JSON.stringify(event.result));
 				processMessage(event.result);
 			}
-			else {
-				// all events turned out to be stale.
-				window.requestAnimationFrame(render);
-			}
 		}
 		else if (other_queue.length > 0) {
 			processMessage(other_queue.shift());
 		}
 		else if (subscription_queue.length > 0) {
 			processMessage(subscription_queue.shift());
-		}
-		else {
-			window.requestAnimationFrame(render);
 		}
 	}
 
@@ -89,7 +93,9 @@ function Salix(aRootId) {
 		$.get(url, message, handle, 'json').always(function () {
 			// request the frame after work has been done by handle
 			// this ensures "synchronous" processing of messages
-			window.requestAnimationFrame(render);
+			if (stillWorkToBeDone()) {
+				nextFrame();
+			}
 		});
 	}
 
@@ -207,23 +213,39 @@ function Salix(aRootId) {
 		}
 	}
 	
+	var frameRequested = false;
+	function nextFrame() {
+		// frameRequested is meant to ensure that we
+		// don't ask for frames multiple times whenever
+		// both commands/subs/events get scheduled
+		// within the same time span...
+		if (!frameRequested) {
+			frameRequested = true;
+			window.requestAnimationFrame(render);
+		}
+	}
 	
 	function scheduleEvent(event, handle, data) {
 		var result = makeResult(handle, data);
 		event_queue.push({type: event.type, target: event.target, result: result});
+		nextFrame();
 	}
 
+	// command/sub schedule don't need nextFrame as per
+	// processmessage.
 	function scheduleCommand(handle, data) {
 		command_queue.push(makeResult(handle, data));
-	}
-
-	function scheduleOther(handle, data) {
-		other_queue.push(makeResult(handle, data));
 	}
 
 	function scheduleSubscription(handle, data) {
 		subscription_queue.push(makeResult(handle, data));
 	}
+
+	function scheduleOther(handle, data) {
+		other_queue.push(makeResult(handle, data));
+		nextFrame();
+	}
+
 
 	
 	function makeResult(handle, data) {
