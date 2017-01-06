@@ -13,18 +13,25 @@ Salix is best understood through an example. Here we describe a simple counter a
 
 First we define the model, which is simply an integer:
 
+```rascal
     alias Model = int;
+```
 
 The initial model is 0:
     
+```rascal
     Model init() = 0;
+```
 
 The model is changed by interpreting messages. In Salix, all messages are of the `Msg` type. Other components might extend the same algebraic data type `Msg` for their own purposes. Here we have two messages: one to increment the counter and one to decrement it. 
 
+```rascal
     data Msg = inc() | dec();
+```
 
 The evaluator (conventionally called `update`) can be implemented as follows:
 
+```rascal
 	Model update(Msg msg, Model model) {
 	  switch (msg) {
 	    case inc(): model += 1;
@@ -32,9 +39,11 @@ The evaluator (conventionally called `update`) can be implemented as follows:
 	  }
 	  return model;
 	}
+```
 
 With the model and the `update` function in place, we can now define a view as follows: 
 
+```rascal
     void view(Model m) {
       div(() {
         h2("My first counter app in Rascal");
@@ -43,6 +52,7 @@ With the model and the `update` function in place, we can now define a view as f
         button(onClick(dec()), "-");
       });
     }
+```
 
 A few notes are in order here. A view in Salix is a function from a model (in this case, of type `Model`) to `void`. Views defined in this style call HTML generating functions defined in the `salix::HTML` module, which are all `void` functions too.  Consider the `void` functions as "drawing" functions, painting HTML structure on an implicit canvas. This imperative style has the advantage that all regular control-flow constructs of Rascal can be used during view construction. Notice how `void` closures are used to express nesting.
 
@@ -50,19 +60,24 @@ The `button` elements receive attributes to setup event-handling. In this case, 
 
 Now that we've defined all required components of a simple Salix app, how do we tie it all together? This is where the `app` function comes in: it takes a function to produce the initial model, a view function, an update function, and two locations capturing the host+port configuration and the path to serve static assets from, respectively. Here's the definition of the counter app: 
 
+```rascal
     App[Model] counterApp() 
       = app(init, view, update, |http://localhost:9197|, |file:///...|); 
+```
 
 The returned value of type `App[Model]` is a tuple containing function to start and stop the application, like so:
 
+```rascal
     counter = counterApp();
     counter.serve(); // start the application
     counter.stop(); // shut it down
+```
 
 And that's it! After calling `counter.serve()`, you can use the counter app at `http://localhost:9197/index.html`.
 
 Wait, we forgot one thing. Here's the minimally required `index.html`  file need to run Salix apps:
 
+```html
 	<!DOCTYPE html>
 	<html>
 	  <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
@@ -70,6 +85,7 @@ Wait, we forgot one thing. Here's the minimally required `index.html`  file need
 	  <script>$(document).ready(new Salix().start);</script>
 	  <body><div id="root"></div></body>
 	</html>
+```
 
 Salix currently requires JQuery to do Ajax calls. Salix apps hook into the `div` with `id` "root" by default. This default can be overridden, however, through the `root` keyword parameter of the `app` function, and providing it to the `Salix` constructor.
 
@@ -79,6 +95,7 @@ Components encapsulate their own models and sets of messages. In order to nest c
 
 As an example, let's consider an app that contains the counter app twice. Clicking increment or decrement on either of the counters should not affect the other. Here's how mapping solves this problem.
 
+ ```rascal
     import Counter;
     import salix::HTML;
     
@@ -104,17 +121,20 @@ As an example, let's consider an app that contains the counter app twice. Clicki
         mapView(sub2, model.counter2, view);
       });
     }
+```
 
 The important bit here is that the `view` function of the counter app is embedded twice, via the special `mapView` function. It takes as its first argument a function of type `Msg(Msg)` (i.e., a message transformer), a model as its second argument, and a view (of type `void(&T)`) as its last argument. In this case we provide the `sub1` and `sub2` constructors as message transformers. The function `mapView` now ensures that whenever a message is received that originates from the first counter it is wrapped in `sub1`, and that any message from the second counter is wrapped in `sub2`. For instance, `inc()` from the first counter will be wrapped as `sub1(inc())` and passed to `updateTwice` who will route it to `update` on `m.counter1`. Same for the second counter.
 
 If we didn't use mapping here, the function `updateTwice` could directly interpret `inc()` and `dec()`, but it wouldn't know which counter model to update! Alternatively, however, you shouldn't use mapping if you *want* two views sharing the same model. In this case, there's no need for routing of messages, and the two `view` functions can be simply called twice, on the same model. For instance, like this:
 
+```rascal
     void viewTwice(Model model) {
       div(() {
         view(model);
         view(model);
       });
     }
+```
     
 ##### Why is mapping part of the framework?
 
@@ -128,12 +148,15 @@ The same holds for arguments to the mapping functions. Basically this means that
 
 Subscriptions can be used to listen to events of interest which are not produced by users interacting with the page. Examples include incoming data on Web sockets, or timers. In Salix these are represented by the type `Sub` (defined in `salix::Core`). Currently, there's only one: 
 
+```rascal
 	timeEvery(Msg(int) time2msg, int interval) 
+```
 
 To be notified of subscriptions, provide a function of type `list[Sub](&T)` (where `&T` represents your model type) to the `subs` keyword parameter of `app`.
 
 As as example, let's say we'd like to automatically increment our counter every 5 seconds. This can be achieved as follows:
 
+```rascal
 	import salix::Core; // defines the Sub ADT
 
 	data Msg  // extend Msg to respond to timeEvery subscription
@@ -149,20 +172,23 @@ As as example, let's say we'd like to automatically increment our counter every 
 	  }
 	  return model;
 	}
-	
+```	
 	
 This code states that every 5 seconds we will be notified of the event through the message `tick` which will contain the current time. The `update` function is changed to modify the model as intended.
 
 Finally modify the invocation to `app` as follows:
 
+```rascal
 	App[Model] counterApp() = app(..., subs = counterSubs);
+```
       
 If your nested components have subscriptions, you need to map them in the same way as views are mapped, but this time using `mapSubs`. For instance, here's how to map the subscriptions of each counter to combine them into a list of subscriptions of `counterTwice`, assuming the counter app defines its list of subscriptions for a model as `counterSubs(Model m)`:
 
+```rascal
 	list[Sub] subsTwice(ModelTwice m)
 	  = mapSubs(sub1, m.counter1, counterSubs)
 	  + mapSubs(sub2, m.counter2, counterSubs);
-
+```
 
 ### Commands
 
@@ -185,6 +211,7 @@ As an example, here's the counter's `init` and `update` functions modified to ca
 Of course, nothing changes in the behavior yet. Let's add some additional logic: whenever you press the increment button, we'll generate a command to add some random "jitter" to the counter value.
 Here's how:
 
+```rascal
 	data Msg = ... | jitter(int j);
 	
 	WithCmd[Model] update(Msg msg, Model model) {
@@ -202,6 +229,7 @@ Here's how:
 
 	  return withCmd(model, cmd);
 	}
+```
 	
 
 We've added a new message, `jitter` with an integer argument. The `update` function is modified so that whenever the counter is incremented, we'll do that, but also produce a command, in this case the predefined `random` command which will generate a random integer in the provided range. The result is sent back and wrapped into a `jitter` message. The `update` function uses this message to add "jitter" to the counter value.
@@ -231,8 +259,10 @@ Extending the framework with new events, commands or subscriptions is facilitate
 
 An event is defined using the following pattern:
 
+```rascal
 	Attr <eventName>(Msg(...) something2msg) 
 	  = event("<eventName", handler("<handler>", encode(something2msg));
+```
 
 This code defines an event function named `eventName`, accepting a function to map some event data to a `Msg`. It is defined using the `event` constructor which takes the name of the event and a "handler". Handlers are used to process event data such that it can eventually be fed into the argument function `something2msg`. Handlers thus are specific for such functions. The handler also encapsulates an encoded representation of the function needed to decode the event data.
 
@@ -240,13 +270,16 @@ Standard handlers include `succeed(Msg)` which simply returns the argument messa
 
 If the standard handlers are not sufficient, you can also define your own. By defining functions that produce `Hnd` values, As an example, `targetValue` is defined as follows:
 
+```rascal
 	Hnd targetValue(Msg(str) str2msg) = handler("targetValue", encode(str2msg));
+```
 
 The reverse is also needed: turning a handle received from the client into the corresponding message as produced by the handler function. This is performed by interpreting the type of the result (represented as a string). Such a result is then converted to a message on the server. For instance, the result of `targetValue` is parsed using the following function:
 
+```rascal
     Msg parseMsg("string", Handle h, map[str,str] p) 
       = applyMaps(h, decode(h, #Msg(str))(p["value"]));
-
+```
 
 The function `parseMsg` receives three parameters: first the type of the result (used to dispatch the parse function); second, the `Handle` as received from the client, and third the map of request data that was received from the client.  The `decode` function is used to decode the handle into a function `Msg(str)`, which is then applied to the request parameter `value` to obtain a message. The function `applyMaps` then transforms the resulting message according to the mappers that were active at the time this handle was produced. You should always apply this function, otherwise mapping (see above) won't work.  
 
