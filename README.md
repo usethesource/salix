@@ -48,10 +48,10 @@ A few notes are in order here. A view in Salix is a function from a model (in th
 
 The `button` elements receive attributes to setup event-handling. In this case, the `onClick` attribute wraps an `Msg` value to indicate that this message must be sent if the button is clicked. The main render loop will forward such messages to `update` to obtain a new model value, which in turn is used to create the updated view.
 
-Now that we've defined all required components of a simple Salix app, how do we tie it all together? This is where the `app` function comes in: it takes an initial model, a view function, an update function, and two locations capturing the host+port configuration and the path to serve static assets from, respectively. Here's the definition of the counter app: 
+Now that we've defined all required components of a simple Salix app, how do we tie it all together? This is where the `app` function comes in: it takes a function to produce the initial model, a view function, an update function, and two locations capturing the host+port configuration and the path to serve static assets from, respectively. Here's the definition of the counter app: 
 
     App[Model] counterApp() 
-      = app(init(), view, update, |http://localhost:9197|, |file:///...|); 
+      = app(init, view, update, |http://localhost:9197|, |file:///...|); 
 
 The returned value of type `App[Model]` is a tuple containing function to start and stop the application, like so:
 
@@ -71,7 +71,7 @@ Wait, we forgot one thing. Here's the minimally required `index.html`  file need
 	  <body><div id="root"></div></body>
 	</html>
 
-Salix requires JQuery to do Ajax calls. Salix apps hook into the `div` with `id` "root" by default. This default can be overridden, however, through the `root` keyword parameter of the `app` function, and providing it to the `Salix` constructor.
+Salix currently requires JQuery to do Ajax calls. Salix apps hook into the `div` with `id` "root" by default. This default can be overridden, however, through the `root` keyword parameter of the `app` function, and providing it to the `Salix` constructor.
 
 ### Nesting Components by Mapping
 
@@ -122,7 +122,7 @@ You'd think it would easy to realize mapping just using a standard `map` functio
 
 Unfortunately, such transformed embedded functions can't be serialized over the wire. That's why they are encoded. When receiving a result, the encoding is used to find the original function again. This requires equality on functions. Function equality in Rascal is tricky: two functions are considered equal if they correspond to the same declaration, or if they are *exactly* the same closure (i.e. created at the same execution point). This basically means that you cannot use inline closures as handlers, because on every render, they will lead to new identities, and hence, spurious event handler updates in the browser.  
 
-The same holds for arguments to the mapping functions. Basically this means that you only nest components that are statically known :-(.
+The same holds for arguments to the mapping functions. Basically this means that you only nest components that are statically known :-(. For instance, a generic editable-list component won't work, since such a component will nest a statically unknown number of element components.
 
 ### Subscriptions
 
@@ -166,18 +166,18 @@ If your nested components have subscriptions, you need to map them in the same w
 
 ### Commands
 
-Commands are used to trigger side-effects. Instead of simply returning a new model in `update`, this function will now also return a (possibly empty) list of commands of type `Cmd`. This result is captured in the type `WithCmds[&T]` which is tuple of a model of type `&T` and a list of commands. The helper functions `noCmds(&T)` and `withCmds(&T, list[Cmd])` can be used to construct such result values.
+Commands are used to trigger side-effects. Instead of simply returning a new model in `update`, this function will now also return a single command of type `Cmd`. This result is captured in the type `WithCmd[&T]` which is tuple of a model of type `&T` and a command (the command `none()` indicates nothing needs to be done). The helper functions `noCmd(&T)` and `withCmd(&T, Cmd)` can be used to construct such result values.
 
 As an example, here's the counter's `init` and `update` functions modified to cater for commands:
 
-	WithCmds[Model] init() = noCmds(0);
+	WithCmd[Model] init() = noCmd(0);
 	
-	WithCmds[Model] update(Msg msg, Model model) {
+	WithCmd[Model] update(Msg msg, Model model) {
 	  switch (msg) {
 	    case inc(): model += 1;
 	    case dec(): model -= 1;
 	  }
-	  return noCmds(model);
+	  return noCmd(model);
 	}
 	
 Of course, nothing changes in the behavior yet. Let's add some additional logic: whenever you press the increment button, we'll generate a command to add some random "jitter" to the counter value.
@@ -185,24 +185,24 @@ Here's how:
 
 	data Msg = ... | jitter(int j);
 	
-	WithCmds[Model] update(Msg msg, Model model) {
-	  list[Cmd] cmds = [];
+	WithCmd[Model] update(Msg msg, Model model) {
+	  Cmd cmd = none();
 
 	  switch (msg) {
 	    case inc(): {
 	      model += 1;
-	      cmds += [random(jitter, -10, 10)];
+	      cmd = random(jitter, -10, 10);
 	    }
 	    ...
 	    case jitter(int j):
 	      model += j;
 	  }
 
-	  return withCmds(model, cmds);
+	  return withCmd(model, cmd);
 	}
 	
 
-We've added a new message, `jitter` with an integer argument. The `update` function is modified so that whenever the counter is incremented, we'll do that, but also produce a command, in this case the predefined `random` command which will generate a random integer in the provided range. The result is sent back and mapped into the `jitter` message. The `update` function uses this message to add "jitter" to the counter value.
+We've added a new message, `jitter` with an integer argument. The `update` function is modified so that whenever the counter is incremented, we'll do that, but also produce a command, in this case the predefined `random` command which will generate a random integer in the provided range. The result is sent back and wrapped into a `jitter` message. The `update` function uses this message to add "jitter" to the counter value.
 
 TBD: mapCmds
 
@@ -221,64 +221,38 @@ TBD: mapCmds
 
 ### Extending the Framework
 
-Extending the framework with new events, commands or subscriptions is facilitated by Rascal's extensible data types. In all cases, you define new constructors for handlers (`Hnd`), commands (`Cmd`) or subscriptions (`Sub`). Since all three of those values are sent over the wire, they have to be encoded. The framework provides functions to do so. Handlers, commands and subscriptions produce results, which are sent back to the server. This means that you'll also have to write a parser to turn received data into a proper message of type `Msg`, if the type of data is not supported by the built-in parser (i.e. `nothing`, `string`, `integer`, or `boolean`). In some cases the Javascript needs to be modified in order to accommodate the construct. 
+Extending the framework with new events, commands or subscriptions is facilitated by Rascal's extensible data types. In all cases, you define functions to produce handlers (`Hnd`), commands (`Cmd`) or subscriptions (`Sub`). Since all three of those values are sent over the wire, they have to be encoded. The framework provides functions to do so. Handlers, commands and subscriptions produce results, which are sent back to the server. This means that you'll also have to extend the parser to turn received data into a proper message of type `Msg`, if the type of data is not supported by the built-in parser (i.e. `nothing`, `string`, `integer`, or `boolean`). In some cases the Javascript needs to be modified in order to accommodate the construct. 
 
 #### Events
 
 An event is defined using the following pattern:
 
 	Attr <eventName>(Msg(...) something2msg) 
-	  = event("<eventName", <handler>(something2msg));
+	  = event("<eventName", handler("<handler>", encode(something2msg));
 
-This code defines an event function named `eventName`, accepting a function to map some event data to a `Msg`. It is defined using the `event` constructor which takes the name of the event and a "handler". Handlers are used to process event data such that it can eventually be fed into the argument function `something2msg`. Handlers thus are specific for such functions.
+This code defines an event function named `eventName`, accepting a function to map some event data to a `Msg`. It is defined using the `event` constructor which takes the name of the event and a "handler". Handlers are used to process event data such that it can eventually be fed into the argument function `something2msg`. Handlers thus are specific for such functions. The handler also encapsulates an encoded representation of the function needed to decode the event data.
 
-Standard handlers include `succeed(Msg)` which simply returns the argument when the event succeeds; `targetValue(Msg(str))` feeds the value property of the target element of the event into the argument function to obtain a message; and `targetChecked(Msg(bool))` which can be used on checkboxes and radio buttons. These are ready to use in your event definitions. 
+Standard handlers include `succeed(Msg)` which simply returns the argument message when the event succeeds; `targetValue(Msg(str))` feeds the value property of the target element of the event into the argument function to obtain a message; and `targetChecked(Msg(bool))` which can be used on checkboxes and radio buttons. These are ready to use in your event definitions. 
 
-If the standard handlers are not sufficient, you can also define your own. By extending the `Hnd` data type, and providing a smart constructor turning the handler function into serializable form. As an example, `targetValue` is defined as follows:
+If the standard handlers are not sufficient, you can also define your own. By defining functions that produce `Hnd` values, As an example, `targetValue` is defined as follows:
 
-	data Hnd
-     = ...
-     | targetValue(Handle handle);
+	Hnd targetValue(Msg(str) str2msg) = handler("targetValue", encode(str2msg));
 
-	Hnd targetValue(Msg(str) str2msg) = targetValue(encode(str2msg));
+The reverse is also needed: turning a handle received from the client into the corresponding message as produced by the handler function. This is performed by interpreting the type of the result (represented as a string). Such a result is then converted to a message on the server. For instance, the result of `targetValue` is parsed using the following function:
 
-The type `Handle` is an opaque type representing the handler function in serializable form. The function `encode` uses internal magic to turn an arbitrary value into a handle. 
-
-The reverse is also needed: turning a handle received from the client into the corresponding message as produced by the handler function. This is performed by interpreting `Result`s. Such a result is then converted to a message on the server. For instance, the result of `targetValue` is represented using the `Result` constructor `string(Handle,str)`. Here's how such a result is turned into a message:
-
-	Msg stringParser(Handle h, map[str,str] p) 
-    = applyMaps(h, decode(h, #Msg(str))(p["strVal"]));
+    Msg parseMsg("string", Handle h, map[str,str] p) 
+      = applyMaps(h, decode(h, #Msg(str))(p["value"]));
 
 
-The function `stringParser` receives two parameters: first, the `Handle` as received from the client, and second the map of request data that was received from the client.  The `decode` function is used to decode into a function `Msg(str)`, which is then applied to the request parameter `strVal` to obtain a message. The function `applyMaps` then transforms the resulting message according to the mappers that were active at the time this handle was produced. 
+The function `parseMsg` receives three parameters: first the type of the result (used to dispatch the parse function); second, the `Handle` as received from the client, and third the map of request data that was received from the client.  The `decode` function is used to decode the handle into a function `Msg(str)`, which is then applied to the request parameter `value` to obtain a message. The function `applyMaps` then transforms the resulting message according to the mappers that were active at the time this handle was produced. You should always apply this function, otherwise mapping (see above) won't work.  
 
-You can define a new parser in a way similar to `stringParser`. In that case, however, it needs to be registered to the framework by calling `msgParser(str typ, Msg(Handle, map[str,str]) parser)`; 
-Values of type `Hnd` are interpreted in the client to produce attributes in the request (such as `strVal`). Therefore, adding your own handlers requires changing the Javascript code to support the new kind. 
+You can define a new parser in a similar way, this time dispatching on a different type string. Note, that this also requires modifying the `salix.js` Javascript code to actually produce these new results. Furthermore, the function extension won't be in scope automatically at the top-level `app` function. Thus, before calling `app`, make sure all required parsers are in scope at the call-site, and provide `parseMsg` to the `parser` keyword parameter of `app`. 
 
 #### Subscriptions & Commands (TODO)
 
-Extend `Sub` with new constructor for sending to client.
-extend decoder to represent a decoder for this subscription
-define smart constructor that encodes decoding functions
-extend js to handle the new subscription.
+Salix can be extended with new kinds of subscriptions and commands, similar to how new handlers are defined (e.g., `targetValue`. The only difference is that instead of the `Hnd` type and the `handler` constructor, you now use `Cmd` and `command`, and `Sub` and `subscription`, respectively.  
 
-For instance, `timeEvery` is defined as follows:
+#### Embedding Unmanaged Javascript
 
-	data Sub = timeEvery(Handle handle, int interval);
-
-	Sub timeEvery(Msg(int) int2msg, int n) = timeEvery(encode(int2msg), n);
-
-
-For instance, the `random` command is defined as follows:
-
-	data Cmd = random(Handle handle, int from, int to);
-  
-	Cmd random(Msg(int) f, int from, int to) = random(encode(f), from, to);
-
-
-New subscriptions and commands always require modifying the Javascript to interpret them (like `Hnd` extensions). The results sent back to the server follow the pattern of event results.  In this case, for instance, the `random` command will produce results which will be parsed by `intParser`.
-
-#### Interop with JS
-
-// Natives
+TBD
 
