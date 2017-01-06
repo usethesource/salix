@@ -11,10 +11,8 @@ App[str] cmApp()
   = app(init, view, update, |http://localhost:9000|, |project://salix/src|); 
 
 
-Model init() {
-  registerCodeMirror();
-  return <[], "function hello() {\n  console.log(\'Hello world\');\n}">;
-}
+Model init() 
+  = <[], "function hello() {\n  console.log(\'Hello world\');\n}">;
 
 data Msg
   = myChange(int, int, int, int, str, str)

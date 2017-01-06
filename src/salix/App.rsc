@@ -25,7 +25,7 @@ WithCmd[&T](Msg, &T) withoutCmd(&T(Msg, &T) update)
 
 @doc{Helper function for apps that don't need commands.}
 App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
-            Subs[&T] subs = noSubs, str root = "root") 
+            Subs[&T] subs = noSubs, str root = "root", Parser parser = parseMsg) 
  = app(WithCmd[&T]() { return noCmd(init()); }, 
     view, withoutCmd(update), http, static, subs = subs, root = root);
 
@@ -33,7 +33,7 @@ App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static,
 a http loc to serve the app to, and a location to resolve static files.
 The keyword param root identifies the root element in the html document.}
 App[&T] app(WithCmd[&T]() init, void(&T) view, WithCmd[&T](Msg, &T) update, loc http, loc static, 
-            Subs[&T] subs = noSubs, str root = "root") {
+            Subs[&T] subs = noSubs, str root = "root", Parser parser = parseMsg) {
 
   Node asRoot(Node h) = h[attrs=h.attrs + ("id": root)];
 
@@ -69,15 +69,15 @@ App[&T] app(WithCmd[&T]() init, void(&T) view, WithCmd[&T](Msg, &T) update, loc 
     // initially, just render the view, for the current model.
     if (get("/init") := req) {
       currentView = empty();
-      <model, command> = initialize(init, view);
-      return transition(model, command);
+      <model, myCmd> = initialize(init, view);
+      return transition(model, myCmd);
     }
     
     
     // if receiving an (encoded) message
     if (get("/msg") := req) {
       //println("Parsing request");
-      Msg msg = params2msg(req.parameters);
+      Msg msg = params2msg(req.parameters, parser);
       println("Processing: <msg>");
       <newModel, myCmd> = update(msg, currentModel);
       return transition(newModel, myCmd);

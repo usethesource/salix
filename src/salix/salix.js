@@ -110,17 +110,18 @@ function Salix(aRootId) {
 
 	// Execute commands, and schedule the result on the command queue.
 	function doCommand(cmd) {
-		switch (nodeType(cmd)) {
+		// TODO: get rid of this
+		if (cmd.none) {
+			return;
+		}
+		
+		switch (cmd.command.name) {
 		
 		case 'random':
-			var random = Math.floor(Math.random() * (cmd.random.to - cmd.random.from + 1)) + cmd.random.from;
-			scheduleCommand(cmd.random.handle.handle, {type: 'integer', intVal: random});
-			break;
-			
-		case 'batch':
-			for (var i = 0; i < cmd.batch.commands.length; i++) {
-				doCommand(cmd.batch.commands[i]);
-			}
+			var to = cmd.command.args.to;
+			var from = cmd.command.args.from;
+			var random = Math.floor(Math.random() * (to - from + 1)) + from;
+			scheduleCommand(cmd.command.handle.handle, {type: 'integer', value: random});
 			break;
 			
 		default: 
@@ -135,13 +136,13 @@ function Salix(aRootId) {
 	// Initialize a subscription of the provided type, returning
 	// a closure to cancel it when unsubscribing.
 	function installSubscription(sub) {
-		switch (nodeType(sub)) {
+		switch (sub.subscription.name) {
 		
 		case 'timeEvery':
 			var timer = setInterval(function() {
-				var data = {type: 'integer', intVal: (new Date().getTime() / 1000) | 0};
-				scheduleSubscription(sub.timeEvery.handle.handle, data); 
-			}, sub.timeEvery.interval);
+				var data = {type: 'integer', value: (new Date().getTime() / 1000) | 0};
+				scheduleSubscription(sub.subscription.handle.handle, data); 
+			}, sub.subscription.args.interval);
 			return function () {
 				clearInterval(timer);
 			};
@@ -152,8 +153,7 @@ function Salix(aRootId) {
 	function subscribe(subs) {
 		for (var i = 0; i < subs.length; i++) {
 			var sub = subs[i];
-			var type = nodeType(sub);
-			var id = sub[type].handle.handle.id;
+			var id = sub.subscription.handle.handle.id;
 			if (subscriptions.hasOwnProperty(id)) {
 				continue;
 			}
@@ -256,12 +256,6 @@ function Salix(aRootId) {
 		command_queue.push(makeResult(handle, data));
 	}
 
-	
-
-	
-
-
-	
 	function makeResult(handle, data) {
 		var result = {id: handle.id};
 		if (handle.maps) {
@@ -279,26 +273,28 @@ function Salix(aRootId) {
 	// happens, schedules it on the queue, interpreting event data according
 	// to the decoder's type. 
 	// This needs adaptation if new kinds of data are required. 
-	function dec2handler(decoder) {
-		switch (nodeType(decoder)) {
+	function dec2handler(hnd) {
+		switch (hnd.handler.name) {
 		
 		case 'succeed':
 			return function (event) {	
-				// TODO: change 'nothing' to 'ok'
-				scheduleEvent(event, decoder.succeed.handle.handle, {type: 'nothing'});
+				scheduleEvent(event, hnd.handler.handle.handle, {type: 'nothing'});
 			};
 			
 		case 'targetValue':
 			return function (event) {
-				scheduleEvent(event, decoder.targetValue.handle.handle, 
-						{type: 'string', strVal: event.target.value});
+				scheduleEvent(event, hnd.handler.handle.handle, 
+						{type: 'string', value: event.target.value});
 			};
 			
 		case 'targetChecked':
 			return function (event) {	
-				scheduleEvent(event, decoder.targetChecked.handle.handle, 
-						{type: 'boolean', boolVal: event.target.checked});
+				scheduleEvent(event, hnd.handler.handle.handle, 
+						{type: 'boolean', value: event.target.checked});
 			};
+			
+		default:
+			console.log("WARNING: unhandled hnd " + JSON.stringify(hnd));
 			
 		}
 	}

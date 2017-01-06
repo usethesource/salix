@@ -12,6 +12,7 @@ import salix::demo::basic::CodeMirror;
 import salix::demo::basic::Clock;
 import salix::demo::basic::Random;
 
+import salix::lib::CodeMirror;
 
 alias AllModel = tuple[
   salix::demo::basic::Celsius::Model celsius, 
@@ -30,7 +31,8 @@ data Msg
   ;
 
 App[AllModel] allApp() 
-  = app(initAll, viewAll, editAll, |http://localhost:9213|, |project://salix/src|, subs = allSubs); 
+  = app(initAll, viewAll, editAll, |http://localhost:9213|, |project://salix/src|
+       , subs = allSubs, parser = parseMsg); 
 
 App[AllModel] debugAllApp() 
   = debug(initAll, myDebugView, editAll, |http://localhost:9213|, |project://salix/src|, subs = allSubs); 

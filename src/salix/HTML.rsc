@@ -345,9 +345,14 @@ Attr onSubmit(Msg msg) = event("focus", succeed(msg));
 Attr onInput(Msg(str) f) = event("input", targetValue(f)); 
 Attr onCheck(Msg(bool) f) = event("check", targetChecked(f));
 
-// Code mirror
-Attr onChange(Msg(int, int, int, int, str, str) f)
-  = event("change", change(f));
   
+@doc{Smart constructors for constructing encoded event decoders.}
+Hnd succeed(Msg msg) = handler("succeed", encode(msg));
+
+Hnd targetValue(Msg(str) str2msg) = handler("targetValue", encode(str2msg));
+
+Hnd targetChecked(Msg(bool) bool2msg) = handler("targetChecked", encode(bool2msg));
+
+Hnd keyCode(Msg(int) int2msg) = handler("keyCode", encode(int2msg)); 
 
   

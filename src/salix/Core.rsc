@@ -152,12 +152,12 @@ void _text(value v) = add(txt("<v>")); // TODO: HTML encode.
  
 @doc{Subs are like events: they are sent to JS, and Results are sent back.}
 data Sub // Subscriptions
-  = timeEvery(Handle handle, int interval)
+  = subscription(str name, Handle handle, map[str, value] args = ())
   ;
 
 @doc{Smart constructors for constructing encoded subscriptions.}
 Sub timeEvery(Msg(int) int2msg, int interval)
-  = timeEvery(encode(int2msg), interval);
+  = subscription("timeEvery", encode(int2msg), args = ("interval": interval));
 
 alias Subs[&T] = list[Sub](&T);
 
@@ -166,14 +166,13 @@ list[Sub] noSubs(&T t) = [];
 
 @doc{Commands represent actions that need to be performed at the client.}
 data Cmd  // Commands
-  = random(Handle handle, int from, int to)
-  | batch(list[Cmd] commands) // TODO (but how?)
+  = command(str name, Handle handle, map[str,value] args = ())
   | none()
   ;
   
 @doc{Smart constructors for constructing encoded commands.}
 Cmd random(Msg(int) f, int from, int to)
-  = random(encode(f), from, to);
+  = command("random", encode(f), args = ("from": from, "to": to));
 
 alias WithCmd[&T] = tuple[&T model, Cmd command];  
 
@@ -187,35 +186,21 @@ WithCmd[&T] withCmds(&T model, list[Cmd] cmds) = <model, batch(cmds)>;
  * Event decoders
  */
 
-@doc{Handlers are what is sent to the client for handling user events.}
 data Hnd // Handlers for events
-  = succeed(Handle handle)
-  | targetValue(Handle handle)
-  | targetChecked(Handle handle)
+  = handler(str name, Handle handle, map[str,value] args = ())
   ;
   
-@doc{Smart constructors for constructing encoded event decoders.}
-Hnd succeed(Msg msg) = succeed(encode(msg));
-
-Hnd targetValue(Msg(str) str2msg) = targetValue(encode(str2msg));
-
-Hnd targetChecked(Msg(bool) bool2msg) = targetChecked(encode(bool2msg));
-
-Hnd keyCode(Msg(int) int2msg) = keyCode(encode(int2msg)); 
-
 /*
  * Message parsing
  */  
   
+alias Parser = Msg(str,Handle,map[str,str]);  
+  
 @doc{Convert request parameters to a Msg value. Active mappers at `path`
 transform the message according to f.}
-Msg params2msg(map[str, str] params) 
-  = msgParsers[params["type"]](toHandle(params), params);
+Msg params2msg(map[str, str] params, Parser parse) 
+  = parse(params["type"], toHandle(params), params);
 
-@doc{Register a message parser for type `typ`.}
-void msgParser(str typ, Msg(Handle, map[str,str]) parser) {
-  msgParsers[typ] = parser;
-}
 
 @doc{Parse request parameters into a Handle.}
 Handle toHandle(map[str, str] params)
@@ -223,27 +208,20 @@ Handle toHandle(map[str, str] params)
 
 list[int] toMaps(str x) = [ toInt(i) | str i <- split(";", x), i != "" ];
 
-Msg nothingParser(Handle h, map[str, str] p) 
+Msg parseMsg("nothing", Handle h, map[str, str] p) 
   = applyMaps(h, decode(h, #Msg)); 
 
-Msg stringParser(Handle h, map[str,str] p) 
-  = applyMaps(h, decode(h, #Msg(str))(p["strVal"]));
+Msg parseMsg("string", Handle h, map[str,str] p) 
+  = applyMaps(h, decode(h, #Msg(str))(p["value"]));
 
-Msg booleanParser(Handle h, map[str,str] p) 
-  = applyMaps(h, decode(h, #Msg(bool))(p["boolVal"] == true));
+Msg parseMsg("boolean", Handle h, map[str,str] p) 
+  = applyMaps(h, decode(h, #Msg(bool))(p["value"] == true));
 
-Msg integerParser(Handle h, map[str,str] p) 
-  = applyMaps(h, decode(h, #Msg(int))(toInt(p["intVal"])));
+Msg parseMsg("integer", Handle h, map[str,str] p) 
+  = applyMaps(h, decode(h, #Msg(int))(toInt(p["value"])));
 
 
 Msg applyMaps(Handle h, Msg msg) = ( msg | decode(m, #(Msg(Msg)))(it) | int m <- h.maps );
-
-private map[str, Msg(Handle, map[str, str])] msgParsers = (
-  "nothing": nothingParser,
-  "string": stringParser,
-  "boolean": booleanParser,
-  "integer": integerParser
-);
 
 /*
  * Mapping

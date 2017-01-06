@@ -9,34 +9,25 @@ import String;
 import List;
 
 
-data Hnd
-  = codeMirrorChange(Handle handle)
-  ;
-
-Msg codeMirrorChangeParser(Handle h, map[str, str] p)
+Msg parseMsg("codeMirrorChange", Handle h, map[str, str] p)
   = applyMaps(h, decode(h.id, #Msg(int, int, int, int, str, str))(
            toInt(p["fromLine"]), toInt(p["fromCol"]), 
            toInt(p["toLine"]), toInt(p["toCol"]),
            p["text"], p["removed"]));
 
 void codeMirror(str id, value vals...) 
-  = build(vals,  Node(list[Node] _, list[Attr] attrs) { 
+  = build(vals, Node(list[Node] _, list[Attr] attrs) { 
       return native("codeMirror", id, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
    });
  
 void codeMirrorWithMode(str id, Mode mode, value vals...) 
-  = build(vals,  Node(list[Node] _, list[Attr] attrs) { 
+  = build(vals, Node(list[Node] _, list[Attr] attrs) { 
       return native("codeMirror", id, attrsOf(attrs), propsOf(attrs), eventsOf(attrs), extra = ("mode": mode));
    });
 
 
-void registerCodeMirror() {
-  msgParser("codeMirrorChange", codeMirrorChangeParser);
-}
-
-
 Attr onChange(Msg(int, int, int, int, str, str) ch2msg)
-  = event("change", codeMirrorChange(encode(ch2msg)));
+  = event("change", handler("codeMirrorChange", encode(ch2msg)));
 
 // Special cased
 // http://codemirror.net/doc/manual.html#setSize
