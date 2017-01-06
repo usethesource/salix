@@ -27,7 +27,7 @@ Model update(Msg msg, Model t) {
 }
 
 App[Model] clockApp() = 
-  app(init(), examples::Clock::view, examples::Clock::update, 
+  app(init, examples::Clock::view, examples::Clock::update, 
     |http://localhost:9100|, |project://salix/src|,
     subs = subs); 
 

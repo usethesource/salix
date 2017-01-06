@@ -30,9 +30,6 @@ void codeMirrorWithMode(str id, Mode mode, value vals...)
    });
 
 
-// hack to make something run on import
-// NB: bug, after decl!!
-
 void registerCodeMirror() {
   msgParser("codeMirrorChange", codeMirrorChangeParser);
 }

@@ -14,7 +14,7 @@ data Msg
   ;
 
 App[Model] randomApp()
-  = app(init(), view, update, |http://localhost:9098|, |project://salix/src|); 
+  = app(init, view, update, |http://localhost:9098|, |project://salix/src|); 
 
 WithCmd[Model] init() = noCmd(<1>);
 
@@ -43,7 +43,7 @@ void view(Model m) {
 // Twice
 
 App[TwiceModel] twiceRandomApp()
-  = app(twiceInit(), twiceView, twiceUpdate, |http://localhost:9098|, |project://salix/src|); 
+  = app(twiceInit, twiceView, twiceUpdate, |http://localhost:9098|, |project://salix/src|); 
 
 data TwiceModel 
   = twice(Model model1, Model model2);

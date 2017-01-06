@@ -8,7 +8,7 @@ import IO;
 alias Model = tuple[list[Msg] changes, str src];
 
 App[str] cmApp()
-  = app(init(), view, update, |http://localhost:9000|, |project://salix/src|); 
+  = app(init, view, update, |http://localhost:9000|, |project://salix/src|); 
 
 
 Model init() {

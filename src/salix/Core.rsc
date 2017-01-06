@@ -97,6 +97,12 @@ private list[Node] pop() {
 }
 
 
+@doc{Initialize viewContext for an initial model, so that cmds are properly mapped.}
+WithCmd[&T] initialize(WithCmd[&T]() init, void(&T) view) {
+  initViewContext(view);
+  return init();
+}
+
 @doc{Render turns void returning views for a model &T into an Node node.}  
 Node render(&T model, void(&T) block) {
   //println("Rendering <model> through <block>");

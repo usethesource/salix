@@ -16,13 +16,14 @@ import IO;
 
 
 App[Model] ideApp() 
-  = app(init(), view, update, |http://localhost:8001|, |project://salix/src|); 
+  = app(init, view, update, |http://localhost:8001|, |project://salix/src|); 
 
 alias Model = tuple[
   str src, 
   Maybe[start[Controller]] lastParse,
   Maybe[str] currentState,
-  list[str] output
+  list[str] output,
+  str currentCommand
 ];
   
 Maybe[start[Controller]] maybeParse(str src) {
@@ -37,7 +38,7 @@ Maybe[start[Controller]] maybeParse(str src) {
 WithCmd[Model] init() {
   registerCodeMirror();
   registerXTerm();
-  Model model = <"", nothing(), nothing(), []>;
+  Model model = <"", nothing(), nothing(), [], "">;
   
   model.src = doors();
   model.lastParse = maybeParse(model.src);
@@ -102,9 +103,11 @@ WithCmd[Model] update(Msg msg, Model model) {
     
     case xtermData(str s): {
       if (s == "\r") {
-        cmd = writeln(noOp(), "myXterm", "\r");
+        cmd = write(fireEvent(model.currentCommand), "myXterm", "\r\n$ ");
+        model.currentCommand = "";
       }
       else {
+        model.currentCommand += s;
         cmd = write(noOp(), "myXterm", s);
       }
     }
