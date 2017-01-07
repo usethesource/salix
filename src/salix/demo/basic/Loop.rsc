@@ -45,8 +45,8 @@ void view(Model m) {
   div(() {
      text("Count: ");
      input(\type("text"), \value("<m.count>"), onInput(updateCount));
-     for (int n <- m.numbers) {
-       p(n);
+     for (int i <- [0..size(m.numbers)]) {
+       p("<i>: <m.numbers[i]>");
      }
   });
 }

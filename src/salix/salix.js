@@ -10,7 +10,7 @@ function Salix(aRootId) {
 	var subscriptions = {};
 	
 	// signals whether a new rendering is requested
-	// during that time, we won't do events
+	// during that time, we won't process events
 	var renderRequested = true;
 	
 	// queue of pending commands, events, subscription events
@@ -27,7 +27,8 @@ function Salix(aRootId) {
 		
 	// event is either an ordinary event or {message: ...} from sub.
 	function handle(event) {
-		// if doSome didn't do anything, we trigger the loop again here.
+		// if doSome didn't do anything, we trigger the loop again here
+		// because there's work now.
 		if (queue.length == 0) {
 			window.requestAnimationFrame(doSome);
 		}
@@ -46,18 +47,18 @@ function Salix(aRootId) {
 				renderRequested = true;
 				$.get('/msg', event.message, step).fail(function () {
 					renderRequested = false;
+					window.requestAnimationFrame(doSome);
 				}); 
 				break; // process one event at a time
 			}
 		}
 	}
 	
-	function step(work) {
-		var patch = work[2], subs = work[1], commands = [work[0]];
-		render(patch);
-		doCommands(commands);
-		subscribe(subs);
-		// I don't understand yet, but putting these in 
+	function step(payload) {
+		render(payload.patch);
+		doCommands([payload.command]);
+		subscribe(payload.subs);
+		// I don't understand why, but putting these in 
 		// .always on the get request doesn't work....
 		renderRequested = false;
 		window.requestAnimationFrame(doSome);
@@ -71,7 +72,7 @@ function Salix(aRootId) {
 		var prepend = [];
 		for (var i = 0; i < cmds.length; i++) {
 			var cmd = cmds[i];
-			if (cmd.none) {
+			if (cmd.none) { // legacy; let's move to list[Cmd] again...
 				continue;
 			}
 			var data = Commands[cmd.command.name](cmd.command.args);
@@ -195,7 +196,7 @@ function Salix(aRootId) {
 				var key = edit[type].name;
 				var h = edit[type].handler;
 				var handler = getHandler(h);
-				dom.addEventListener(key, withCleanListeners(dom, key, handler));
+				setEventListener(dom, key, handler);
 				break
 			
 			case 'removeAttr': 
@@ -222,15 +223,11 @@ function Salix(aRootId) {
 	}
 	
 	function replacer(dom, oldKid) {
-		return function (newKid) {
-			dom.replaceChild(newKid, oldKid);
-		};
+		return function (newKid) { dom.replaceChild(newKid, oldKid); };
 	}
 	
 	function appender(dom) {
-		return function (kid) {
-			dom.appendChild(kid);
-		};
+		return function (kid) { dom.appendChild(kid); };
 	}
 	
 	function patchDOM(dom, tree, attach) {
@@ -241,26 +238,24 @@ function Salix(aRootId) {
 			patchThis(dom, tree.patch.edits, attach);
 		}
 		
+		// NB: (native || replace in edits) implies tree.patch.patches == []
 		var patches = tree.patch.patches || [];
 		for (var i = 0; i < patches.length; i++) {
 			var p = patches[i];
 			var kid = dom.childNodes[p.patch.pos];
-			if (kid === undefined) {
-				console.log("BANG!");
-			}
 			patchDOM(kid, p, replacer(dom, kid));
 		}
 		
 	}
 
-	// ensure that only one handler exists for any event type
-	function withCleanListeners(dom, key, handler) {
+	function setEventListener(dom, key, handler) {
 		var allHandlers = dom.salix_handlers || {};
 		if (allHandlers.hasOwnProperty(key)) {
 			dom.removeEventListener(key, allHandlers[key]);
 			allHandlers[key].stale = true;
 		}
 		allHandlers[key] = handler;
+		dom.addEventListener(key, handler);
 		dom.salix_handlers = allHandlers;
 		return handler;
 	}
@@ -314,7 +309,7 @@ function Salix(aRootId) {
 	    
 	    for (var k in vevents) {
 	    	if (vevents.hasOwnProperty(k)) {
-	    		elt.addEventListener(k, withCleanListeners(elt, k, getHandler(vevents[k])));
+	    		setEventListener(elt, k, getHandler(vevents[k]));
 	    	}
 	    }
 	}

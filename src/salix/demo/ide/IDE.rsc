@@ -16,7 +16,7 @@ import IO;
 
 
 App[Model] ideApp() 
-  = app(init, view, update, |http://localhost:8001|, |project://salix/src|
+  = app(init, update, view, |http://localhost:8001|, |project://salix/src|
        parser = parseMsg); 
 
 alias Model = tuple[
@@ -171,7 +171,7 @@ void view(Model model) {
     div(class("row"), () {
       div(class("col-md-6"), () {
         h4("Edit the state machine.");
-        codeMirrorWithMode("myCodeMirror", model.mode, onChange(myChange), height(300), 
+        codeMirrorWithMode("myCodeMirror", model.mode, onChange(myChange), height(500), 
             mode("statemachine"), indentWithTabs(false), lineNumbers(true), \value(model.src));
       });
         

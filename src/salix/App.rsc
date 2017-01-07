@@ -42,13 +42,6 @@ App[&T] app(WithCmd[&T]() init, void(&T) view, WithCmd[&T](Msg, &T) update, loc 
   &T currentModel;
   
   
-  // TODO: we have to somehow know whether we're still responding
-  // to cmd message (and hence not send any UI updates).
-  // [apparently Elm does not serialize them, but runs them in parallel.
-  //  I wonder if this is correct...]
-  list[Cmd] pendingCommands = [];
-  
-  
   Response transition(&T newModel, Cmd cmd) {
     currentModel = newModel;
 
@@ -59,7 +52,7 @@ App[&T] app(WithCmd[&T]() init, void(&T) view, WithCmd[&T](Msg, &T) update, loc 
 
     currentView = newView;
     
-    return response([cmd, mySubs, myPatch]);
+    return response(("command": cmd, "subs": mySubs, "patch": myPatch));
   }
 
 
