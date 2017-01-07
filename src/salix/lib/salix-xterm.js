@@ -19,9 +19,11 @@ function registerXTerm(salix) {
 		}
 	}
 	
-	function schedule(cmd, value) {
-		salix.scheduleCommand(cmd.command.handle.handle, val2result(value));
+	salix.Commands.getOption = function(args) {
+		var term = xterms[args.id];
+		return val2result(term.getOption(args.key));
 	}
+	// TODO: etc.
 	
 	function doCommand(cmd) {
 		var type = cmd.command.name;

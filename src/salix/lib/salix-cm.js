@@ -34,29 +34,23 @@ function registerCodeMirror(salix) {
 	function dec2handler(hnd) {
 		switch (hnd.handler.name) {
 		
-		// for now: schedule on the other queue, because we don't 
-		// want to ever discard events (code mirror manages own state).
-		
 		case 'codeMirrorChange':
-			return function (editor, change) {
-				salix.scheduleOther(hnd.handler.handle.handle,  {
-					type: 'codeMirrorChange', 
+			return salix.makeNativeHandler(hnd, function (editor, change) {
+				return {type: 'codeMirrorChange', 
 					fromLine: change.from.line, fromCol: change.from.ch,
 					toLine: change.to.line, toCol: change.to.ch,
 					text: change.text.join('\n'),
-					removed: change.removed.join("\n")
-				});
-			};
+					removed: change.removed.join("\n")};
+			});
 			
 		case 'cusorActivity':
-			return function (editor) {
+			return salix.makeNativeHandler(hnd, function (editor) {
 				var position = editor.getCursor();
 				var line = position.line;
 				var token = editor.getTokenAt(position);
-				salix.scheduleOther(hnd.handler.handle.handle, 
-					{type: 'cursorActivity', line: line, start: token.start, 
-					end: token.end, string: token.string, tokenType: token.type});
-			};
+				return  {type: 'cursorActivity', line: line, start: token.start, 
+					end: token.end, string: token.string, tokenType: token.type};
+			});
 		
 		}
 	}

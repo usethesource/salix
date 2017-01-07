@@ -62,8 +62,7 @@ App[&T] app(WithCmd[&T]() init, void(&T) view, WithCmd[&T](Msg, &T) update, loc 
     return response([cmd, mySubs, myPatch]);
   }
 
-  // the main handler to interpret http requests.
-  // BUG: mixes with constructors that are in scope!!!
+
   Response _handle(Request req) {
     
     // initially, just render the view, for the current model.
