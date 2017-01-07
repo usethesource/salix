@@ -9,17 +9,12 @@ function Salix(aRootId) {
 	// currently active subscriptions
 	var subscriptions = {};
 	
-	// signals whether a new rendering is needed
-	var needRender = true;
+	// signals whether a new rendering is requested
+	// during that time, we won't do events
+	var renderRequested = true;
 	
 	// queue of pending commands, events, subscription events
 	var queue = [];
-	
-	// out of order "queue" of incoming patches + commands
-	var render_queue = {};
-	var payload = undefined;
-	
-	var counter = 0;
 	
 	function start() {
 		$.get('/init', {}, step).always(doSome);
@@ -41,34 +36,31 @@ function Salix(aRootId) {
 	
 	
 	function doSome() {
-		if (needRender) {
-			if (payload) {
-				render(payload.patch);
-				doCommands(payload.commands);
-				needRender = false;
-				payload = undefined;
-			} // else wait.
-			window.requestAnimationFrame(doSome);
-		} 
-		else {
+		if (!renderRequested) {
 			while (queue.length > 0) {
 				var event = queue.shift();
 				if (isStale(event)) {
+					console.log('Stale event');
 					continue;
 				}
-				needRender = true;
+				renderRequested = true;
 				$.get('/msg', event.message, step).fail(function () {
-					needRender = false;
+					renderRequested = false;
 				}); 
-				window.requestAnimationFrame(doSome); 
 				break; // process one event at a time
 			}
 		}
 	}
 	
 	function step(work) {
-		payload = {patch: work[2], commands: [work[0]]};
-		subscribe(work[1]);
+		var patch = work[2], subs = work[1], commands = [work[0]];
+		render(patch);
+		doCommands(commands);
+		subscribe(subs);
+		// I don't understand yet, but putting these in 
+		// .always on the get request doesn't work....
+		renderRequested = false;
+		window.requestAnimationFrame(doSome);
 	}
 	
 	function render(patch) {
@@ -109,11 +101,12 @@ function Salix(aRootId) {
 	function unsubscribeStaleSubs(subs) {
 		// TODO: fix this abomination
 		var toDelete = [];
+		
 		outer: for (var k in subscriptions) {
 			if (subscriptions.hasOwnProperty(k)) {
 				for (var i = 0; i < subs.length; i++) {
 					var sub = subs[i];
-					var id = sub[nodeType(sub)].handle.handle.id;
+					var id = sub.subscription.handle.handle.id;
 					if (('' + id) === k) {
 						continue outer;
 					}
