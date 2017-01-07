@@ -1,155 +1,98 @@
 
 
-/*
-
-TODO (?): ordering issue with subscriptions
-
-Processing: sub(clock(tick(1483357114)))
-Processing: sub(clock(tick(1483357115)))
-Processing: sub(clock(tick(1483357116)))
-Processing: sub(clock(tick(1483357117)))
-Processing: sub(clock(tick(1483357118)))
-Processing: sub(clock(toggle()))
-Processing: sub(clock(tick(1483357119)))
-
- */
-
-
 function Salix(aRootId) {
 	var rootId = aRootId || 'root';
-	
-	var event_queue = [];
-	var command_queue = [];
-	var subscription_queue = [];
-	var other_queue = [];
 
 	// 'native 'dom elements
 	var builders = {};
 
+	// currently active subscriptions
 	var subscriptions = {};
 	
+	// signals whether a new rendering is needed
+	var needRender = true;
+	
+	// queue of pending commands, events, subscription events
+	var queue = [];
+	
+	// out of order "queue" of incoming patches + commands
+	var render_queue = {};
+	var payload = undefined;
+	
+	var counter = 0;
+	
 	function start() {
-		send('/init', {}, function (work) {
-			step(work[0], work[1], work[2]);
-		});
+		$.get('/init', {}, step).always(doSome);
 	}
-
-	function processMessage(msg) {
-		send('/msg', msg, function (work) {
-			step(work[0], work[1], work[2]);
-		});
-	}
-
-	function stillWorkToBeDone() {
-		return command_queue.length > 0 
-			|| event_queue.length > 0
-			|| other_queue.length > 0
-			|| subscription_queue.length > 0;
-	}
-
-	function render(timestamp) {
-		frameRequested = false; // because we're in the requested frame...
-		
-		// so if nothing is done in this render invocation
-		// (i.e. no subs/commands and no events, there will be a new
-		// render frame only when the user clicks something.
-		
-		// commands are always processed first.
-		if (command_queue.length > 0) { // could we do all at once in one frame??
-			var cmd = command_queue.shift();
-			//console.log("Processing command: " + JSON.stringify(cmd));
-			processMessage(cmd);
-		}
-		else if (event_queue.length > 0) {
-			var event = event_queue.shift();
-			
-			while (event && isStale(event.target)) {
-				//console.log('Discarding: ' + JSON.stringify(event.result));
-				event = event_queue.shift();
-			}
-			
-			if (event) {
-				//console.log('Processing event: ' + JSON.stringify(event.result));
-				processMessage(event.result);
-			}
-		}
-		else if (other_queue.length > 0) {
-			processMessage(other_queue.shift());
-		}
-		else if (subscription_queue.length > 0) {
-			processMessage(subscription_queue.shift());
-		}
-	}
-
-	function step(cmd, subs, myPatch) {
-		subscribe(subs);
-		patch(root(), myPatch, replacer(root().parentNode, root()));
-		// commands on natives require the natives to have been built...
-		// so therefore commands after patch.
-		doCommand(cmd);
-	}
-
-	function send(url, message, handle) {
-		$.get(url, message, handle, 'json').always(function () {
-			// request the frame after work has been done by handle
-			// this ensures "synchronous" processing of messages
-			if (stillWorkToBeDone()) {
-				nextFrame();
-			}
-		});
-	}
-
+	
 	function root() {
-		return document.getElementById('root');
+		return document.getElementById(rootId);
 	}
 
-	function nodeType(node) {
-		for (var type in node) { break; }
-		return type;
-	}
-
-	// Execute commands, and schedule the result on the command queue.
-	function doCommand(cmd) {
-		// TODO: get rid of this
-		if (cmd.none) {
-			return;
+		
+	// event is either an ordinary event or {message: ...} from sub.
+	function handle(event) {
+		// if doSome didn't do anything, we trigger the loop again here.
+		if (queue.length == 0) {
+			window.requestAnimationFrame(doSome);
 		}
-		
-		switch (cmd.command.name) {
-		
-		case 'random':
-			var to = cmd.command.args.to;
-			var from = cmd.command.args.from;
-			var random = Math.floor(Math.random() * (to - from + 1)) + from;
-			scheduleCommand(cmd.command.handle.handle, {type: 'integer', value: random});
-			break;
-			
-		default: 
-			for (var k in builders) {
-				if (builders.hasOwnProperty(k)) {
-					builders[k].doCommand(cmd);
+		queue.push(event);
+	}
+	
+	
+	function doSome() {
+		if (needRender) {
+			if (payload) {
+				render(payload.patch);
+				doCommands(payload.commands);
+				needRender = false;
+				payload = undefined;
+			} // else wait.
+			window.requestAnimationFrame(doSome);
+		} 
+		else {
+			while (queue.length > 0) {
+				var event = queue.shift();
+				if (isStale(event)) {
+					continue;
 				}
+				needRender = true;
+				$.get('/msg', event.message, step).fail(function () {
+					needRender = false;
+				}); 
+				window.requestAnimationFrame(doSome); 
+				break; // process one event at a time
 			}
 		}
 	}
+	
+	function step(work) {
+		payload = {patch: work[2], commands: [work[0]]};
+		subscribe(work[1]);
+	}
+	
+	function render(patch) {
+		patchDOM(root(), patch, replacer(root().parentNode, root()));	
+	}
+	
+	function doCommands(cmds) {
+		var prepend = [];
+		for (var i = 0; i < cmds.length; i++) {
+			var cmd = cmds[i];
+			if (cmd.none) {
+				continue;
+			}
+			var data = Commands[cmd.command.name](cmd.command.args);
 
-	// Initialize a subscription of the provided type, returning
-	// a closure to cancel it when unsubscribing.
-	function installSubscription(sub) {
-		switch (sub.subscription.name) {
-		
-		case 'timeEvery':
-			var timer = setInterval(function() {
-				var data = {type: 'integer', value: (new Date().getTime() / 1000) | 0};
-				scheduleSubscription(sub.subscription.handle.handle, data); 
-			}, sub.subscription.args.interval);
-			return function () {
-				clearInterval(timer);
-			};
-			
+			prepend.push({message: makeMessage(cmd.command.handle.handle, data)});
+		}
+		for (var i = prepend.length - 1; i >= 0; i--) {
+			// unshift in reverse, so that first executed command
+			// is handled first.
+			queue.unshift(prepend[i]);
 		}
 	}
-
+	
 	function subscribe(subs) {
 		for (var i = 0; i < subs.length; i++) {
 			var sub = subs[i];
@@ -157,13 +100,14 @@ function Salix(aRootId) {
 			if (subscriptions.hasOwnProperty(id)) {
 				continue;
 			}
-			subscriptions[id] = installSubscription(sub);
+			subscriptions[id] = Subscriptions[sub.subscription.name](sub.subscription.handle.handle, 
+									sub.subscription.args);
 		}
-
 		unsubscribeStaleSubs(subs);
 	}
 
 	function unsubscribeStaleSubs(subs) {
+		// TODO: fix this abomination
 		var toDelete = [];
 		outer: for (var k in subscriptions) {
 			if (subscriptions.hasOwnProperty(k)) {
@@ -183,80 +127,27 @@ function Salix(aRootId) {
 		}
 	}
 
-	/*
-	 * A user event may become stale when
-	 * - 1. its dom (or any parent) is removed between the time of queueing the event, and 
-	 *   removing it from the queue in render, OR
-	 * - 2. the event handler has been removed from before removing event from the queue 
-	 *   (such stale events are discarded in in pruneEventQueue)
-	 */
+	function isStale(event) {
+		if (!event.target) {
+			return false; // subscription, command, or 'native'
+		}
+		if (event.handler.stale) {
+			return true;
+		}
+		return isStaleDOM(event.target);
+	}
 	
-	function isStale(dom) {
+	function isStaleDOM(dom) {
 		if (dom === null) {
 			return true;
 		}
 		if (dom === document) {
 			return false;
 		}
-		return isStale(dom.parentNode);
+		return isStaleDOM(dom.parentNode);
 	}
 	
-	function pruneEventQueue(type, dom) {
-		var i = 0;
-		while (i < event_queue.length) {
-			var event = event_queue[i];
-			if (event.type === type && event.target === dom) {
-				event_queue.splice(i, 1);
-				i--;
-			}
-			i++;
-		}
-	}
-	
-	var frameRequested = false;
-	function nextFrame() {
-		// frameRequested is meant to ensure that we
-		// don't ask for frames multiple times whenever
-		// both commands/subs/events get scheduled
-		// within the same time span...
-		if (!frameRequested) {
-			frameRequested = true;
-			window.requestAnimationFrame(render);
-		}
-	}
-	
-	// send requests a nextFrame, but only if there's work to be done
-	// whenever an event happens after handling a message completes, though,
-	// we need to enter the render loop again.
-	
-	function scheduleEvent(event, handle, data) {
-		var result = makeResult(handle, data);
-		event_queue.push({type: event.type, target: event.target, result: result});
-		nextFrame();
-	}
-
-	// this function schedules events that are out of reach of salix
-	// for instance from natives; we can't detect staleness for those
-	// so events on the other queue are never discarded.
-	function scheduleOther(handle, data) {
-		other_queue.push(makeResult(handle, data));
-		nextFrame();
-	}
-	
-//	// subscriptions also ask for a new frame, since they work like events.
-	function scheduleSubscription(handle, data) {
-		subscription_queue.push(makeResult(handle, data));
-		nextFrame();
-	}
-	
-	// command schedule don't need nextFrame as per
-	// processmessage: results are always scheduled during
-	// "step".
-	function scheduleCommand(handle, data) {
-		command_queue.push(makeResult(handle, data));
-	}
-
-	function makeResult(handle, data) {
+	function makeMessage(handle, data) {
 		var result = {id: handle.id};
 		if (handle.maps) {
 			result.maps = handle.maps.join(';'); 
@@ -269,36 +160,12 @@ function Salix(aRootId) {
 		return result;
 	}
 
-	// This function returns an event handler closure, which, when the event
-	// happens, schedules it on the queue, interpreting event data according
-	// to the decoder's type. 
-	// This needs adaptation if new kinds of data are required. 
-	function dec2handler(hnd) {
-		switch (hnd.handler.name) {
-		
-		case 'succeed':
-			return function (event) {	
-				scheduleEvent(event, hnd.handler.handle.handle, {type: 'nothing'});
-			};
-			
-		case 'targetValue':
-			return function (event) {
-				scheduleEvent(event, hnd.handler.handle.handle, 
-						{type: 'string', value: event.target.value});
-			};
-			
-		case 'targetChecked':
-			return function (event) {	
-				scheduleEvent(event, hnd.handler.handle.handle, 
-						{type: 'boolean', value: event.target.checked});
-			};
-			
-		default:
-			console.log("WARNING: unhandled hnd " + JSON.stringify(hnd));
-			
-		}
+	function nodeType(node) {
+		for (var type in node) { break; }
+		return type;
 	}
-	
+
+
 	function patchThis(dom, edits, attach) {
 		edits = edits || [];
 
@@ -320,7 +187,7 @@ function Salix(aRootId) {
 				break;
 				
 			case 'appendNode':
-				build(edit[type].html, function (kid) { dom.appendChild(kid); });
+				build(edit[type].html, appender(dom));
 				break;
 				
 			case 'setAttr': 
@@ -333,7 +200,8 @@ function Salix(aRootId) {
 				
 			case 'setEvent':
 				var key = edit[type].name;
-				var handler = dec2handler(edit[type].handler);
+				var h = edit[type].handler;
+				var handler = getHandler(h);
 				dom.addEventListener(key, withCleanListeners(dom, key, handler));
 				break
 			
@@ -348,8 +216,9 @@ function Salix(aRootId) {
 			case 'removeEvent': 
 				var key = edit[type].name;
 				var handler = dom.salix_handlers[key];
+				handler.stale = true;
 				dom.removeEventListener(key, handler);
-				pruneEventQueue(key, dom);
+				delete dom.salix_handlers[key]
 				break;
 				
 			default: 
@@ -359,17 +228,19 @@ function Salix(aRootId) {
 		}
 	}
 	
-	function replace(dom, newDom) {
-		dom.parentNode.replaceChild(newDom, dom);
-	}
-
 	function replacer(dom, oldKid) {
 		return function (newKid) {
 			dom.replaceChild(newKid, oldKid);
-		}
+		};
 	}
 	
-	function patch(dom, tree, attach) {
+	function appender(dom) {
+		return function (kid) {
+			dom.appendChild(kid);
+		};
+	}
+	
+	function patchDOM(dom, tree, attach) {
 		if (dom.salix_native) {
 			dom.salix_native.patch(tree.patch.edits, attach)
 		} 
@@ -384,7 +255,7 @@ function Salix(aRootId) {
 			if (kid === undefined) {
 				console.log("BANG!");
 			}
-			patch(kid, p, replacer(dom, kid));
+			patchDOM(kid, p, replacer(dom, kid));
 		}
 		
 	}
@@ -394,7 +265,7 @@ function Salix(aRootId) {
 		var allHandlers = dom.salix_handlers || {};
 		if (allHandlers.hasOwnProperty(key)) {
 			dom.removeEventListener(key, allHandlers[key]);
-			pruneEventQueue(key, dom);
+			allHandlers[key].stale = true;
 		}
 		allHandlers[key] = handler;
 		dom.salix_handlers = allHandlers;
@@ -416,7 +287,7 @@ function Salix(aRootId) {
 
 	    if (vdom.native) {
 	    	var native = vdom.native;
-	    	builders[native.kind].build(attach, native.id, vattrs, vprops, vevents, native.extra);
+	    	builders[native.kind](attach, native.id, vattrs, vprops, vevents, native.extra);
 	    	return;
 	    }
 
@@ -430,7 +301,7 @@ function Salix(aRootId) {
 	    
 	    attach(elt);
 	    for (var i = 0; i < vdom.element.kids.length; i++) {
-	    	build(vdom.element.kids[i], function (kid) { elt.appendChild(kid); });
+	    	build(vdom.element.kids[i], appender(elt));
 	    }
 	    
 	}
@@ -450,11 +321,62 @@ function Salix(aRootId) {
 	    
 	    for (var k in vevents) {
 	    	if (vevents.hasOwnProperty(k)) {
-	    		elt.addEventListener(k, withCleanListeners(elt, k, dec2handler(vevents[k])));
+	    		elt.addEventListener(k, withCleanListeners(elt, k, getHandler(vevents[k])));
 	    	}
 	    }
 	}
 
+	// Basic library of commands and subscriptions
+	// can be extended by 'natives'.
+	
+	var Subscriptions = {
+			timeEvery: function (h, args) {
+				var timer = setInterval(function() {
+					var data = {type: 'integer', value: (new Date().getTime() / 1000) | 0};
+					handle({message: makeMessage(h, data)}); 
+				}, args.interval);
+				return function () { clearInterval(timer); };
+			}
+	};
+	
+	var Commands = {
+			random: function (args) {
+				var to = args.to;
+				var from = args.from;
+				var random = Math.floor(Math.random() * (to - from + 1)) + from;
+				return {type: 'integer', value: random};
+			}
+	};
+	
+	
+	function getDecoder(hnd) {
+		return Decoders[hnd.handler.name];
+	}
+	
+	function getHandler(hnd) {
+		var handler = function (event) {
+			event.message = makeMessage(hnd.handler.handle.handle, getDecoder(hnd)(event));
+			event.handler = handler; // used to detect staleness
+			handle(event);
+		}
+		return handler;
+	}
+	
+	function getNativeHandler(hnd) {
+		return function (arg0, arg1, arg2, arg3) {
+			var event = {}; // simulate ordinary event
+			event.message = makeMessage(hnd.handler.handle.handle, getDecoder(hnd)(arg0, arg1, arg2, arg3))
+			handle(event);
+		};
+	}
+	
+	var Decoders = {
+			succeed: function (e) { return {type: 'nothing'}; },
+			targetValue: function (e) { return {type: 'string', value: e.target.value}; },
+			targetChecked: function (e) { return {type: 'boolean', value: e.target.checked}; }
+	};
+	
+	
 	function registerNative(kind, builder) {
 		builders[kind] = builder;
 	}
@@ -463,10 +385,10 @@ function Salix(aRootId) {
 			registerNative: registerNative,
 			build: build,
 			nodeType: nodeType,
-			scheduleEvent: scheduleEvent,
-			scheduleSubscription: scheduleSubscription,
-			scheduleOther: scheduleOther,
-			scheduleCommand: scheduleCommand};
+			getNativeHandler: getNativeHandler,
+			Subscriptions: Subscriptions,
+			Decoders: Decoders,
+			Commands: Commands};
 }
 
 
