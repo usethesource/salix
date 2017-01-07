@@ -19,104 +19,64 @@ function registerXTerm(salix) {
 		}
 	}
 	
-	salix.Commands.getOption = function(args) {
-		var term = xterms[args.id];
-		return val2result(term.getOption(args.key));
-	}
-	// TODO: etc.
-	
-	function doCommand(cmd) {
-		var type = cmd.command.name;
-		var term = xterms[cmd.command.args.id];
-		
-		if (!term) {
-			return;
-		}
-		
-		switch (type) {
-		
-		case 'getOption':
-			schedule(schedule, term.getOption(cmd.getOption.key));
-			break
-
-		case 'setOption':
-			term.setOption(cmd.command.args.key, cmd.command.args.val);
-			schedule(cmd, undefined);
-			break
-
-		case 'refresh':
-			term.refresh(cmd.command.args.start, cmd.command.args.end, cmd.command.args.queue);
-			schedule(cmd, undefined);
-			break
-
-		case 'resize':
-			term.resize(cmd.command.args.x, cmd.command.args.y);
-			schedule(cmd, undefined);
-			break;
-
-		case 'scrollDisp':
-			term.scrollDisp(cmd.command.args.n);
-			schedule(cmd, undefined);
-			break;
-
-		case 'scrollPages':
-			term.scrollPages(cmd.command.args.n);
-			schedule(cmd, undefined);
-			break;
-
-		case 'write':
-			term.write(cmd.command.args.text);
-			schedule(cmd, undefined);
-			break;
-			
-		case 'writeln':
-			term.writeln(cmd.command.args.text);
-			schedule(cmd, undefined);
-			break;
-		
-		default:
-			term[type]();
-			schedule(cmd, undefined);
-		}
+	function nothing() {
+		return {type: 'nothing'};
 	}
 	
-	function scheduleEvent(hnd, result) {
-		salix.scheduleOther(hnd.handler.handle.handle, result);
-	}
-	
-	function dec2handler(hnd) {
-		var type = hnd.handler.name;
-		switch (type) {
-		
-		case 'eventData':
-			return function (data) {
-				scheduleEvent(hnd, val2result(data));
-			};
-			
-		case 'keyName':
-			return function (key, event) {
-				scheduleEvent(hnd, val2result(key)); 
-			};
-		
-		case 'startEnd':
-			return function (data) {
-				scheduleEvent(hnd, 
-					{type: 'int-int', value1: data.start, value2: data.end}); 
-			};
-		
-		case 'colsRows':
-			return function (data) {
-				scheduleEvent(hnd, 
-					{type: 'int-int', value1: data.cols, value2: data.rows}); 
-			};
-		
-		case 'ydisp':
-			return function (n) {
-				scheduleEvent(hnd, val2result(n)); 
-			};
+	salix.Commands.getOption = function (args) {
+		return val2result(xterms[args.id].getOption(args.key));
+	};
 
-		}
-	}
+	salix.Commands.setOption = function (args) {
+		xterms[args.id].setOption(args.key, args.val));
+		return nothing();
+	};
+
+	salix.Commands.refresh = function (args) {
+		xterms[args.id].refresh(args.start, args.end, args.queue);
+		return nothing();
+	};
+	
+	salix.Commands.resize = function (args) {
+		xterms[args.id].resize(args.x, args.y);
+		return nothing();
+	};
+
+	salix.Commands.scrollDisp = function (args) {
+		xterms[args.id].scrollDisp(args.n);
+	};
+	
+	salix.Commands.scrollPages = function (args) {
+		xterms[args.id].scrollPages(args.n);
+	};
+
+	salix.Commands.write = function (args) {
+		xterms[args.id].write(args.text);
+	};
+
+	salix.Commands.writeln = function (args) {
+		xterms[args.id].writeln(args.text);
+	};
+	
+	salix.Decoders.eventData = function (data) {
+		return val2result(data);
+	}; 
+	
+	salix.Decoders.keyName = function (key, event) {
+		return val2result(key); 
+	};
+		
+	salix.Decoders.startEnd = function (data) {
+		return {type: 'int-int', value1: data.start, value2: data.end}; 
+	};
+		
+	salix.Decoders.colsRows = function (data) {
+		return {type: 'int-int', value1: data.cols, value2: data.rows}; 
+	};
+		
+	salix.Decoders.ydisp = function (n) {
+		return val2result(n); 
+	};
 	
 	function myXterm(attach, id, attrs, props, events, extra) {
 		var rows = parseInt(props['rows']);
@@ -176,7 +136,7 @@ function registerXTerm(salix) {
 					
 				case 'setEvent': 
 					var key = edit[type].name;
-					var handler = dec2handler(edit[type].handler);
+					var handler = salix.getNativeHandler(edit[type].handler);
 					myHandlers[key] = handler;
 					term.on(key, handler);
 					break
@@ -210,5 +170,5 @@ function registerXTerm(salix) {
 		return div;
 	}
 	
-	salix.registerNative('xterm', {build: myXterm, doCommand: doCommand});
+	salix.registerNative('xterm', myXterm);
 };

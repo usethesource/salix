@@ -30,24 +30,20 @@ function registerCodeMirror(salix) {
 		return jsMode;
 	}
 	
-	salix.Handlers.codeMirrorChange = function (hnd) {
-		return salix.makeNativeHandler(hnd, function (editor, change) {
-			return {type: 'codeMirrorChange', 
-				fromLine: change.from.line, fromCol: change.from.ch,
-				toLine: change.to.line, toCol: change.to.ch,
-				text: change.text.join('\n'),
-				removed: change.removed.join("\n")};
-		});
+	salix.Decoders.codeMirrorChange = function (editor, change) {
+		return {type: 'codeMirrorChange', 
+			fromLine: change.from.line, fromCol: change.from.ch,
+			toLine: change.to.line, toCol: change.to.ch,
+			text: change.text.join('\n'),
+			removed: change.removed.join("\n")};
 	};
 	
-	salix.Handlers.cursorActivity = function (hnd) {
-		salix.makeNativeHandler(hnd, function (editor) {
-			var position = editor.getCursor();
-			var line = position.line;
-			var token = editor.getTokenAt(position);
-			return  {type: 'cursorActivity', line: line, start: token.start, 
-				end: token.end, string: token.string, tokenType: token.type};
-		});
+	salix.Decoders.cursorActivity = function (editor) {
+		var position = editor.getCursor();
+		var line = position.line;
+		var token = editor.getTokenAt(position);
+		return  {type: 'cursorActivity', line: line, start: token.start, 
+			end: token.end, string: token.string, tokenType: token.type};
 	};
 	
 	function codeMirror(attach, id, attrs, props, events, extra) {
@@ -92,7 +88,7 @@ function registerCodeMirror(salix) {
 		for (var key in events) {
 			// TODO: shared with setEvent
 			if (events.hasOwnProperty(key)) {
-				var handler = salix.Handlers[events[key].handler.name](events[key]);
+				var handler = salix.getNativeHandler(events[key]);
 				myHandlers[key] = handler;
 				cm.on(key, handler);
 			}
@@ -149,7 +145,7 @@ function registerCodeMirror(salix) {
 					
 				case 'setEvent': 
 					var key = edit[type].name;
-					var handler = dec2handler(edit[type].handler);
+					var handler = salix.getNativeHandler(edit[type].handler));
 					myHandlers[key] = handler;
 					cm.on(key, handler);
 					break
@@ -189,5 +185,5 @@ function registerCodeMirror(salix) {
 		// TODO
 	}
 	
-	salix.registerNative('codeMirror', {build: codeMirror, doCommand: doCommand});
+	salix.registerNative('codeMirror', codeMirror);
 };

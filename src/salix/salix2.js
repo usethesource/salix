@@ -9,32 +9,28 @@ function Salix(aRootId) {
 	// currently active subscriptions
 	var subscriptions = {};
 	
-	function root() {
-		return document.getElementById(rootId);
-	}
-
-	function nodeType(node) {
-		for (var type in node) { break; }
-		return type;
-	}
-
 	// signals whether a new rendering is needed
 	var needRender = true;
 	
 	// queue of pending commands, events, subscription events
 	var queue = [];
 	
+	// out of order "queue" of incoming patches + commands
 	var render_queue = {};
+	var payload = undefined;
 	
 	var counter = 0;
 	
 	function start() {
-		$.get('/init', {}, stepper(counter)).always(doSome);
+		$.get('/init', {}, step).always(doSome);
 	}
 	
-	
+	function root() {
+		return document.getElementById(rootId);
+	}
+
+		
 	// event is either an ordinary event or {message: ...} from sub.
-	// note: commands are explicitly put in front of the queue.
 	function handle(event) {
 		// if doSome didn't do anything, we trigger the loop again here.
 		if (queue.length == 0) {
@@ -44,20 +40,13 @@ function Salix(aRootId) {
 	}
 	
 	
-	/*
-	 * Counter increases with processing of each message (from event, command, or sub)
-	 * Rendering waits for the patch corresponding to the counter to become available
-	 * and only then renders. 
-	 * 
-	 */
 	function doSome() {
 		if (needRender) {
-			if (render_queue[counter]) {
-				//console.log("Rendering " + counter);
-				render(render_queue[counter].patch);
-				doCommands(render_queue[counter].commands);
-				delete render_queue[counter];
+			if (payload) {
+				render(payload.patch);
+				doCommands(payload.commands);
 				needRender = false;
+				payload = undefined;
 			} // else wait.
 			window.requestAnimationFrame(doSome);
 		} 
@@ -65,25 +54,21 @@ function Salix(aRootId) {
 			while (queue.length > 0) {
 				var event = queue.shift();
 				if (isStale(event)) {
-					console.log('Stale event')
 					continue;
 				}
-				counter++;
 				needRender = true;
-				$.get('/msg', event.message, stepper(counter)).fail(function () {
+				$.get('/msg', event.message, step).fail(function () {
 					needRender = false;
 				}); 
 				window.requestAnimationFrame(doSome); 
-				break;
+				break; // process one event at a time
 			}
 		}
 	}
 	
-	function stepper(seq) {
-		return function step(work) {
-			render_queue[seq] = {patch: work[2], commands: [work[0]]};
-			subscribe(work[1]);
-		}
+	function step(work) {
+		payload = {patch: work[2], commands: [work[0]]};
+		subscribe(work[1]);
 	}
 	
 	function render(patch) {
@@ -175,22 +160,12 @@ function Salix(aRootId) {
 		return result;
 	}
 
-	function makeNativeHandler(hnd, args2data) {
-		return function (arg0, arg1, arg2, arg3) {
-			handle({message: makeMessage(hnd.handler.handle.handle, args2data(arg0, arg1, arg2, arg3))});
-		}
+	function nodeType(node) {
+		for (var type in node) { break; }
+		return type;
 	}
-	
-	
-	function makeHandler(hnd, event2data) {
-		var handler = function (event) {
-			event.message = makeMessage(hnd.handler.handle.handle, event2data(event));
-			event.handler = handler; // used to detect staleness
-			handle(event);
-		}
-		return handler;
-	}
-	
+
+
 	function patchThis(dom, edits, attach) {
 		edits = edits || [];
 
@@ -226,7 +201,7 @@ function Salix(aRootId) {
 			case 'setEvent':
 				var key = edit[type].name;
 				var h = edit[type].handler;
-				var handler = Handlers[h.handler.name](h);
+				var handler = getHandler(h);
 				dom.addEventListener(key, withCleanListeners(dom, key, handler));
 				break
 			
@@ -312,7 +287,7 @@ function Salix(aRootId) {
 
 	    if (vdom.native) {
 	    	var native = vdom.native;
-	    	builders[native.kind].build(attach, native.id, vattrs, vprops, vevents, native.extra);
+	    	builders[native.kind](attach, native.id, vattrs, vprops, vevents, native.extra);
 	    	return;
 	    }
 
@@ -346,7 +321,7 @@ function Salix(aRootId) {
 	    
 	    for (var k in vevents) {
 	    	if (vevents.hasOwnProperty(k)) {
-	    		elt.addEventListener(k, withCleanListeners(elt, k, Handlers[vevents[k].handler.name](vevents[k])));
+	    		elt.addEventListener(k, withCleanListeners(elt, k, getHandler(vevents[k])));
 	    	}
 	    }
 	}
@@ -372,16 +347,32 @@ function Salix(aRootId) {
 			}
 	};
 	
-	var Handlers = {
-			succeed: function (hnd) {
-				return makeHandler(hnd, function (e) { return {type: 'nothing'}; });
-			},
-			targetValue: function (hnd) {
-				return makeHandler(hnd, function (e) { return {type: 'string', value: e.target.value}; });
-			},
-			targetChecked: function (hnd) {
-				return makeHandler(hnd, function (e) { return {type: 'boolean', value: e.target.checked}; });
-			}	
+	
+	function getDecoder(hnd) {
+		return Decoders[hnd.handler.name];
+	}
+	
+	function getHandler(hnd) {
+		var handler = function (event) {
+			event.message = makeMessage(hnd.handler.handle.handle, getDecoder(hnd)(event));
+			event.handler = handler; // used to detect staleness
+			handle(event);
+		}
+		return handler;
+	}
+	
+	function getNativeHandler(hnd) {
+		return function (arg0, arg1, arg2, arg3) {
+			var event = {}; // simulate ordinary event
+			event.message = makeMessage(hnd.handler.handle.handle, getDecoder(hnd)(arg0, arg1, arg2, arg3))
+			handle(event);
+		};
+	}
+	
+	var Decoders = {
+			succeed: function (e) { return {type: 'nothing'}; },
+			targetValue: function (e) { return {type: 'string', value: e.target.value}; },
+			targetChecked: function (e) { return {type: 'boolean', value: e.target.checked}; }
 	};
 	
 	
@@ -393,9 +384,9 @@ function Salix(aRootId) {
 			registerNative: registerNative,
 			build: build,
 			nodeType: nodeType,
-			makeNativeHandler: makeNativeHandler,
+			getNativeHandler: getNativeHandler,
 			Subscriptions: Subscriptions,
-			Handlers: Handlers,
+			Decoders: Decoders,
 			Commands: Commands};
 }
 
