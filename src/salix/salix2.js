@@ -1,20 +1,5 @@
 
 
-/*
-
-TODO (?): ordering issue with subscriptions
-
-Processing: sub(clock(tick(1483357114)))
-Processing: sub(clock(tick(1483357115)))
-Processing: sub(clock(tick(1483357116)))
-Processing: sub(clock(tick(1483357117)))
-Processing: sub(clock(tick(1483357118)))
-Processing: sub(clock(toggle()))
-Processing: sub(clock(tick(1483357119)))
-
- */
-
-
 function Salix(aRootId) {
 	var rootId = aRootId || 'root';
 
@@ -36,6 +21,7 @@ function Salix(aRootId) {
 	// signals whether a new rendering is needed
 	var needRender = true;
 	
+	// queue of pending commands, events, subscription events
 	var queue = [];
 	
 	var render_queue = {};
@@ -50,6 +36,7 @@ function Salix(aRootId) {
 	// event is either an ordinary event or {message: ...} from sub.
 	// note: commands are explicitly put in front of the queue.
 	function handle(event) {
+		// if doSome didn't do anything, we trigger the loop again here.
 		if (queue.length == 0) {
 			window.requestAnimationFrame(doSome);
 		}
@@ -72,10 +59,6 @@ function Salix(aRootId) {
 				delete render_queue[counter];
 				needRender = false;
 			} // else wait.
-			else {
-				//console.log("Nothing to render yet.");
-			}
-			// try again later.
 			window.requestAnimationFrame(doSome);
 		} 
 		else {
@@ -208,24 +191,6 @@ function Salix(aRootId) {
 		return handler;
 	}
 	
-	function dec2handler(hnd) {
-		switch (hnd.handler.name) {
-		
-		case 'succeed':
-			return makeHandler(hnd, function (e) { return {type: 'nothing'};});
-			
-		case 'targetValue':
-			return makeHandler(hnd, function (e) { return {type: 'string', value: e.target.value}; });
-			
-		case 'targetChecked':
-			return makeHandler(hnd, function (e) { return {type: 'boolean', value: e.target.checked}; });
-			
-		default:
-			console.log("WARNING: unhandled hnd " + JSON.stringify(hnd));
-			return function() {};
-		}
-	}
-	
 	function patchThis(dom, edits, attach) {
 		edits = edits || [];
 
@@ -260,7 +225,8 @@ function Salix(aRootId) {
 				
 			case 'setEvent':
 				var key = edit[type].name;
-				var handler = dec2handler(edit[type].handler);
+				var h = edit[type].handler;
+				var handler = Handlers[h.handler.name](h);
 				dom.addEventListener(key, withCleanListeners(dom, key, handler));
 				break
 			
@@ -380,7 +346,7 @@ function Salix(aRootId) {
 	    
 	    for (var k in vevents) {
 	    	if (vevents.hasOwnProperty(k)) {
-	    		elt.addEventListener(k, withCleanListeners(elt, k, dec2handler(vevents[k])));
+	    		elt.addEventListener(k, withCleanListeners(elt, k, Handlers[vevents[k].handler.name](vevents[k])));
 	    	}
 	    }
 	}
@@ -406,6 +372,18 @@ function Salix(aRootId) {
 			}
 	};
 	
+	var Handlers = {
+			succeed: function (hnd) {
+				return makeHandler(hnd, function (e) { return {type: 'nothing'}; });
+			},
+			targetValue: function (hnd) {
+				return makeHandler(hnd, function (e) { return {type: 'string', value: e.target.value}; });
+			},
+			targetChecked: function (hnd) {
+				return makeHandler(hnd, function (e) { return {type: 'boolean', value: e.target.checked}; });
+			}	
+	};
+	
 	
 	function registerNative(kind, builder) {
 		builders[kind] = builder;
@@ -416,6 +394,8 @@ function Salix(aRootId) {
 			build: build,
 			nodeType: nodeType,
 			makeNativeHandler: makeNativeHandler,
+			Subscriptions: Subscriptions,
+			Handlers: Handlers,
 			Commands: Commands};
 }
 

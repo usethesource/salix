@@ -30,30 +30,25 @@ function registerCodeMirror(salix) {
 		return jsMode;
 	}
 	
+	salix.Handlers.codeMirrorChange = function (hnd) {
+		return salix.makeNativeHandler(hnd, function (editor, change) {
+			return {type: 'codeMirrorChange', 
+				fromLine: change.from.line, fromCol: change.from.ch,
+				toLine: change.to.line, toCol: change.to.ch,
+				text: change.text.join('\n'),
+				removed: change.removed.join("\n")};
+		});
+	};
 	
-	function dec2handler(hnd) {
-		switch (hnd.handler.name) {
-		
-		case 'codeMirrorChange':
-			return salix.makeNativeHandler(hnd, function (editor, change) {
-				return {type: 'codeMirrorChange', 
-					fromLine: change.from.line, fromCol: change.from.ch,
-					toLine: change.to.line, toCol: change.to.ch,
-					text: change.text.join('\n'),
-					removed: change.removed.join("\n")};
-			});
-			
-		case 'cusorActivity':
-			return salix.makeNativeHandler(hnd, function (editor) {
-				var position = editor.getCursor();
-				var line = position.line;
-				var token = editor.getTokenAt(position);
-				return  {type: 'cursorActivity', line: line, start: token.start, 
-					end: token.end, string: token.string, tokenType: token.type};
-			});
-		
-		}
-	}
+	salix.Handlers.cursorActivity = function (hnd) {
+		salix.makeNativeHandler(hnd, function (editor) {
+			var position = editor.getCursor();
+			var line = position.line;
+			var token = editor.getTokenAt(position);
+			return  {type: 'cursorActivity', line: line, start: token.start, 
+				end: token.end, string: token.string, tokenType: token.type};
+		});
+	};
 	
 	function codeMirror(attach, id, attrs, props, events, extra) {
 		var cm = CodeMirror(function(elt) { attach(elt); }, {});
@@ -97,7 +92,7 @@ function registerCodeMirror(salix) {
 		for (var key in events) {
 			// TODO: shared with setEvent
 			if (events.hasOwnProperty(key)) {
-				var handler = dec2handler(events[key]);
+				var handler = salix.Handlers[events[key].handler.name](events[key]);
 				myHandlers[key] = handler;
 				cm.on(key, handler);
 			}
