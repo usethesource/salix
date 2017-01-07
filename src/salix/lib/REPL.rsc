@@ -16,11 +16,13 @@ alias Model = tuple[
   int pointer,
   str currentLine,
   Msg(str) eval,
-  str(str) complete
+  list[str] completions,
+  int cycle,
+  list[str](str) complete // todo: need tab cycling
 ];
 
-WithCmd[Model] initRepl(str id, Msg(str) eval, str(str) complete) 
-  = withCmd(<id, [], 0, "", eval, complete>, write(noOp(), id, "$ ")); 
+WithCmd[Model] initRepl(str id, Msg(str) eval, list[str](str) complete) 
+  = withCmd(<id, [], 0, "", eval, [], -1, complete>, write(noOp(), id, "$ ")); 
   
 data Msg
   = xtermData(str s)
@@ -34,6 +36,9 @@ WithCmd[Model] update(Msg msg, Model model) {
   
   switch (msg) {
     case xtermData(str s): {
+      if (s != "\t") {
+        model.cycle = -1;
+      }
       if (s == "\r") {
         cmd = write(model.eval(model.currentLine), model.id, "\r\n$ ");
         model.history += [model.currentLine];
@@ -41,7 +46,7 @@ WithCmd[Model] update(Msg msg, Model model) {
         model.currentLine = "";
       }
       else if (s == "\a7f") {
-        cmd = write(noOp(), id, "\b");
+        cmd = write(noOp(), model.id, "\b");
       }
       else if (s == "\a1b[A") { // arrow up
         if (model.pointer > 0) {
@@ -60,9 +65,23 @@ WithCmd[Model] update(Msg msg, Model model) {
         }
       }
       else if (s == "\t") {
-        str completion = model.complete(model.currentLine);
-        cmd = write(noOp(), model.id, completion[size(model.currentLine)..]);
-        model.currentLine = completion;
+        // TODO: put in model
+        // it always at least contains the prefix itself.
+        //println("Completions after: <model.completions> @ <model.cycle>");
+        if (model.cycle == -1) {
+          model.completions = model.complete(model.currentLine);
+        }
+        if (model.cycle < size(model.completions) - 1) {
+          model.cycle += 1;
+        }
+        else {
+          model.cycle = 0;
+        }
+        //println("Completions after: <model.completions> @ <model.cycle>");
+        str comp = model.completions[model.cycle];
+        str back = ( "" | it + "\b" | int _ <- [0..size(model.currentLine)] );
+        cmd = write(noOp(), model.id, back + comp);
+        model.currentLine = comp;
       }
       else if (/[a-zA-Z0-9_]/ := s) {
         model.currentLine += s;
@@ -90,14 +109,9 @@ void(Model) repl(str id, value vals...) {
   };
 }
 
-str dummyCompleter(str prefix) {
-  list[str] xs = ["aap", "noot", "mies"];
-  for (str x <- xs) {
-    if (startsWith(x, prefix)) {
-      return x;
-    }
-  }
-  return prefix;
+list[str] dummyCompleter(str prefix) {
+  list[str] xs = ["aap", "nooit", "noot", "mies", "muis"];
+  return [ x | x <- xs, startsWith(x, prefix) ] + [prefix];
 }
 
 WithCmd[Model] init() = initRepl("x", dummy, dummyCompleter);
@@ -106,10 +120,12 @@ App[Model] replApp()
   = app(init, sampleView, update, |http://localhost:5001|, |project://salix/src|
        parser = parseMsg);
 
+Msg identity(Msg m) = m;
+
 void sampleView(Model m) {
   div(() {
     h4("Command line");
-    repl("x", cursorBlink(true), cols(25), rows(10))(m);
+    repl(identity, m, "x", cursorBlink(true), cols(25), rows(10));
   });       
 }
 
