@@ -115,19 +115,7 @@ function registerCodeMirror(salix) {
 					var key = edit[type].name;
 					var val = edit[type].val;
 					if (key === 'value') {
-						// ignore value changes
-						
-//						if (cm.getValue() !== val) {
-//							var hasChange = myHandlers.hasOwnProperty('change');
-//							if (hasChange) { 
-//								cm.off('change', myHandlers.change);	
-//							}
-//							cm.setValue(val);
-//							if (hasChange) {
-//								cm.on('change', myHandlers.change);
-//							}
-//						}
-						
+						// ignore
 					}
 					else if (key === 'width') {
 						cm.setSize(val, null);
@@ -145,7 +133,7 @@ function registerCodeMirror(salix) {
 					
 				case 'setEvent': 
 					var key = edit[type].name;
-					var handler = salix.getNativeHandler(edit[type].handler));
+					var handler = salix.getNativeHandler(edit[type].handler);
 					myHandlers[key] = handler;
 					cm.on(key, handler);
 					break

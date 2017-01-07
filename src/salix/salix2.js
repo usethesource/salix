@@ -327,6 +327,7 @@ function Salix(aRootId) {
 	}
 
 	// Basic library of commands and subscriptions
+	// can be extended by 'natives'.
 	
 	var Subscriptions = {
 			timeEvery: function (h, args) {

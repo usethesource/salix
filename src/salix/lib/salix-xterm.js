@@ -28,7 +28,7 @@ function registerXTerm(salix) {
 	};
 
 	salix.Commands.setOption = function (args) {
-		xterms[args.id].setOption(args.key, args.val));
+		xterms[args.id].setOption(args.key, args.val);
 		return nothing();
 	};
 
@@ -44,18 +44,22 @@ function registerXTerm(salix) {
 
 	salix.Commands.scrollDisp = function (args) {
 		xterms[args.id].scrollDisp(args.n);
+		return nothing();
 	};
 	
 	salix.Commands.scrollPages = function (args) {
 		xterms[args.id].scrollPages(args.n);
+		return nothing();
 	};
 
 	salix.Commands.write = function (args) {
 		xterms[args.id].write(args.text);
+		return nothing();
 	};
 
 	salix.Commands.writeln = function (args) {
 		xterms[args.id].writeln(args.text);
+		return nothing();
 	};
 	
 	salix.Decoders.eventData = function (data) {
@@ -99,7 +103,7 @@ function registerXTerm(salix) {
 		for (var key in events) {
 			// TODO: code is dupe of setEvent
 			if (events.hasOwnProperty(key)) {
-				var handler = dec2handler(events[key]);
+				var handler = salix.getNativeHandler(events[key]);
 				myHandlers[key] = handler;
 				term.on(key, handler);
 			}
