@@ -19,20 +19,19 @@ alias Model = tuple[
   list[str] history,
   int pointer,
   str currentLine,
-  Msg(str) eval,
   list[str] completions,
   int cycle,
   list[str](str) complete,
   Maybe[str](str) highlight
 ];
 
-WithCmd[Model] initRepl(str id, str prompt, Msg(str) eval, list[str](str) complete, Maybe[str](str) highlight) 
-  = withCmd(<id, prompt, [], 0, "", eval, [], -1, complete, highlight>, write(noOp(), id, prompt)); 
+WithCmd[Model] initRepl(str id, str prompt, list[str](str) complete, Maybe[str](str) highlight) 
+  = withCmd(<id, prompt, [], 0, "", [], -1, complete, highlight>, write(noOp(), id, prompt)); 
   
 data Msg
   = xtermData(str s)
+  | eval(str s)  
   | noOp()
-  | dummy(str s)  
   ;
   
   
@@ -56,7 +55,7 @@ WithCmd[Model] update(Msg msg, Model model) {
         model.cycle = -1;
       }
       if (s == "\r") {
-        cmd = write(model.eval(model.currentLine), model.id, "\r\n<model.prompt>");
+        cmd = write(eval(model.currentLine), model.id, "\r\n<model.prompt>");
         model.history += [model.currentLine];
         model.pointer = size(model.history);
         model.currentLine = "";
@@ -102,8 +101,8 @@ WithCmd[Model] update(Msg msg, Model model) {
         }
       }
     }
-    case dummy(str s):
-      println("Command: <s>");
+    case eval(str s):
+      ; // container responsibility
   }
   
   return withCmd(model, cmd);
@@ -128,8 +127,17 @@ list[str] dummyCompleter(str prefix) {
 
 Maybe[str] dummyHighlighter(str x) {
   try {
+    bool terminated = false;
+    if (!endsWith(x, ";")) {
+      x += ";"; // try to terminate to get earlier highlighting...
+      terminated = true;
+    }
     Tree t = parseCommand(x, |file:///dummy|);
-    return just(ansiHighlight(t));
+    str h = ansiHighlight(t);
+    if (terminated) {
+      h = h[0..-1]; 
+    }
+    return just(h);
   }
   catch value _: {
     return nothing();
@@ -137,7 +145,7 @@ Maybe[str] dummyHighlighter(str x) {
 } 
  
 
-WithCmd[Model] init() = initRepl("x", "$ ", dummy, dummyCompleter, dummyHighlighter);
+WithCmd[Model] init() = initRepl("x", "$ ", dummyCompleter, dummyHighlighter);
 
 App[Model] replApp()
   = app(init, sampleView, update, |http://localhost:5001|, |project://salix/src|
@@ -152,8 +160,6 @@ void sampleView(Model m) {
   });       
 }
 
-
-
 map[str, str] cat2ansi() = (
   "Type": "",
   "Identifier": "",
@@ -163,7 +169,7 @@ map[str, str] cat2ansi() = (
   "Todo": "",
   "MetaAmbiguity": "\u001B[1;31m", // bold red
   "MetaVariable": "",
-  "MetaKeyword": "\u001B[4;35m", // underlined purple
+  "MetaKeyword": "\u001B[1;35m", // bold purple
   "StringLiteral": "\u001B[0;36m" // cyan
 );
 
@@ -185,8 +191,7 @@ str highlightRec(Tree t,  map[str,str] cats, int tabsize) {
 
     case appl(prod(Symbol d, list[Symbol] ss, set[Attr] as), list[Tree] args): {
       if (\tag("category"(str cat)) <- as) {
-        // categories can't be nested
-        println("Doing <cat>");
+        // categories can't be nested, so just yield the tree.
         return "<cats[cat]><t><reset>";
       }
       return highlightArgs(args);

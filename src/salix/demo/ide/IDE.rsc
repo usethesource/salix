@@ -8,6 +8,7 @@ import salix::demo::ide::StateMachine;
 import salix::lib::CodeMirror;
 import salix::lib::XTerm;
 import salix::lib::Mode;
+import salix::lib::REPL;
 import util::Maybe;
 import ParseTree;
 import String;
@@ -15,17 +16,18 @@ import List;
 import IO;
 
 
-App[Model] ideApp() 
-  = app(init, update, view, |http://localhost:8001|, |project://salix/src|
-       parser = parseMsg); 
+App[IDEModel] ideApp() 
+  = app(ideInit, ideView, ideUpdate, 
+        |http://localhost:8001|, |project://salix/src|, parser = parseMsg); 
 
-alias Model = tuple[
+alias IDEModel = tuple[
   str src, 
   Maybe[start[Controller]] lastParse,
   Maybe[str] currentState,
   list[str] output,
   str currentCommand,
-  Mode mode // put it here, so not regenerated at every click..
+  Mode mode, // put it here, so not regenerated at every click..
+  salix::lib::REPL::Model repl
 ];
   
 Maybe[start[Controller]] maybeParse(str src) {
@@ -37,8 +39,9 @@ Maybe[start[Controller]] maybeParse(str src) {
   }
 }  
   
-WithCmd[Model] init() {
-  Model model = <"", nothing(), nothing(), [], "", grammar2mode("statemachine", #Controller)>;
+WithCmd[IDEModel] ideInit() {
+  WithCmd[salix::lib::REPL::Model] wc = initRepl("myXterm", "$ ", stmComplete, stmHighlight);
+  IDEModel model = <"", nothing(), nothing(), [], "", grammar2mode("statemachine", #Controller), wc.model>;
   
   model.src = doors();
   model.lastParse = maybeParse(model.src);
@@ -47,7 +50,25 @@ WithCmd[Model] init() {
       model.currentState = just("<s.name>");
     }
   }  
-  return withCmd(model, write(noOp(), "myXterm", "\r\n$ "));
+ 
+  return withCmd(model, wc.command);
+}
+
+list[str] stmComplete(str prefix) {
+  // TODO
+  return [prefix];
+}
+
+Maybe[str] stmHighlight(str x) {
+  if (/goto <rest:.*>/ := x) {
+    return just("\u001B[1;35mgoto\u001B[0m <rest>");
+  }
+  if (/event <rest:.*>/ := x) {
+    return just("\u001B[1;35mevent\u001B[0m <rest>");
+  }
+  else {
+    return nothing();
+  }
 }
 
 str doors() = 
@@ -67,12 +88,27 @@ str doors() =
 data Msg
   = myChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed)
   | fireEvent(str name)
+  | repl(Msg msg)
   | noOp()
-  | xtermData(str txt)
   ;
 
-WithCmd[Model] update(Msg msg, Model model) {
+WithCmd[IDEModel] ideUpdate(Msg msg, IDEModel model) {
   Cmd cmd = none();
+  
+  void doTransition(str event) {
+    if (just(start[Controller] ctl) := model.lastParse) {
+      if (just(salix::demo::ide::StateMachine::State s) := lookupCurrentState(ctl, model)) { 
+        if (Transition t <- s.transitions, "<t.event>" == event) {
+          model.currentState = just("<t.state>");
+          if (just(Event e) := lookupEvent(ctl, event)) {
+            model.output += ["<e.token>"];
+            // todo: this should be a helper function in REPL
+            cmd = write(noOp(), model.repl.id, "\u001B[31m<e.token>\u001B[0m\r\n<model.repl.prompt>");
+          }
+        }
+      }
+    } 
+  }
   
   switch (msg) {
   
@@ -86,33 +122,25 @@ WithCmd[Model] update(Msg msg, Model model) {
       }  
     }
     
-    case fireEvent(str event): {
-      if (just(start[Controller] ctl) := model.lastParse) {
-        if (just(salix::demo::ide::StateMachine::State s) := lookupCurrentState(ctl, model)) { 
-          if (Transition t <- s.transitions, "<t.event>" == event) {
-            model.currentState = just("<t.state>");
-            if (just(Event e) := lookupEvent(ctl, event)) {
-              model.output += ["<e.token>"];
-              cmd = write(noOp(), "myXterm", "\u001B[31m<e.token>\u001B[0m\r\n$ ");
-            }
-          }
-        }
-      } 
+    case fireEvent(str event): 
+      doTransition(event);
+    
+    case repl(eval(str x)): {
+      if (/event <event:.*>/ := x) {
+        doTransition(event);
+      }
+      if (/goto <state:.*>/ := x) {
+         if (just(start[Controller] ctl) := model.lastParse) {
+           if (salix::demo::ide::StateMachine::State s <- ctl.top.states, "<s.name>" == state) {
+             model.currentState = just("<s.name>");
+           } 
+         }
+      }
     }
     
-    case xtermData(str s): {
-      if (s == "\r") {
-        cmd = write(fireEvent(model.currentCommand), "myXterm", "\r\n$ ");
-        model.currentCommand = "";
-      }
-      else if (s == "\a7f") {
-        cmd = write(noOp(), "myXterm", "\b");
-      }
-      else if (/[a-zA-Z0-9_]/ := s) {
-        model.currentCommand += s;
-        cmd = write(noOp(), "myXterm", s);
-      }
-    }
+    case repl(Msg sub): 
+      <model.repl, cmd> = mapCmd(Msg::repl, sub, model.repl, salix::lib::REPL::update);
+
   }
   
   return withCmd(model, cmd);
@@ -140,7 +168,7 @@ Maybe[str] initialState(start[Controller] ctl) {
   return nothing();
 }
  
-Maybe[salix::demo::ide::StateMachine::State] lookupCurrentState(start[Controller] ctl, Model model) {
+Maybe[salix::demo::ide::StateMachine::State] lookupCurrentState(start[Controller] ctl, IDEModel model) {
   if (salix::demo::ide::StateMachine::State s <- ctl.top.states, isCurrentState(s, model)) {
     return just(s);
   }
@@ -154,13 +182,13 @@ Maybe[Event] lookupEvent(start[Controller] ctl, str event) {
   return nothing();
 } 
  
-bool staleCurrentState(start[Controller] ctl, Model model) 
+bool staleCurrentState(start[Controller] ctl, IDEModel model) 
   = !any(salix::demo::ide::StateMachine::State s <- ctl.top.states, isCurrentState(s, model));
  
-bool isCurrentState(salix::demo::ide::StateMachine::State s, Model model)
+bool isCurrentState(salix::demo::ide::StateMachine::State s, IDEModel model)
   = just(str current) := model.currentState && current == "<s.name>";
 
-void view(Model model) {
+void ideView(IDEModel model) {
   div(() {
     div(class("row"), () {
       div(class("col-md-12"), () {
@@ -190,7 +218,7 @@ void view(Model model) {
               }
             });
             h4("Command line");
-            xterm("myXterm", cursorBlink(true), onData(xtermData), cols(25), rows(10));       
+            repl(Msg::repl, model.repl, model.repl.id, cursorBlink(true), cols(30), rows(10));       
           });
         }
       });
