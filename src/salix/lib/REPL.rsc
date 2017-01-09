@@ -5,6 +5,8 @@ import salix::App;
 import salix::Core;
 import salix::HTML;
 
+import util::Maybe;
+import ParseTree;
 import List;
 import IO;
 import String;
@@ -19,11 +21,12 @@ alias Model = tuple[
   Msg(str) eval,
   list[str] completions,
   int cycle,
-  list[str](str) complete
+  list[str](str) complete,
+  Maybe[str](str) highlight
 ];
 
-WithCmd[Model] initRepl(str id, str prompt, Msg(str) eval, list[str](str) complete) 
-  = withCmd(<id, prompt, [], 0, "", eval, [], -1, complete>, write(noOp(), id, prompt)); 
+WithCmd[Model] initRepl(str id, str prompt, Msg(str) eval, list[str](str) complete, Maybe[str](str) highlight) 
+  = withCmd(<id, prompt, [], 0, "", eval, [], -1, complete, highlight>, write(noOp(), id, prompt)); 
   
 data Msg
   = xtermData(str s)
@@ -32,9 +35,15 @@ data Msg
   ;
   
   
-WithCmd[Model] replaceLine(Model model, str newLine) {
+WithCmd[Model] replaceLine(Model model, str newLine) 
+  = withCmd(model[currentLine=newLine], writeLine(model, newLine));
+
+Cmd writeLine(Model model, str newLine) {
   str zap = ( "\r" | it + " " | int _ <- [0..size(model.currentLine) + size(model.prompt)] );
-  return withCmd(model[currentLine=newLine], write(noOp(), model.id, "<zap>\r<model.prompt><newLine>"));
+  if (just(str highlighted) := model.highlight(newLine)) {
+    newLine = highlighted;
+  }
+  return write(noOp(), model.id, "<zap>\r<model.prompt><newLine>");
 }
 
 WithCmd[Model] update(Msg msg, Model model) {
@@ -81,6 +90,9 @@ WithCmd[Model] update(Msg msg, Model model) {
       }
       else if (/[a-zA-Z0-9_\ ]/ := s) {
         model.currentLine += s;
+        if (just(str x) := model.highlight(s)) {
+          s = x;
+        }
         cmd = write(noOp(), model.id, s);
       }
       else {
@@ -110,7 +122,14 @@ list[str] dummyCompleter(str prefix) {
   return [ x | x <- xs, startsWith(x, prefix) ] + [prefix];
 }
 
-WithCmd[Model] init() = initRepl("x", "$ ", dummy, dummyCompleter);
+
+Maybe[str] dummyHighlighter(str x) {
+  bool isVowel(str c) = c in {"a", "u", "i", "e", "o"};
+  return  just(( "" | it + (isVowel(c) ? "\u001B[0;31m<c>\u001B[0m" : c) | int i <- chars(x), str c := stringChar(i) ));
+} 
+ 
+
+WithCmd[Model] init() = initRepl("x", "$ ", dummy, dummyCompleter, dummyHighlighter);
 
 App[Model] replApp()
   = app(init, sampleView, update, |http://localhost:5001|, |project://salix/src|
@@ -125,3 +144,61 @@ void sampleView(Model m) {
   });       
 }
 
+
+
+map[str, str] cat2ansi = (
+  "Type": "",
+  "Identifier": "",
+  "Variable": "",
+  "Constant": "",
+  "Comment": "\u001B[3m", // italics
+  "Todo": "",
+  "MetaAmbiguity": "\u001B[0;31m", // red
+  "MetaVariable": "",
+  "MetaKeyword": "\u001B[1;35m", // bold purple
+  "StringLiteral": ""
+);
+
+
+str ansiHighlight(Tree t, map[str,str] cats = cat2ansi, int tabsize = 2) = highlightRec(t, cats, tabsize);
+
+str highlightRec(Tree t,  map[str,str] cats, int tabsize) {
+
+  str reset = "\u001B[0m";
+  
+  str highlightArgs(list[Tree] args) 
+    = ("" | it + highlightRec(a, cats, tabsize) | Tree a <- args );
+  
+  switch (t) {
+    
+    case appl(prod(lit(/^<s:[a-zA-Z_0-9]+>$/), _, _), list[Tree] args): {
+      return "<cats["MetaKeyword"]><s><reset>";
+    }
+
+    case appl(prod(Symbol d, list[Symbol] ss, set[Attr] as), list[Tree] args): {
+      if (\tag("category"(str cat)) <- as) {
+        // categories can't be nested
+        return "<cats[cat]><s><reset>";
+      }
+      return highlightArgs(args);
+    }
+    
+    case appl(_, list[Tree] args):
+      return highlightArgs(args);
+    
+    case char(int c): { 
+      str s = stringChar(c);
+      return  s == "\t" ? ("" | it + " " | _ <- [0..tabSize]) : s;
+    }
+    
+    case amb(set[Tree] alts): {
+      if (Tree a <- alts) {
+        return highlightRec(a, cats);
+      }
+    }
+
+  }
+  
+  return "";
+    
+} 
