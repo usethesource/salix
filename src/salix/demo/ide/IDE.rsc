@@ -27,7 +27,7 @@ alias IDEModel = tuple[
   list[str] output,
   str currentCommand,
   Mode mode, // put it here, so not regenerated at every click..
-  salix::lib::REPL::Model repl
+  REPLModel repl
 ];
   
 Maybe[start[Controller]] maybeParse(str src) {
@@ -40,14 +40,9 @@ Maybe[start[Controller]] maybeParse(str src) {
 }  
   
 WithCmd[IDEModel] ideInit() {
-  
-  WithCmd[salix::lib::REPL::Model] wc = initRepl("myXterm", "$ ", list[str](str p) { return [p]; }, stmHighlight);
-  IDEModel model = <"", nothing(), nothing(), [], "", grammar2mode("statemachine", #Controller), wc.model>;
-  
-  list[str] comp(str prefix) {
-    return stmComplete(model, prefix);
-  }
-  model.repl.complete = comp;
+  <replModel, replCmd> = initRepl("myXterm", "$ ");
+  Mode stmMode = grammar2mode("statemachine", #Controller);
+  IDEModel model = <"", nothing(), nothing(), [], "", stmMode, replModel>;
   
   model.src = doors();
   model.lastParse = maybeParse(model.src);
@@ -57,11 +52,11 @@ WithCmd[IDEModel] ideInit() {
     }
   }  
  
-  return withCmd(model, wc.command);
+  return withCmd(model, replCmd);
 }
 
 list[str] stmComplete(IDEModel model, str prefix) {
-  list[str] cs = [prefix];
+  list[str] cs = [];
   if (just(start[Controller] ctl) := model.lastParse) {
     if (/<word:[a-zA-Z0-9_]+>$/ := prefix) {
       for (salix::demo::ide::StateMachine::State s <- ctl.top.states, startsWith("<s.name>", word)) {
@@ -72,7 +67,7 @@ list[str] stmComplete(IDEModel model, str prefix) {
       }
     }
   }
-  return cs;
+  return cs + [prefix];
 }
 
 Maybe[str] stmHighlight(str x) {
@@ -102,33 +97,64 @@ str doors() =
     'end";
 
 data Msg
-  = myChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed)
+  = stmChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed)
   | fireEvent(str name)
+  | gotoState(str name)
   | repl(Msg msg)
   | noOp()
   ;
 
+tuple[Msg, str] myEval(str command) {
+  if (/event <event:.*>/ := command) {
+    return <fireEvent(event), "ok">;
+  }
+  if (/goto <state:.*>/ := command) {
+    return <gotoState(state), "ok">;
+  }
+  return <noOp(), "">;
+}
+
+
+alias Next = tuple[Maybe[str] token, Maybe[str] state];
+
+Next transition(str currentState, str event, start[Controller] ctl) {
+  Next result = <nothing(), nothing()>;
+  
+  if (salix::demo::ide::StateMachine::State s <- ctl.top.states, "<s.name>" == currentState) { 
+    if (Transition t <- s.transitions, "<t.event>" == event) {
+      result.state = just("<t.state>");
+      if (just(Event e) := lookupEvent(ctl, event)) {
+        result.token = just("<e.token>");
+      }
+    }
+  }
+  
+  return result;
+} 
+
 WithCmd[IDEModel] ideUpdate(Msg msg, IDEModel model) {
   Cmd cmd = none();
   
+  list[str] myComplete(str prefix) = stmComplete(model, prefix);
+  
   void doTransition(str event) {
     if (just(start[Controller] ctl) := model.lastParse) {
-      if (just(salix::demo::ide::StateMachine::State s) := lookupCurrentState(ctl, model)) { 
-        if (Transition t <- s.transitions, "<t.event>" == event) {
-          model.currentState = just("<t.state>");
-          if (just(Event e) := lookupEvent(ctl, event)) {
-            model.output += ["<e.token>"];
-            // todo: this should be a helper function in REPL
-            cmd = write(noOp(), model.repl.id, "\u001B[31m<e.token>\u001B[0m\r\n<model.repl.prompt>");
-          }
+      if (just(str current) := model.currentState) {
+        Next nxt = transition(current, event, ctl);
+        if (just(str nextState) := nxt.state) {
+          model.currentState = just(nextState);
+        }
+        if (just(str token) := nxt.token) {
+          model.output += [token];
+          cmd = write(noOp(), model.repl.id, "\u001B[31m<token>\u001B[0m\r\n<model.repl.prompt>");
         }
       }
-    } 
+    }
   }
   
   switch (msg) {
   
-    case myChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed): { 
+    case stmChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed): { 
       model.src = updateSrc(model.src, fromLine, fromCol, toLine, toCol, text, removed);
       if (just(start[Controller] ctl) := maybeParse(model.src)) {
         model.lastParse = just(ctl);
@@ -138,25 +164,35 @@ WithCmd[IDEModel] ideUpdate(Msg msg, IDEModel model) {
       }  
     }
     
-    case fireEvent(str event): 
-      doTransition(event);
+    // this is bad, but mapping prevents stuff produced in the repl
+    // to surface back here; it's really hard to communicate from
+    // contained components to parents...
+    case repl(gotoState(str state)): {
+       if (just(start[Controller] ctl) := model.lastParse) {
+         if (salix::demo::ide::StateMachine::State s <- ctl.top.states, "<s.name>" == state) {
+           model.currentState = just("<s.name>");
+         } 
+       }
+     }
     
-    case repl(eval(str x)): { // intercept eval message of contained repl.
-      if (/event <event:.*>/ := x) {
-        doTransition(event);
-      }
-      if (/goto <state:.*>/ := x) {
-         if (just(start[Controller] ctl) := model.lastParse) {
-           if (salix::demo::ide::StateMachine::State s <- ctl.top.states, "<s.name>" == state) {
-             model.currentState = just("<s.name>");
-           } 
-         }
-      }
-    }
+    // even worse, this one can be generated by the repl, but
+    // also at this level, so two cases are needed. 
+    // so, 3 options:
+    // - multiple cases; maybe this is the least bad... the cases
+    //   identify origins of messages.
+    // - cheating with side-effects on model in eval
+    // - not do mapping on repl (this means xtermData enters the parent namespace)
+    //   and need ugly default to go to repl update...
+    
+    case repl(fireEvent(str event)): 
+      doTransition(event);
+      
+    case fireEvent(str event):
+      doTransition(event);
+      
     
     case repl(Msg sub): {
-      model.repl.complete = list[str](str prefix) { return stmComplete(model,prefix); }; 
-      <model.repl, cmd> = mapCmd(Msg::repl, sub, model.repl, salix::lib::REPL::update);
+      <model.repl, cmd> = mapCmd(Msg::repl, sub, model.repl, replUpdate(myEval, myComplete, stmHighlight));
     }
 
   }
@@ -217,7 +253,7 @@ void ideView(IDEModel model) {
     div(class("row"), () {
       div(class("col-md-6"), () {
         h4("Edit the state machine.");
-        codeMirrorWithMode("myCodeMirror", model.mode, onChange(myChange), height(500), 
+        codeMirrorWithMode("myCodeMirror", model.mode, onChange(stmChange), height(500), 
             mode("statemachine"), indentWithTabs(false), lineNumbers(true), \value(model.src));
       });
         
