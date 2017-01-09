@@ -31,6 +31,11 @@ data Msg
   | dummy(str s)  
   ;
   
+  
+WithCmd[Model] replaceLine(Model model, str newLine) {
+  str zap = ( "\r" | it + " " | int _ <- [0..size(model.currentLine) + size(model.prompt)] );
+  return withCmd(model[currentLine=newLine], write(noOp(), model.id, "<zap>\r<model.prompt><newLine>"));
+}
 
 WithCmd[Model] update(Msg msg, Model model) {
   Cmd cmd = none();
@@ -52,23 +57,16 @@ WithCmd[Model] update(Msg msg, Model model) {
       else if (s == "\a1b[A") { // arrow up
         if (model.pointer > 0) {
           model.pointer -= 1;
-          str back = ( "" | it + "\b" | int _ <- [0..size(model.currentLine)] );
-          model.currentLine = model.history[model.pointer];
-          cmd = write(noOp(), model.id, back + model.currentLine);
+          <model, cmd> = replaceLine(model, model.history[model.pointer]); 
         }
       }
       else if (s == "\a1b[B") { // arrow down
         if (model.pointer < size(model.history) - 1) {
 	        model.pointer += 1;
-          str back = ( "" | it + "\b" | int _ <- [0..size(model.currentLine)] );
-          model.currentLine = model.history[model.pointer];
-          cmd = write(noOp(), model.id, back + model.currentLine);
+	        <model, cmd> = replaceLine(model, model.history[model.pointer]);
         }
       }
       else if (s == "\t") {
-        // TODO: put in model
-        // it always at least contains the prefix itself.
-        //println("Completions after: <model.completions> @ <model.cycle>");
         if (model.cycle == -1) {
           model.completions = model.complete(model.currentLine);
         }
@@ -78,13 +76,10 @@ WithCmd[Model] update(Msg msg, Model model) {
         else {
           model.cycle = 0;
         }
-        //println("Completions after: <model.completions> @ <model.cycle>");
         str comp = model.completions[model.cycle];
-        str back = ( "\r" | it + " " | int _ <- [0..size(model.currentLine) + size(model.prompt)] );
-        cmd = write(noOp(), model.id,  back + "\r<model.prompt>" + comp);
-        model.currentLine = comp;
+        <model, cmd> = replaceLine(model, model.completions[model.cycle]);
       }
-      else if (/[a-zA-Z0-9_]/ := s) {
+      else if (/[a-zA-Z0-9_\ ]/ := s) {
         model.currentLine += s;
         cmd = write(noOp(), model.id, s);
       }
