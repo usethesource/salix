@@ -12,17 +12,18 @@ import String;
 
 alias Model = tuple[
   str id,
+  str prompt,
   list[str] history,
   int pointer,
   str currentLine,
   Msg(str) eval,
   list[str] completions,
   int cycle,
-  list[str](str) complete // todo: need tab cycling
+  list[str](str) complete
 ];
 
-WithCmd[Model] initRepl(str id, Msg(str) eval, list[str](str) complete) 
-  = withCmd(<id, [], 0, "", eval, [], -1, complete>, write(noOp(), id, "$ ")); 
+WithCmd[Model] initRepl(str id, str prompt, Msg(str) eval, list[str](str) complete) 
+  = withCmd(<id, prompt, [], 0, "", eval, [], -1, complete>, write(noOp(), id, prompt)); 
   
 data Msg
   = xtermData(str s)
@@ -40,7 +41,7 @@ WithCmd[Model] update(Msg msg, Model model) {
         model.cycle = -1;
       }
       if (s == "\r") {
-        cmd = write(model.eval(model.currentLine), model.id, "\r\n$ ");
+        cmd = write(model.eval(model.currentLine), model.id, "\r\n<model.prompt>");
         model.history += [model.currentLine];
         model.pointer = size(model.history);
         model.currentLine = "";
@@ -79,8 +80,8 @@ WithCmd[Model] update(Msg msg, Model model) {
         }
         //println("Completions after: <model.completions> @ <model.cycle>");
         str comp = model.completions[model.cycle];
-        str back = ( "" | it + "\b" | int _ <- [0..size(model.currentLine)] );
-        cmd = write(noOp(), model.id, back + comp);
+        str back = ( "\r" | it + " " | int _ <- [0..size(model.currentLine) + size(model.prompt)] );
+        cmd = write(noOp(), model.id,  back + "\r<model.prompt>" + comp);
         model.currentLine = comp;
       }
       else if (/[a-zA-Z0-9_]/ := s) {
@@ -114,7 +115,7 @@ list[str] dummyCompleter(str prefix) {
   return [ x | x <- xs, startsWith(x, prefix) ] + [prefix];
 }
 
-WithCmd[Model] init() = initRepl("x", dummy, dummyCompleter);
+WithCmd[Model] init() = initRepl("x", "$ ", dummy, dummyCompleter);
 
 App[Model] replApp()
   = app(init, sampleView, update, |http://localhost:5001|, |project://salix/src|

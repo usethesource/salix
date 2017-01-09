@@ -53,7 +53,9 @@ function registerXTerm(salix) {
 	};
 
 	salix.Commands.write = function (args) {
-		xterms[args.id].write(args.text);
+		var term = xterms[args.id];
+		var term2 = xterms.x;
+		term.write(args.text);
 		return nothing();
 	};
 
