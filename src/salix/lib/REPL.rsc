@@ -6,6 +6,7 @@ import salix::Core;
 import salix::HTML;
 
 import util::Maybe;
+import util::Reflective;
 import ParseTree;
 import List;
 import IO;
@@ -60,8 +61,11 @@ WithCmd[Model] update(Msg msg, Model model) {
         model.pointer = size(model.history);
         model.currentLine = "";
       }
-      else if (s == "\a7f") {
-        cmd = write(noOp(), model.id, "\b");
+      else if (s == "\a7f") { 
+        if (model.currentLine != "" ) {
+          model.currentLine = model.currentLine[0..-1];
+          cmd = write(noOp(), model.id, "\b \b");
+        }
       }
       else if (s == "\a1b[A") { // arrow up
         if (model.pointer > 0) {
@@ -88,15 +92,14 @@ WithCmd[Model] update(Msg msg, Model model) {
         str comp = model.completions[model.cycle];
         <model, cmd> = replaceLine(model, model.completions[model.cycle]);
       }
-      else if (/[a-zA-Z0-9_\ ]/ := s) {
-        model.currentLine += s;
-        if (just(str x) := model.highlight(s)) {
-          s = x;
-        }
-        cmd = write(noOp(), model.id, s);
-      }
       else {
-        println("Unrecognized: <s>");
+        model.currentLine += s;
+        if (just(str x) := model.highlight(model.currentLine)) {
+          cmd = writeLine(model, x);
+        }
+        else {
+          cmd = write(noOp(), model.id, s);
+        }
       }
     }
     case dummy(str s):
@@ -124,8 +127,13 @@ list[str] dummyCompleter(str prefix) {
 
 
 Maybe[str] dummyHighlighter(str x) {
-  bool isVowel(str c) = c in {"a", "u", "i", "e", "o"};
-  return  just(( "" | it + (isVowel(c) ? "\u001B[0;31m<c>\u001B[0m" : c) | int i <- chars(x), str c := stringChar(i) ));
+  try {
+    Tree t = parseCommand(x, |file:///dummy|);
+    return just(ansiHighlight(t));
+  }
+  catch value _: {
+    return nothing();
+  }
 } 
  
 
@@ -140,27 +148,27 @@ Msg identity(Msg m) = m;
 void sampleView(Model m) {
   div(() {
     h4("Command line");
-    repl(identity, m, "x", cursorBlink(true), cols(25), rows(10));
+    repl(identity, m, "x", cursorBlink(true), cols(80), rows(10));
   });       
 }
 
 
 
-map[str, str] cat2ansi = (
+map[str, str] cat2ansi() = (
   "Type": "",
   "Identifier": "",
   "Variable": "",
-  "Constant": "",
-  "Comment": "\u001B[3m", // italics
+  "Constant": "\u001B[0;36m", //cyan
+  "Comment":  "\u001B[0;37m", // gray
   "Todo": "",
-  "MetaAmbiguity": "\u001B[0;31m", // red
+  "MetaAmbiguity": "\u001B[1;31m", // bold red
   "MetaVariable": "",
-  "MetaKeyword": "\u001B[1;35m", // bold purple
-  "StringLiteral": ""
+  "MetaKeyword": "\u001B[4;35m", // underlined purple
+  "StringLiteral": "\u001B[0;36m" // cyan
 );
 
 
-str ansiHighlight(Tree t, map[str,str] cats = cat2ansi, int tabsize = 2) = highlightRec(t, cats, tabsize);
+str ansiHighlight(Tree t, map[str,str] cats = cat2ansi(), int tabsize = 2) = highlightRec(t, cats, tabsize);
 
 str highlightRec(Tree t,  map[str,str] cats, int tabsize) {
 
@@ -178,7 +186,8 @@ str highlightRec(Tree t,  map[str,str] cats, int tabsize) {
     case appl(prod(Symbol d, list[Symbol] ss, set[Attr] as), list[Tree] args): {
       if (\tag("category"(str cat)) <- as) {
         // categories can't be nested
-        return "<cats[cat]><s><reset>";
+        println("Doing <cat>");
+        return "<cats[cat]><t><reset>";
       }
       return highlightArgs(args);
     }
