@@ -40,8 +40,14 @@ Maybe[start[Controller]] maybeParse(str src) {
 }  
   
 WithCmd[IDEModel] ideInit() {
-  WithCmd[salix::lib::REPL::Model] wc = initRepl("myXterm", "$ ", stmComplete, stmHighlight);
+  
+  WithCmd[salix::lib::REPL::Model] wc = initRepl("myXterm", "$ ", list[str](str p) { return [p]; }, stmHighlight);
   IDEModel model = <"", nothing(), nothing(), [], "", grammar2mode("statemachine", #Controller), wc.model>;
+  
+  list[str] comp(str prefix) {
+    return stmComplete(model, prefix);
+  }
+  model.repl.complete = comp;
   
   model.src = doors();
   model.lastParse = maybeParse(model.src);
@@ -54,9 +60,19 @@ WithCmd[IDEModel] ideInit() {
   return withCmd(model, wc.command);
 }
 
-list[str] stmComplete(str prefix) {
-  // TODO
-  return [prefix];
+list[str] stmComplete(IDEModel model, str prefix) {
+  list[str] cs = [prefix];
+  if (just(start[Controller] ctl) := model.lastParse) {
+    if (/<word:[a-zA-Z0-9_]+>$/ := prefix) {
+      for (salix::demo::ide::StateMachine::State s <- ctl.top.states, startsWith("<s.name>", word)) {
+        cs += ["<prefix[0..size(prefix) - size(word)]><s.name>"];
+      }
+      for (/salix::demo::ide::StateMachine::Event e := ctl, startsWith("<e.name>", word)) {
+        cs += ["<prefix[0..size(prefix) - size(word)]><e.name>"];
+      }
+    }
+  }
+  return cs;
 }
 
 Maybe[str] stmHighlight(str x) {
@@ -125,7 +141,7 @@ WithCmd[IDEModel] ideUpdate(Msg msg, IDEModel model) {
     case fireEvent(str event): 
       doTransition(event);
     
-    case repl(eval(str x)): {
+    case repl(eval(str x)): { // intercept eval message of contained repl.
       if (/event <event:.*>/ := x) {
         doTransition(event);
       }
@@ -138,8 +154,10 @@ WithCmd[IDEModel] ideUpdate(Msg msg, IDEModel model) {
       }
     }
     
-    case repl(Msg sub): 
+    case repl(Msg sub): {
+      model.repl.complete = list[str](str prefix) { return stmComplete(model,prefix); }; 
       <model.repl, cmd> = mapCmd(Msg::repl, sub, model.repl, salix::lib::REPL::update);
+    }
 
   }
   
