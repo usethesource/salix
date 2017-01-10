@@ -5,9 +5,7 @@ import ParseTree;
 import IO;
 import String;
 
-alias Cat2Css = map[str, lrel[str, str]]; 
-
-Cat2Css _category2styles = (
+private map[str, lrel[str, str]] cat2styles = (
   "Type": [<"color", "#748B00">],
   "Identifier": [<"color", "#485A62">],
   "Variable": [<"color", "#268BD2">],
@@ -23,7 +21,7 @@ Cat2Css _category2styles = (
 
 
 
-void highlight(Tree t, void(list[value]) container = pre, Cat2Css cats = _category2styles, int tabSize = 2) {
+void highlightToHtml(Tree t, void(list[value]) container = pre, map[str,lrel[str,str]] cats = cat2styles, int tabSize = 2) {
   container([() {
     str pending = highlightRec(t, "", cats, tabSize);
     if (pending != "") {
@@ -32,8 +30,7 @@ void highlight(Tree t, void(list[value]) container = pre, Cat2Css cats = _catego
   }]);
 }
 
-
-str highlightRec(Tree t, str current, Cat2Css cats, int tabSize) {
+private str highlightRec(Tree t, str current, Cat2Css cats, int tabSize) {
   
   void highlightArgs(list[Tree] args) {
     for (Tree a <- args) {
@@ -86,5 +83,61 @@ str highlightRec(Tree t, str current, Cat2Css cats, int tabSize) {
   return current;
     
 } 
+
+private map[str, str] cat2ansi = (
+  "Type": "",
+  "Identifier": "",
+  "Variable": "",
+  "Constant": "\u001B[0;36m", //cyan
+  "Comment":  "\u001B[0;37m", // gray
+  "Todo": "",
+  "MetaAmbiguity": "\u001B[1;31m", // bold red
+  "MetaVariable": "",
+  "MetaKeyword": "\u001B[1;35m", // bold purple
+  "StringLiteral": "\u001B[0;36m" // cyan
+);
+
+
+str highlightToAnsi(Tree t, map[str,str] cats = cat2ansi, int tabsize = 2) { 
+
+  str reset = "\u001B[0m";
+  
+  str highlightArgs(list[Tree] args) 
+    = ("" | it + highlightRec(a, cats, tabsize) | Tree a <- args );
+  
+  switch (t) {
+    
+    case appl(prod(lit(/^<s:[a-zA-Z_0-9]+>$/), _, _), list[Tree] args): {
+      return "<cats["MetaKeyword"]><s><reset>";
+    }
+
+    case appl(prod(Symbol d, list[Symbol] ss, set[Attr] as), list[Tree] args): {
+      if (\tag("category"(str cat)) <- as) {
+        // categories can't be nested, so just yield the tree.
+        return "<cats[cat]><t><reset>";
+      }
+      return highlightArgs(args);
+    }
+    
+    case appl(_, list[Tree] args):
+      return highlightArgs(args);
+    
+    case char(int c): { 
+      str s = stringChar(c);
+      return  s == "\t" ? ("" | it + " " | _ <- [0..tabSize]) : s;
+    }
+    
+    case amb(set[Tree] alts): {
+      if (Tree a <- alts) {
+        return highlightRec(a, cats);
+      }
+    }
+
+  }
+  
+  return "";
+    
+} 
+
 
 

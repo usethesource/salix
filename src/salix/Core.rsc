@@ -167,9 +167,7 @@ list[Sub] noSubs(&T t) = [];
 @doc{Commands represent actions that need to be performed at the client.}
 data Cmd  // Commands
   = command(str name, Handle handle, map[str,value] args = ())
-  | none()
   ;
- 
  
 private list[Cmd] commands = []; 
 
