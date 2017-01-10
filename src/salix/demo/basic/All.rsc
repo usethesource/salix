@@ -37,13 +37,13 @@ App[AllModel] allApp()
 App[AllModel] debugAllApp() 
   = debug(initAll, myDebugView, editAll, |http://localhost:9213|, |project://salix/src|, subs = allSubs); 
   
-WithCmd[AllModel] initAll() = noCmd(<
-  salix::demo::basic::Celsius::init(), 
-  salix::demo::basic::Counter::init(), 
-  salix::demo::basic::Random::twiceInit().model,
-  salix::demo::basic::CodeMirror::init(),
-  salix::demo::basic::Clock::init() 
->);  
+AllModel initAll() = <
+  mapCmds(Msg::celsius, salix::demo::basic::Celsius::init), 
+  mapCmds(Msg::counter, salix::demo::basic::Counter::init), 
+  mapCmds(Msg::random, salix::demo::basic::Random::twiceInit),
+  mapCmds(Msg::codeMirror, salix::demo::basic::CodeMirror::init),
+  mapCmds(Msg::clock, salix::demo::basic::Clock::init) 
+>;  
   
 list[Sub] allSubs(AllModel m) 
   = mapSubs(Msg::clock, m.clock, salix::demo::basic::Clock::subs);
@@ -62,23 +62,22 @@ void viewAll(AllModel m) {
   });
 }
 
-WithCmd[AllModel] editAll(Msg msg, AllModel m) {
-  Cmd cmd = none();
+AllModel editAll(Msg msg, AllModel m) {
   switch (msg) {
     case celsius(Msg msg):
-      m.celsius = salix::demo::basic::Celsius::update(msg, m.celsius);
+      m.celsius = mapCmds(Msg::celsius, msg, m.celsius, salix::demo::basic::Celsius::update);
       
     case counter(Msg msg):
-      m.counter = salix::demo::basic::Counter::update(msg, m.counter);
+      m.counter = mapCmds(Msg::counter, msg, m.counter, salix::demo::basic::Counter::update);
     
     case random(Msg msg): 
-      <m.random, cmd> = mapCmd(Msg::random, msg, m.random, twiceUpdate);
+      m.random = mapCmds(Msg::random, msg, m.random, twiceUpdate);
     
     case codeMirror(Msg msg):
-      m.codeMirror = salix::demo::basic::CodeMirror::update(msg, m.codeMirror);
+      m.codeMirror = mapCmds(Msg::codeMirror, msg, m.codeMirror, salix::demo::basic::CodeMirror::update);
       
     case clock(Msg msg):
-      m.clock = salix::demo::basic::Clock::update(msg, m.clock);
+      m.clock = mapCmds(Msg::clock, msg, m.clock, salix::demo::basic::Clock::update);
   }
   
   return withCmd(m, cmd);

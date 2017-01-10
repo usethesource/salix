@@ -56,7 +56,7 @@ function Salix(aRootId) {
 	
 	function step(payload) {
 		render(payload.patch);
-		doCommands([payload.command]);
+		doCommands(payload.commands);
 		subscribe(payload.subs);
 		// I don't understand why, but putting these in 
 		// .always on the get request doesn't work....

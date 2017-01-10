@@ -23,8 +23,10 @@ alias REPLModel = tuple[
   int cycle
 ];
 
-WithCmd[REPLModel] initRepl(str id, str prompt) 
-  = withCmd(<id, prompt, [], 0, "", [], -1>, write(noOp(), id, prompt)); 
+REPLModel initRepl(str id, str prompt) {
+  do(write(noOp(), id, prompt));
+  return <id, prompt, [], 0, "", [], -1>;
+} 
   
 data Msg
   = xtermData(str s)
@@ -32,8 +34,10 @@ data Msg
   ;
   
   
-WithCmd[REPLModel] replaceLine(REPLModel model, str newLine, Maybe[str](str) hl) 
-  = withCmd(model[currentLine=newLine], writeLine(model, newLine, hl));
+REPLModel replaceLine(REPLModel model, str newLine, Maybe[str](str) hl) {
+  do(writeLine(model, newLine, hl));
+  return model[currentLine=newLine];
+} 
 
 Cmd writeLine(REPLModel model, str newLine, Maybe[str](str) hl) {
   str zap = ( "\r" | it + " " | int _ <- [0..size(model.currentLine) + size(model.prompt)] );
@@ -43,13 +47,12 @@ Cmd writeLine(REPLModel model, str newLine, Maybe[str](str) hl) {
   return write(noOp(), model.id, "<zap>\r<model.prompt><newLine>");
 }
 
-WithCmd[REPLModel](Msg, REPLModel) replUpdate(tuple[Msg, str](str) eval, list[str](str) complete, Maybe[str](str) highlight) 
-  = WithCmd[REPLModel](Msg msg, REPLModel rm) {
+REPLModel(Msg, REPLModel) replUpdate(tuple[Msg, str](str) eval, list[str](str) complete, Maybe[str](str) highlight) 
+  = REPLModel(Msg msg, REPLModel rm) {
       return replUpdate(eval, complete, highlight, msg, rm);
     };
 
-WithCmd[REPLModel] replUpdate(tuple[Msg, str](str) eval, list[str](str) complete, Maybe[str](str) highlight, Msg msg, REPLModel model) {
-  Cmd cmd = none();
+REPLModel replUpdate(tuple[Msg, str](str) eval, list[str](str) complete, Maybe[str](str) highlight, Msg msg, REPLModel model) {
   
   switch (msg) {
     case xtermData(str s): {
@@ -58,7 +61,7 @@ WithCmd[REPLModel] replUpdate(tuple[Msg, str](str) eval, list[str](str) complete
       }
       if (s == "\r") {
         <evalMsg, result> = eval(model.currentLine);
-        cmd = write(evalMsg, model.id, "\r\n<result>\r\n<model.prompt>");
+        do(write(evalMsg, model.id, "\r\n<result>\r\n<model.prompt>"));
         model.history += [model.currentLine];
         model.pointer = size(model.history);
         model.currentLine = "";
@@ -66,19 +69,19 @@ WithCmd[REPLModel] replUpdate(tuple[Msg, str](str) eval, list[str](str) complete
       else if (s == "\a7f") { 
         if (model.currentLine != "" ) {
           model.currentLine = model.currentLine[0..-1];
-          cmd = write(noOp(), model.id, "\b \b");
+          do(write(noOp(), model.id, "\b \b"));
         }
       }
       else if (s == "\a1b[A") { // arrow up
         if (model.pointer > 0) {
           model.pointer -= 1;
-          <model, cmd> = replaceLine(model, model.history[model.pointer], highlight); 
+          model = replaceLine(model, model.history[model.pointer], highlight); 
         }
       }
       else if (s == "\a1b[B") { // arrow down
         if (model.pointer < size(model.history) - 1) {
 	        model.pointer += 1;
-	        <model, cmd> = replaceLine(model, model.history[model.pointer], highlight);
+	        model = replaceLine(model, model.history[model.pointer], highlight);
         }
       }
       else if (s == "\t") {
@@ -92,21 +95,21 @@ WithCmd[REPLModel] replUpdate(tuple[Msg, str](str) eval, list[str](str) complete
           model.cycle = 0;
         }
         str comp = model.completions[model.cycle];
-        <model, cmd> = replaceLine(model, model.completions[model.cycle], highlight);
+        model = replaceLine(model, model.completions[model.cycle], highlight);
       }
       else {
         model.currentLine += s;
         if (just(str x) := highlight(model.currentLine)) {
-          cmd = writeLine(model, x, highlight);
+          do(writeLine(model, x, highlight));
         }
         else {
-          cmd = write(noOp(), model.id, s);
+          do(write(noOp(), model.id, s));
         }
       }
     }
   }
   
-  return withCmd(model, cmd);
+  return model;
 }  
 
 
@@ -126,40 +129,6 @@ list[str] dummyCompleter(str prefix) {
 }
 
 
-Maybe[str] dummyHighlighter(str x) {
-  try {
-    bool terminated = false;
-    if (!endsWith(x, ";")) {
-      x += ";"; // try to terminate to get earlier highlighting...
-      terminated = true;
-    }
-    Tree t = parseCommand(x, |file:///dummy|);
-    str h = ansiHighlight(t);
-    if (terminated) {
-      h = h[0..-1]; 
-    }
-    return just(h);
-  }
-  catch value _: {
-    return nothing();
-  }
-} 
- 
-
-WithCmd[REPLModel] init() = initRepl("x", "$ ", dummyCompleter, dummyHighlighter);
-
-App[REPLModel] replApp()
-  = app(init, sampleView, update, |http://localhost:5001|, |project://salix/src|
-       parser = parseMsg);
-
-Msg identity(Msg m) = m;
-
-void sampleView(REPLModel m) {
-  div(() {
-    h4("Command line");
-    repl(identity, m, "x", cursorBlink(true), cols(80), rows(10));
-  });       
-}
 
 map[str, str] cat2ansi() = (
   "Type": "",

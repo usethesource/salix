@@ -8,7 +8,7 @@ import salix::Node; // for null()...
 import List;
 
 alias DebugModel[&T]
-  = tuple[int current, list[&T] models, list[Msg] messages, WithCmd[&T](Msg, &T) update]
+  = tuple[int current, list[&T] models, list[Msg] messages, &T(Msg, &T) update]
   ;
   
 data Msg
@@ -18,9 +18,9 @@ data Msg
   | goto(int version)
   ;
 
-App[DebugModel[&T]] debug(WithCmd[&T]() model, 
+App[DebugModel[&T]] debug(&T() model, 
                           void(DebugModel[&T]) view, // // can't wrap view implicitly, because it'll lead to closures... 
-                          WithCmd[&T](Msg, &T) upd, loc http, loc static,
+                          &T(Msg, &T) upd, loc http, loc static,
                           Subs[&T] subs = noSubs, str root = "root")
   = app(wrapModel(model, upd), view, debugUpdate, http, static,
         subs = wrapSubs(subs), root = root); 
@@ -29,9 +29,9 @@ App[DebugModel[&T]] debug(WithCmd[&T]() model,
 Subs[DebugModel[&T]] wrapSubs(Subs[&T] subs) 
   = list[Sub](DebugModel[&T] m) { return mapSubs(Msg::sub, m.models[m.current], subs); };
 
-WithCmd[DebugModel[&T]] wrapModel(WithCmd[&T]() model, WithCmd[&T](Msg, &T) upd) 
-  = WithCmd[DebugModel[&T]]() {
-      <m, c> = model(); 
+DebugModel[&T] wrapModel(&T() model, &T(Msg, &T) upd) 
+  = DebugModel[&T]() {
+      &T m = mapCmds(Msg::sub, model);
       return withCmd(<0, [m], [], upd>, c);
     };
 
@@ -67,8 +67,7 @@ void debugView(DebugModel[&T] model, void(&T) subView) {
   });
 }
 
-WithCmd[DebugModel[&T]] debugUpdate(Msg msg, DebugModel[&T] m) {
-  Cmd cmd = none();
+DebugModel[&T] debugUpdate(Msg msg, DebugModel[&T] m) {
 
   switch (msg) {
   
@@ -79,7 +78,7 @@ WithCmd[DebugModel[&T]] debugUpdate(Msg msg, DebugModel[&T] m) {
       m.current = m.current > 0 ? m.current - 1 : m.current;
       
     case sub(Msg s): {
-      <newModel, cmd> = mapCmd(Msg::sub, s, m.models[m.current], m.update);
+      newModel = mapCmds(Msg::sub, s, m.models[m.current], m.update);
       m.models += [newModel];
       m.messages += [msg];
       m.current = size(m.models) - 1;
@@ -89,6 +88,7 @@ WithCmd[DebugModel[&T]] debugUpdate(Msg msg, DebugModel[&T] m) {
       m.current = v;
   }
   
-  return withCmd(m, cmd);
+  return m;
+  
 }
 

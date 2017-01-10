@@ -16,20 +16,21 @@ data Msg
 App[Model] randomApp()
   = app(init, view, update, |http://localhost:9098|, |project://salix/src|); 
 
-WithCmd[Model] init() = noCmd(<1>);
+Model init() = <1>;
 
-WithCmd[Model] update(Msg msg, Model m) {
-  Cmd cmd = none();
+Model update(Msg msg, Model m) {
   switch (msg) {
     
     case roll(): 
-      cmd = random(newFace, 1, 6);
+      // side-effects to capture commands at this point.
+      do(random(newFace, 1, 6));
     
     case newFace(int n): 
       m.dieFace = n; 
   
   }
-  return withCmd(m, cmd);
+  
+  return m;
 }
 
 
@@ -48,26 +49,20 @@ App[TwiceModel] twiceRandomApp()
 data TwiceModel 
   = twice(Model model1, Model model2);
 
-WithCmd[TwiceModel] twiceInit() {
-  <m1, _> = init(); // todo: need mapping of cmds, outside of update
-  <m2, _> = init();
- return noCmd(twice(m1, m2));
-}
+TwiceModel twiceInit() = twice(init(), init());
 
 data Msg = sub1(Msg msg) | sub2(Msg msg);
 
-WithCmd[TwiceModel] twiceUpdate(Msg msg, TwiceModel m) {
-  Cmd cmd = none();
-  
+TwiceModel twiceUpdate(Msg msg, TwiceModel m) {
   switch (msg) {
     case sub1(Msg s):
-      <m.model1, cmd> = mapCmd(sub1, s, m.model1, update);
+      m.model1 = mapCmds(sub1, s, m.model1, update);
       
     case sub2(Msg s):
-      <m.model2, cmd> = mapCmd(sub2, s, m.model2, update);
+      m.model2 = mapCmds(sub2, s, m.model2, update);
   }
   
-  return withCmd(m, cmd);
+  return m;
 }
 
 void twiceView(TwiceModel m) {

@@ -98,9 +98,9 @@ private list[Node] pop() {
 
 
 @doc{Initialize viewContext for an initial model, so that cmds are properly mapped.}
-WithCmd[&T] initialize(WithCmd[&T]() init, void(&T) view) {
+tuple[list[Cmd], &T] initialize(&T() init, void(&T) view) {
   initViewContext(view);
-  return init();
+  return execute(init);
 }
 
 @doc{Render turns void returning views for a model &T into an Node node.}  
@@ -169,18 +169,30 @@ data Cmd  // Commands
   = command(str name, Handle handle, map[str,value] args = ())
   | none()
   ;
+ 
+ 
+private list[Cmd] commands = []; 
+
+void do(Cmd cmd) {
+  commands += [cmd];
+}  
+  
+// the pendant of render, but on init and update
+tuple[list[Cmd], &T] execute(Msg msg, &T(Msg, &T) update, &T model) {
+  commands = [];
+  &T newModel = update(msg, model);
+  return <commands, newModel>;
+}
+
+tuple[list[Cmd], &T] execute(&T() init) {
+  commands = [];
+  &T newModel = init();
+  return <commands, newModel>;
+}
   
 @doc{Smart constructors for constructing encoded commands.}
 Cmd random(Msg(int) f, int from, int to)
   = command("random", encode(f), args = ("from": from, "to": to));
-
-alias WithCmd[&T] = tuple[&T model, Cmd command];  
-
-// functions to hide the representation of WithCmd.
-WithCmd[&T] noCmd(&T model) = <model, none()>;
-WithCmd[&T] withCmd(&T model, Cmd cmd) = <model, cmd>;
-WithCmd[&T] withCmds(&T model, list[Cmd] cmds) = <model, batch(cmds)>;
-
 
 /*
  * Event decoders
@@ -240,8 +252,11 @@ private &T withMapper(Msg(Msg) f, &T() block) {
 list[Sub] mapSubs(Msg(Msg) f, &T t, list[Sub](&T) subs) 
   = withMapper(f, list[Sub]() { return subs(t); });
 
-tuple[&T,Cmd] mapCmd(Msg(Msg) f, Msg msg, &T t, tuple[&T, Cmd](Msg, &T) upd) 
-  = withMapper(f, tuple[&T, Cmd]() { return upd(msg, t); });
+&T mapCmds(Msg(Msg) f, Msg msg, &T t, &T(Msg, &T) upd) 
+  = withMapper(f, &T() { return upd(msg, t); });
+
+&T mapCmds(Msg(Msg) f, &T() init) 
+  = withMapper(f, init);
 
 @doc{Record mapper to transform messages produced in block according f.}
 void mapView(Msg(Msg) f, &T t, void(&T) block) { 

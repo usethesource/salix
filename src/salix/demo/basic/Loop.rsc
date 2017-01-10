@@ -9,7 +9,10 @@ import List;
 
 alias Model = tuple[int count, list[int] numbers];
 
-WithCmd[Model] init() = withCmd(<100, []>, random(addNumber, 1, 100));
+Model init() {
+  do(random(addNumber, 1, 100));
+  return <100, []>;
+}
 
 App[Model] loopApp()
   = app(init, view, update, |http://localhost:6001|, |project://salix/src|); 
@@ -19,26 +22,25 @@ data Msg
   | updateCount(str x)
   ;
 
-WithCmd[Model] update(Msg msg, Model m) {
-  Cmd cmd = none();
-  
+Model update(Msg msg, Model m) {
+
   switch (msg) {
     case addNumber(int x): {
       if (size(m.numbers) < m.count) {
         m.numbers += [x];
-        cmd = random(addNumber, 1, 100);
+        do(random(addNumber, 1, 100));
       }
     }
     
     case updateCount(str x): {
       m.count = toInt(x);
       m.numbers = m.numbers[0..m.count];
-      cmd = random(addNumber, 1, 100);
+      do(random(addNumber, 1, 100));
     }
       
   }
   
-  return withCmd(m, cmd);
+  return m;
 }
 
 void view(Model m) {

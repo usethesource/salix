@@ -39,8 +39,8 @@ Maybe[start[Controller]] maybeParse(str src) {
   }
 }  
   
-WithCmd[IDEModel] ideInit() {
-  <replModel, replCmd> = initRepl("myXterm", "$ ");
+IDEModel ideInit() {
+  replModel = mapCmds(Msg::repl, REPLModel() { return initRepl("myXterm", "$ "); });
   Mode stmMode = grammar2mode("statemachine", #Controller);
   IDEModel model = <"", nothing(), nothing(), [], "", stmMode, replModel>;
   
@@ -52,7 +52,7 @@ WithCmd[IDEModel] ideInit() {
     }
   }  
  
-  return withCmd(model, replCmd);
+  return model;
 }
 
 list[str] stmComplete(IDEModel model, str prefix) {
@@ -111,7 +111,7 @@ tuple[Msg, str] myEval(str command) {
   if (/goto <state:.*>/ := command) {
     return <gotoState(state), "ok">;
   }
-  return <noOp(), "">;
+  return <noOp(), "nothing">;
 }
 
 
@@ -132,9 +132,8 @@ Next transition(str currentState, str event, start[Controller] ctl) {
   return result;
 } 
 
-WithCmd[IDEModel] ideUpdate(Msg msg, IDEModel model) {
-  Cmd cmd = none();
-  
+IDEModel ideUpdate(Msg msg, IDEModel model) {
+
   list[str] myComplete(str prefix) = stmComplete(model, prefix);
   
   void doTransition(str event) {
@@ -146,7 +145,7 @@ WithCmd[IDEModel] ideUpdate(Msg msg, IDEModel model) {
         }
         if (just(str token) := nxt.token) {
           model.output += [token];
-          cmd = write(noOp(), model.repl.id, "\u001B[31m<token>\u001B[0m\r\n<model.repl.prompt>");
+          do(write(noOp(), model.repl.id, "\b\b\u001B[31m<token>\u001B[0m\r\n<model.repl.prompt>"));
         }
       }
     }
@@ -184,6 +183,8 @@ WithCmd[IDEModel] ideUpdate(Msg msg, IDEModel model) {
     // - not do mapping on repl (this means xtermData enters the parent namespace)
     //   and need ugly default to go to repl update...
     
+    // this is still bad: in Elm the type system would
+    // prevent it even: kid Msg != parent Msg
     case repl(fireEvent(str event)): 
       doTransition(event);
       
@@ -192,12 +193,12 @@ WithCmd[IDEModel] ideUpdate(Msg msg, IDEModel model) {
       
     
     case repl(Msg sub): {
-      <model.repl, cmd> = mapCmd(Msg::repl, sub, model.repl, replUpdate(myEval, myComplete, stmHighlight));
+      model.repl = mapCmds(Msg::repl, sub, model.repl, replUpdate(myEval, myComplete, stmHighlight));
     }
 
   }
   
-  return withCmd(model, cmd);
+  return model;
 }
 
 list[str] mySplit(str sep, str s) {

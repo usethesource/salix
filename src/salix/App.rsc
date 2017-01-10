@@ -18,22 +18,11 @@ data Msg;
 - stop to shutdown the server}
 alias App[&T] = tuple[void() serve, void() stop];
 
-
-WithCmd[&T](Msg, &T) withoutCmd(&T(Msg, &T) update)
-  = WithCmd[&T](Msg m, &T t) { return noCmd(update(m, t)); };
-
-
-@doc{Helper function for apps that don't need commands.}
-App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
-            Subs[&T] subs = noSubs, str root = "root", Parser parser = parseMsg) 
- = app(WithCmd[&T]() { return noCmd(init()); }, 
-    view, withoutCmd(update), http, static, subs = subs, root = root);
-
 @doc{Construct an App over model type &T, providing a view, a model update,
 a http loc to serve the app to, and a location to resolve static files.
 The keyword param root identifies the root element in the html document.}
-App[&T] app(WithCmd[&T]() init, void(&T) view, WithCmd[&T](Msg, &T) update, loc http, loc static, 
-            Subs[&T] subs = noSubs, str root = "root", Parser parser = parseMsg) {
+App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
+            Subs[&T] subs = noSubs, str root = "root", Parser parser = parseMsg) { 
 
   Node asRoot(Node h) = h[attrs=h.attrs + ("id": root)];
 
@@ -42,7 +31,7 @@ App[&T] app(WithCmd[&T]() init, void(&T) view, WithCmd[&T](Msg, &T) update, loc 
   &T currentModel;
   
   
-  Response transition(&T newModel, Cmd cmd) {
+  Response transition(list[Cmd] cmds, &T newModel ) {
     currentModel = newModel;
 
     list[Sub] mySubs = subs(newModel);
@@ -52,7 +41,7 @@ App[&T] app(WithCmd[&T]() init, void(&T) view, WithCmd[&T](Msg, &T) update, loc 
 
     currentView = newView;
     
-    return response(("command": cmd, "subs": mySubs, "patch": myPatch));
+    return response(("commands": cmds, "subs": mySubs, "patch": myPatch));
   }
 
 
@@ -61,8 +50,8 @@ App[&T] app(WithCmd[&T]() init, void(&T) view, WithCmd[&T](Msg, &T) update, loc 
     // initially, just render the view, for the current model.
     if (get("/init") := req) {
       currentView = empty();
-      <model, myCmd> = initialize(init, view);
-      return transition(model, myCmd);
+      <cmds, model> = initialize(init, view);
+      return transition(cmds, model);
     }
     
     
@@ -71,8 +60,8 @@ App[&T] app(WithCmd[&T]() init, void(&T) view, WithCmd[&T](Msg, &T) update, loc 
       //println("Parsing request");
       Msg msg = params2msg(req.parameters, parser);
       println("Processing: <msg>");
-      <newModel, myCmd> = update(msg, currentModel);
-      return transition(newModel, myCmd);
+      <cmds, newModel> = execute(msg, update, currentModel);
+      return transition(cmds, newModel);
     }
     
     // everything else is considered static files.
