@@ -163,10 +163,10 @@ IDEModel ideUpdate(Msg msg, IDEModel model) {
       }  
     }
     
-    // this is bad, but mapping prevents stuff produced in the repl
+    // wrapping this in repl() is bad, but mapping prevents stuff produced in the repl
     // to surface back here; it's really hard to communicate from
     // contained components to parents...
-    case repl(gotoState(str state)): {
+    case repl(parent(gotoState(str state))): {
        if (just(start[Controller] ctl) := model.lastParse) {
          if (salix::demo::ide::StateMachine::State s <- ctl.top.states, "<s.name>" == state) {
            model.currentState = just("<s.name>");
@@ -179,22 +179,21 @@ IDEModel ideUpdate(Msg msg, IDEModel model) {
     // so, 3 options:
     // - multiple cases; maybe this is the least bad... the cases
     //   identify origins of messages.
-    // - cheating with side-effects on model in eval
+    //   this is still bad: in Elm the type system would
+    //   prevent it even: kid Msg != parent Msg
+    
+    // - cheating with side-effects on model in eval (depends on capturing environments)
     // - not do mapping on repl (this means xtermData enters the parent namespace)
     //   and need ugly default to go to repl update...
     
-    // this is still bad: in Elm the type system would
-    // prevent it even: kid Msg != parent Msg
-    case repl(fireEvent(str event)): 
+    case repl(parent(fireEvent(str event))): 
       doTransition(event);
       
-    case fireEvent(str event):
+    case fireEvent(str event): 
       doTransition(event);
-      
-    
-    case repl(Msg sub): {
+
+    case repl(Msg sub): 
       model.repl = mapCmds(Msg::repl, sub, model.repl, replUpdate(myEval, myComplete, stmHighlight));
-    }
 
   }
   

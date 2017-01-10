@@ -169,18 +169,19 @@ data Cmd  // Commands
   = command(str name, Handle handle, map[str,value] args = ())
   ;
  
+// the list of commands generated during a run of init or update.
 private list[Cmd] commands = []; 
 
+// NB: we could encapsulate do in the smart command constructors,
+// but then it will be completely invisible when a command happens.
+// So we let users call do explicitly, as a marker. 
 void do(Cmd cmd) {
   commands += [cmd];
 }  
   
 // the pendant of render, but on init and update
-tuple[list[Cmd], &T] execute(Msg msg, &T(Msg, &T) update, &T model) {
-  commands = [];
-  &T newModel = update(msg, model);
-  return <commands, newModel>;
-}
+tuple[list[Cmd], &T] execute(Msg msg, &T(Msg, &T) update, &T model) 
+  = execute(&T() { return update(msg, model); });
 
 tuple[list[Cmd], &T] execute(&T() init) {
   commands = [];

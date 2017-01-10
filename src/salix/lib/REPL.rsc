@@ -6,8 +6,6 @@ import salix::Core;
 import salix::HTML;
 
 import util::Maybe;
-import util::Reflective;
-import ParseTree;
 import List;
 import IO;
 import String;
@@ -31,22 +29,31 @@ REPLModel initRepl(str id, str prompt) {
 data Msg
   = xtermData(str s)
   | noOp()
+
+  // allow container to capture a message; in a fully typed way this would
+  // make REPLMsg parametric on the parent message typed:
+  //  REPLMsg[&P] = parent(&P msg)
+  // the container would wrap as follows
+  // data Msg = ... | repl(REPLMsg[Msg] arg)
+  
+  | parent(Msg msg) 
   ;
   
-  
 REPLModel replaceLine(REPLModel model, str newLine, Maybe[str](str) hl) {
-  do(writeLine(model, newLine, hl));
+  writeLine(model, newLine, hl);
+  // NB: writeLine needs access to old line, so update after it.
   return model[currentLine=newLine];
 } 
 
-Cmd writeLine(REPLModel model, str newLine, Maybe[str](str) hl) {
+void writeLine(REPLModel model, str newLine, Maybe[str](str) hl) {
   str zap = ( "\r" | it + " " | int _ <- [0..size(model.currentLine) + size(model.prompt)] );
   if (just(str highlighted) := hl(newLine)) {
     newLine = highlighted;
   }
-  return write(noOp(), model.id, "<zap>\r<model.prompt><newLine>");
+  do(write(noOp(), model.id, "<zap>\r<model.prompt><newLine>"));
 }
 
+// repl updater generator (for use in mapCmds)
 REPLModel(Msg, REPLModel) replUpdate(tuple[Msg, str](str) eval, list[str](str) complete, Maybe[str](str) highlight) 
   = REPLModel(Msg msg, REPLModel rm) {
       return replUpdate(eval, complete, highlight, msg, rm);
@@ -55,13 +62,14 @@ REPLModel(Msg, REPLModel) replUpdate(tuple[Msg, str](str) eval, list[str](str) c
 REPLModel replUpdate(tuple[Msg, str](str) eval, list[str](str) complete, Maybe[str](str) highlight, Msg msg, REPLModel model) {
   
   switch (msg) {
+  
     case xtermData(str s): {
       if (s != "\t") {
-        model.cycle = -1;
+        model.cycle = -1; // exit cycle mode
       }
       if (s == "\r") {
         <evalMsg, result> = eval(model.currentLine);
-        do(write(evalMsg, model.id, "\r\n<result>\r\n<model.prompt>"));
+        do(write(parent(evalMsg), model.id, "\r\n<result>\r\n<model.prompt>"));
         model.history += [model.currentLine];
         model.pointer = size(model.history);
         model.currentLine = "";
@@ -100,7 +108,7 @@ REPLModel replUpdate(tuple[Msg, str](str) eval, list[str](str) complete, Maybe[s
       else {
         model.currentLine += s;
         if (just(str x) := highlight(model.currentLine)) {
-          do(writeLine(model, x, highlight));
+          writeLine(model, x, highlight);
         }
         else {
           do(write(noOp(), model.id, s));
@@ -112,14 +120,11 @@ REPLModel replUpdate(tuple[Msg, str](str) eval, list[str](str) complete, Maybe[s
   return model;
 }  
 
+// render a REPL
+void repl(Msg(Msg) f, REPLModel m, str id, value vals...) 
+  = mapView(f, m, repl(id, vals));
 
-void repl(Msg(Msg) f, REPLModel m, str id, value vals...) {
-   mapView(f, m, repl(id, vals));
-}
-
-void(REPLModel) repl(str id, value vals...) {
-  return void(REPLModel m) {
-     xterm(id, [onData(xtermData)] + vals); 
-  };
-}
+// repl view generator (helper)
+void(REPLModel) repl(str id, value vals...) 
+  =  void(REPLModel m) { xterm(id, [onData(xtermData)] + vals); }; 
 
