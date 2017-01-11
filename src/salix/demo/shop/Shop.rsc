@@ -14,6 +14,7 @@ import String;
 import List;
 import IO;
 
+// This app is based on: https://www.mendix.com/tech-blog/making-react-reactive-pursuit-high-performing-easily-maintainable-react-apps/
 
 data Article
   = article(str name, real price, int id, str newName = "", real newPrice = 0.0);
@@ -51,8 +52,8 @@ data Msg
   | newPrice(str price)
   | newName(str name)
   | newArticle()
-  | updateSome()
-  | createLots()
+  | updateSome() // TODO
+  | createLots() // TODO
   ;
 
 int _id = -1;
@@ -156,16 +157,9 @@ void articleView(Model m, Article a, int i) {
   li(() {
     span(a.name);
     button(onClick(addToCart(i)), "\>\>");
-    //p("Article name ");
-    //input(\type("text"), \value(a.newName), onInput(editName(i)));
-    //p("Price (a number) ");
-    //input(\type("text"), \value("<a.newPrice>"), onInput(editPrice(i)));
-    //button(onClick(save(i)), "update");
     span(class("price"), "€ <a.price>"); 
   });
 }
-
-//Article find(int id, Model m) = [ art | Article art <- m.articles, art.id == m.cart[i].id ][0];
 
 void cartView(Model m) {
  div(() {
