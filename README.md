@@ -11,6 +11,8 @@ The concepts described below are shamelessly copied from Elm; this document desc
 
 ### Teaser: a web-based, live IDE for a simple state machine DSL
 
+(Click to open the video)
+
 [![ScreenShot](https://raw.github.com/cwi-swat/salix/master/resources/salix-ide.png)](https://youtu.be/2S9YL8u6Tes)
 
 ### A Counter Application
