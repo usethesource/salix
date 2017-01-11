@@ -243,7 +243,7 @@ Just like views and subscriptions, commands should be mapped whenever components
 
 - [salix::Node](https://github.com/cwi-swat/salix/blob/master/src/salix/Node.rsc): defines the `Node` data type for representing views. Only needed if you define your own attributes or elements. 
 
-- [salix::Diff](https://github.com/cwi-swat/salix/blob/master/src/salix/Diff.rsc), [Patch](https://github.com/cwi-swat/salix/blob/master/src/salix/Patch.rsc): internal modules for diffing and patching `Node`. You should never have to import these modules. 
+- [salix::Diff](https://github.com/cwi-swat/salix/blob/master/src/salix/Diff.rsc), [salix::Patch](https://github.com/cwi-swat/salix/blob/master/src/salix/Patch.rsc): internal modules for diffing and patching `Node`. You should never have to import these modules. 
 
 #### Example programs
 
