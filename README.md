@@ -235,15 +235,15 @@ Just like views and subscriptions, commands should be mapped whenever components
 
 ### Guide to the modules
 
-- `App`: contains the top-level `app` function and `App[&T]` data type.
+- [salix::App](https://github.com/cwi-swat/salix/blob/master/src/salix/App.rsc): defines the top-level `app` function and `App[&T]` data type.
 
-- `HTML`, `SVG`: define all HTML5 resp. SVG elements and attributes as convenient functions. All element functions (such as `div`, `h2`, etc.) accept a variable sequence of `value`s (i.e. they are "vararg" functions). All values can be attributes (as, e.g., produced by `onClick`, `class` etc.). The last value (if any) can also be either a block (of type `void()`), a `Node`, or a plain Rascal value. In the latter case, it's converted to a string and rendered as an HTML text node.  
+- [salix::HTML](https://github.com/cwi-swat/salix/blob/master/src/salix/HTML.rsc), [salix::SVG](https://github.com/cwi-swat/salix/blob/master/src/salix/SVG.rsc): define  HTML5 resp. SVG elements and attributes as convenient functions. All element functions (such as `div`, `h2`, etc.) accept a variable sequence of `value`s (i.e. they are "vararg" functions). All values can be attributes (as, e.g., produced by `onClick`, `class` etc.). The last value (if any) can also be either a block (of type `void()`), a `Node`, or a plain Rascal value. In the latter case, it's converted to a string and rendered as an HTML text node.  
 
-- `Core`: contains the logic of representing and mapping handlers, commands, and subscriptions in such a way that they can be sent to and received from the browser. Import this if you use subscriptions, if you need mapping (see above), or if you're defining your own events, commands or subscriptions. 
+- [salix::Core](https://github.com/cwi-swat/salix/blob/master/src/salix/Core.rsc): contains the logic of representing and mapping handlers, commands, and subscriptions in such a way that they can be sent to and received from the browser. Import this if you use subscriptions, if you need mapping (see above), or if you're defining your own events, commands or subscriptions. 
 
-- `Node`: defines the `Node` data type for representing views. Only needed if you define your own attributes or elements. 
+- [salix::Node](https://github.com/cwi-swat/salix/blob/master/src/salix/Node.rsc): defines the `Node` data type for representing views. Only needed if you define your own attributes or elements. 
 
-- `Diff`, `Patch`: internal modules for diffing and patching `Node`. You should never have to import these modules. 
+- [salix::Diff](https://github.com/cwi-swat/salix/blob/master/src/salix/Diff.rsc), [Patch](https://github.com/cwi-swat/salix/blob/master/src/salix/Patch.rsc): internal modules for diffing and patching `Node`. You should never have to import these modules. 
 
 #### Example programs
 
