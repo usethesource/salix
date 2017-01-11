@@ -33,20 +33,24 @@ function registerCodeMirror(salix) {
 		return jsMode;
 	}
 	
-	salix.Decoders.codeMirrorChange = function (editor, change) {
-		return {type: 'codeMirrorChange', 
-			fromLine: change.from.line, fromCol: change.from.ch,
-			toLine: change.to.line, toCol: change.to.ch,
-			text: change.text.join('\n'),
-			removed: change.removed.join("\n")};
+	salix.Decoders.codeMirrorChange = function (args) {
+		return function (editor, change) {
+			return {type: 'codeMirrorChange', 
+				fromLine: change.from.line, fromCol: change.from.ch,
+				toLine: change.to.line, toCol: change.to.ch,
+				text: change.text.join('\n'),
+				removed: change.removed.join("\n")};
+		};
 	};
 	
-	salix.Decoders.cursorActivity = function (editor) {
-		var position = editor.getCursor();
-		var line = position.line;
-		var token = editor.getTokenAt(position);
-		return  {type: 'cursorActivity', line: line, start: token.start, 
-			end: token.end, string: token.string, tokenType: token.type};
+	salix.Decoders.cursorActivity = function (args) {
+		return function (editor) {
+			var position = editor.getCursor();
+			var line = position.line;
+			var token = editor.getTokenAt(position);
+			return  {type: 'cursorActivity', line: line, start: token.start, 
+				end: token.end, string: token.string, tokenType: token.type};
+		};
 	};
 	
 	function codeMirror(attach, id, attrs, props, events, extra) {

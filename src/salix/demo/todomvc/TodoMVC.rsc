@@ -9,6 +9,8 @@
 module salix::demo::todomvc::TodoMVC
 
 import salix::HTML;
+import salix::Node;
+import salix::Core;
 import salix::App;
 
 import List;
@@ -127,8 +129,9 @@ void viewInput(str task) {
   });
 }
 
+// Ok, this doesn't work as of now...
 Attr onEnter(Msg msg) 
-  = event("keydown", oneKeyCode(13, Msg(int code) { return msg; }));
+  = event("keydown", handler("theKeyCode", encode(msg), args = ("keyCode": 13)));
 
 // VIEW ALL ENTRIES
 

@@ -73,24 +73,34 @@ function registerXTerm(salix) {
 		return nothing();
 	};
 	
-	salix.Decoders.eventData = function (data) {
-		return val2result(data);
+	salix.Decoders.eventData = function (args) {
+		return function (data) {
+			return val2result(data);
+		};
 	}; 
 	
-	salix.Decoders.keyName = function (key, event) {
-		return val2result(key); 
+	salix.Decoders.keyName = function (args) {
+		return function (key, event) {
+			return val2result(key);
+		};
 	};
 		
-	salix.Decoders.startEnd = function (data) {
-		return {type: 'int-int', value1: data.start, value2: data.end}; 
+	salix.Decoders.startEnd = function (args) {
+		return function (data) {
+			return {type: 'int-int', value1: data.start, value2: data.end};
+		};
 	};
 		
-	salix.Decoders.colsRows = function (data) {
-		return {type: 'int-int', value1: data.cols, value2: data.rows}; 
+	salix.Decoders.colsRows = function (args) {
+		return function (data) {
+			return {type: 'int-int', value1: data.cols, value2: data.rows};
+		};
 	};
 		
-	salix.Decoders.ydisp = function (n) {
-		return val2result(n); 
+	salix.Decoders.ydisp = function (args) {
+		return function (n) {
+			return val2result(n);
+		};
 	};
 	
 	function myXterm(attach, id, attrs, props, events, extra) {

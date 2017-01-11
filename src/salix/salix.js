@@ -151,6 +151,9 @@ function Salix(aRootId) {
 	}
 	
 	function makeMessage(handle, data) {
+		if (!data) {
+			return; // TODO: don't encode "not handling the event" by undefined data.
+		}
 		var result = {id: handle.id};
 		if (handle.maps) {
 			result.maps = handle.maps.join(';'); 
@@ -347,14 +350,16 @@ function Salix(aRootId) {
 	
 	
 	function getDecoder(hnd) {
-		return Decoders[hnd.handler.name];
+		return Decoders[hnd.handler.name](hnd.handler.args);
 	}
 	
 	function getHandler(hnd) {
 		var handler = function (event) {
 			event.message = makeMessage(hnd.handler.handle.handle, getDecoder(hnd)(event));
-			event.handler = handler; // used to detect staleness
-			handle(event);
+			if (event.message) {
+				event.handler = handler; // used to detect staleness
+				handle(event);
+			}
 		}
 		return handler;
 	}
@@ -363,14 +368,29 @@ function Salix(aRootId) {
 		return function (arg0, arg1, arg2, arg3) {
 			var event = {}; // simulate ordinary event
 			event.message = makeMessage(hnd.handler.handle.handle, getDecoder(hnd)(arg0, arg1, arg2, arg3))
-			handle(event);
+			if (event.message) {
+				handle(event);
+			}
 		};
 	}
 	
 	var Decoders = {
-			succeed: function (e) { return {type: 'nothing'}; },
-			targetValue: function (e) { return {type: 'string', value: e.target.value}; },
-			targetChecked: function (e) { return {type: 'boolean', value: e.target.checked}; }
+			succeed: function (args) {
+				return function (e) { return {type: 'nothing'}; };
+			},
+			targetValue: function (args) {
+				return function (e) { return {type: 'string', value: e.target.value}; };
+			},
+			targetChecked: function (args) {
+				return function (e) { return {type: 'boolean', value: e.target.checked}; };
+			},
+			theKeyCode: function (args) {
+				return function (e) {
+					if (e.keyCode === args.keyCode) {
+						return {type: 'nothing'};
+					}
+				};
+			}
 	};
 	
 	
