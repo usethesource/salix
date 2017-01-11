@@ -306,6 +306,10 @@ TODO:
 update/view/init function should *never* be called by the programmer,
 but only framework functions (execute, mapCmd, mapView, render).
 
+#### Why only a single, universal Msg type?
+
+TBD
+
 #### How to communicate from child to parent?
 
 
@@ -349,8 +353,7 @@ At the container level, we might have something like this:
           // interpret result 
           
        case repl(Msg sub):
-         model.repl = mapCmds(Msg::repl, sub, model.repl, 
-                         ReplModel(Msg m, ReplModel rm) { return updateRepl(m, rm, eval); });  
+         model.repl = mapCmds(Msg::repl, sub, model.repl, ReplModel(Msg m, ReplModel rm) { return updateRepl(m, rm, eval); });  
      }   
    }
 ```
