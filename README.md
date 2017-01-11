@@ -306,7 +306,12 @@ TBD
 
 #### Why are HTML nodes and commands dealt with implicitly?
 
-Html nodes: better programming experience. Commands: they need to be threaded through and returned from update functions. Rascal does not have syntactic sugar to make this "monadic" style convenient. Since the HTML nodes are produced implicitly anyway, doing commands implicitly is a compatible design choice. Note that nothing of this breaks referential transparency; although under the hood there are some side effects they should be unobservable from the outside.
+Salix view functions are defined as `void(&T)`, and update functions have type `&T(Msg, &T)`. 
+In the first case, HTML nodes are implicitly constructued; in the second case, commands are implicitly collected. 
+
+As mentioned above, the style of view functions, IMHO, leads to a better programming experience in Rascal, since it allows the use of ordinary control-flow constructs when programming views. In a purely functional, expression-oriented style, it would mean to simulate such control-flow using inline `c ? t : e` conditionals or comprehensions; the use of comprehensions puts the conditions at the end (which can be awkward), and requires visually distracting brackets or parentheses, suggesting nestings that are not there (e.g., nested lists will be flattened away).  
+ 
+For commands the story is somewhat similar: they need to be threaded through and returned from update functions. Rascal does not have syntactic sugar to make this "monadic" style convenient. So explicit threading would require annoying boilerplate code to get commands up to the main loop. Since the HTML nodes are produced implicitly anyway, doing commands implicitly is a compatible design choice. Finally, it's part of Rascal's design itself to be a hybrid functional programming language, in the sense that many idioms and constructs look imperative, without breaking referential transparency. Implicit propagation of commands and construction of HTML ties into that hybrid style.
 
 The effects of views (in terms of DOM construction) and update functions (in terms of generated commands) are captured by the following two functions: 
 
