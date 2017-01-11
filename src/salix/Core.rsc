@@ -38,10 +38,10 @@ data Handle
  * Encoding/decoding
  */
  
-// the "current" top-level view; set by render
+// the "current" top-level view; set by render and initialize
 private value viewContext; 
 
-// a bidirectional map from values (functions) to ints, with an id counter.
+// a bidirectional map from values (functions/Msg) to ints, with an id counter.
 alias Encoding = tuple[int id, map[int, value] from, map[value, int] to]; 
 
 alias RenderState = map[value viewContext, Encoding encoding];
@@ -120,8 +120,7 @@ Node render(&T model, void(&T) block) {
   initViewContext(block);
   push([]); 
   block(model);
-  // TODO: throw exception if top is empty or
-  // size > 1
+  // TODO: assert top is not empty and size == 1
   return pop()[0];
 }
 
@@ -161,7 +160,7 @@ void _text(value v) = add(txt("<v>")); // TODO: HTML encode.
  */
 
  
-@doc{Subs are like events: they are sent to JS, and Results are sent back.}
+@doc{Subs are like events: they are sent to JS, and messages are sent back.}
 data Sub // Subscriptions
   = subscription(str name, Handle handle, map[str, value] args = ())
   ;
@@ -185,7 +184,7 @@ private list[Cmd] commands = [];
 
 // NB: we could encapsulate do in the smart command constructors,
 // but then it will be completely invisible when a command happens.
-// So we let users call do explicitly, as a marker. 
+// So we let users call `do` explicitly, as a visual cue. 
 void do(Cmd cmd) {
   commands += [cmd];
 }  

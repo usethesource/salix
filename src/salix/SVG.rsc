@@ -82,10 +82,6 @@ void stop(value vals...) = build(vals, _stop);
 
 // Graphics elements
 
-/* The circle element is an SVG basic shape, used to create circles based on
-a center point and a radius.
-    circle [ cx "60", cy "60", r "50" ] []
-*/
 void circle(value vals...) = build(vals, _circle);
 void ellipse(value vals...) = build(vals, _ellipse);
 void image(value vals...) = build(vals, _image);
@@ -93,11 +89,6 @@ void line(value vals...) = build(vals, _line);
 void path(value vals...) = build(vals, _path);
 void polygon(value vals...) = build(vals, _polygon);
 
-/*| The polyline element is an SVG basic shape, used to create a series of
-straight lines connecting several points. Typically a polyline is used to
-create open shapes.
-    polyline [ fill "none", stroke "black", points "20,100 40,60 70,80 100,20" ] []
-*/
 void polyline(value vals...) = build(vals, _polyline);
 void rect(value vals...) = build(vals, _rect);
 void use(value vals...) = build(vals, _use);
@@ -130,10 +121,6 @@ void \filter(value vals...) = build(vals, _filter);
 void script(value vals...) = build(vals, _script);
 void style(value vals...) = build(vals, _style);
 void view(value vals...) = build(vals, _view);
-  
-
-  
-  
   
 // basics  
   
@@ -280,10 +267,6 @@ Node _stop(list[Node] kids, list[Attr] attrs)
 
 // Graphics elements
 
-/* The circle element is an SVG basic shape, used to create circles based on
-a center point and a radius.
-    circle [ cx "60", cy "60", r "50" ] []
-*/
 Node _circle(list[Node] kids, list[Attr] attrs)
   = svgElement("circle", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
@@ -302,11 +285,6 @@ Node _path(list[Node] kids, list[Attr] attrs)
 Node _polygon(list[Node] kids, list[Attr] attrs)
   = svgElement("polygon", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-/* The polyline element is an SVG basic shape, used to create a series of
-straight lines connecting several points. Typically a polyline is used to
-create open shapes.
-    polyline [ fill "none", stroke "black", points "20,100 40,60 70,80 100,20" ] []
-*/
 Node _polyline(list[Node] kids, list[Attr] attrs)
   = svgElement("polyline", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 

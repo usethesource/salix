@@ -22,6 +22,7 @@ import salix::demo::basic::Random;
 
 import salix::lib::CodeMirror;
 
+// combine all models
 alias AllModel = tuple[
   salix::demo::basic::Celsius::Model celsius, 
   salix::demo::basic::Counter::Model counter, 
@@ -30,6 +31,7 @@ alias AllModel = tuple[
   salix::demo::basic::Clock::Model clock
 ];
 
+// wrap all messages
 data Msg
   = celsius(Msg msg)
   | counter(Msg msg)
@@ -71,6 +73,7 @@ void viewAll(AllModel m) {
 }
 
 AllModel editAll(Msg msg, AllModel m) {
+  
   switch (msg) {
     case celsius(Msg msg):
       m.celsius = mapCmds(Msg::celsius, msg, m.celsius, salix::demo::basic::Celsius::update);

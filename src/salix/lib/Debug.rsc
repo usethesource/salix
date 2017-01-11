@@ -40,7 +40,7 @@ Subs[DebugModel[&T]] wrapSubs(Subs[&T] subs)
 DebugModel[&T] wrapModel(&T() model, &T(Msg, &T) upd) 
   = DebugModel[&T]() {
       &T m = mapCmds(Msg::sub, model);
-      return withCmd(<0, [m], [], upd>, c);
+      return <0, [m], [], upd>;
     };
 
 

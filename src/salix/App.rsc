@@ -38,9 +38,7 @@ App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static,
   
   &T currentModel;
   
-  
   Response transition(list[Cmd] cmds, &T newModel ) {
-    currentModel = newModel;
 
     list[Sub] mySubs = subs(newModel);
     
@@ -48,6 +46,7 @@ App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static,
     Patch myPatch = diff(currentView, newView);
 
     currentView = newView;
+    currentModel = newModel;
     
     return response(("commands": cmds, "subs": mySubs, "patch": myPatch));
   }
@@ -55,7 +54,7 @@ App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static,
 
   Response _handle(Request req) {
     
-    // initially, just render the view, for the current model.
+    // initially, just render the view, for the initial model.
     if (get("/init") := req) {
       currentView = empty();
       <cmds, model> = initialize(init, view);

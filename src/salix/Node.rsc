@@ -38,9 +38,6 @@ data Attr
   | null()
   ;
 
-// TODO: keyed elements 
-
-
 @doc{Helper functions to partition list of Attrs into attrs, props and events} 
 map[str,str] attrsOf(list[Attr] attrs) = ( k: v | attr(str k, str v) <- attrs );
 

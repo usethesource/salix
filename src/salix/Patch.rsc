@@ -17,9 +17,9 @@ import String;
 @doc{Patch are positioned at pos in the parent element where
 they originate. This allows sparse/shallow traversal during
 patching: not all kids of an element will have changes, so
-patches for those kids will not end up in the patch at ll.
+patches for those kids will not end up in the patch at all.
 At each level a list of edits can be applied.
-A root patch will have pos - 1.}
+A root patch will have pos = - 1.}
 data Patch
   = patch(int pos, list[Patch] patches = [], list[Edit] edits = [])
   ;
