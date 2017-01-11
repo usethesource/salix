@@ -9,6 +9,10 @@ Salix is Rascal library for developing Web-based GUI programs. It emulates the [
 
 The concepts described below are shamelessly copied from Elm; this document describes merely how they are realized in the context of Rascal.
 
+### Teaser: a web-based, live IDE for a simple state machine DSL
+
+<video controls="controls" width="1188" height="550" name="Video Name" src="http://www.cwi.nl/~storm/salix-ide.mov"></video> 
+
 ### A Counter Application
 
 Salix is best understood through an example. Here we describe a simple counter application.
@@ -270,7 +274,7 @@ An event is defined using the following pattern:
 
 ```rascal
 	Attr <eventName>(Msg(...) something2msg) 
-	  = event("<eventName", handler("<handler>", encode(something2msg));
+	  = event("<eventName>", handler("<handler>", encode(something2msg));
 ```
 
 This code defines an event function named `eventName`, accepting a function to map some event data to a `Msg`. It is defined using the `event` constructor which takes the name of the event and a "handler". Handlers are used to process event data such that it can eventually be fed into the argument function `something2msg`. Handlers thus are specific for such functions. The handler also encapsulates an encoded representation of the function needed to decode the event data.
