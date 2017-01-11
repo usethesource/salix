@@ -1,11 +1,11 @@
 @license{
-  Copyright (c) 2016-2017 CWI
-  All rights reserved. This program and the accompanying materials
-  are made available under the terms of the Eclipse Public License v1.0
-  which accompanies this distribution, and is available at
-  http://www.eclipse.org/legal/epl-v10.html
+  Copyright (c) Tijs van der Storm <Centrum Wiskunde & Informatica>.
+  All rights reserved.
+  This file is licensed under the BSD 2-Clause License, which accompanies this project
+  and is available under https://opensource.org/licenses/BSD-2-Clause.
 }
 @contributor{Tijs van der Storm - storm@cwi.nl - CWI}
+
 module salix::lib::XTerm
 
 import salix::Core;
