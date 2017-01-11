@@ -3,6 +3,8 @@
 
 © Tijs van der Storm [@tvdstorm](https://twitter.com/tvdstorm) 
 
+DISCLAIMER: this very much work in progress; the design may change in signficant ways, especially on the Javascript side of things.  
+
 Salix is Rascal library for developing Web-based GUI programs. It emulates the [Elm Architecture](https://guide.elm-lang.org/architecture/), but since Rascal does not run in the browser (yet), all user code written in Rascal is executed on the server. HTML is sent to the browser and the browser sends messages back to the server, where they are interpreted on the model, to construct the new view. 
 
 The concepts described below are shamelessly copied from Elm; this document describes merely how they are realized in the context of Rascal.
@@ -137,14 +139,6 @@ If we didn't use mapping here, the function `updateTwice` could directly interpr
     }
 ```
     
-##### Why is mapping part of the framework?
-
-You'd think it would easy to realize mapping just using a standard `map` function, or comprehensions. You could just simply transform an embedded function, say of type `Msg(int)` using a transformer `Msg(Msg)`. The transformed function would simply be attached at right position in the `Node` tree, -- nothing special.
-
-Unfortunately, such transformed embedded functions can't be serialized over the wire. That's why they are encoded. When receiving a result, the encoding is used to find the original function again. This requires equality on functions. Function equality in Rascal is tricky: two functions are considered equal if they correspond to the same declaration, or if they are *exactly* the same closure (i.e. created at the same execution point). This basically means that you cannot use inline closures as handlers, because on every render, they will lead to new identities, and hence, spurious event handler updates in the browser.  
-
-The same holds for arguments to the mapping functions. Basically this means that you only nest components that are statically known :-(. For instance, a generic editable-list component won't work, since such a component will nest a statically unknown number of element components.
-
 ### Subscriptions
 
 Subscriptions can be used to listen to events of interest which are not produced by users interacting with the page. Examples include incoming data on Web sockets, or timers. In Salix these are represented by the type `Sub` (defined in `salix::Core`). Currently, there's only one: 
@@ -312,7 +306,9 @@ TBD
 
 #### Why are HTML nodes and commands dealt with implicitly?
 
-Html nodes: better programming experience. Commands: they need to be threaded through and returned from update functions. Rascal does not have syntactic sugar to make this "monadic" style convenient. Since the HTML nodes are produced implicitly anyway, doing commands implicitly is a compatible design choice. Note that nothing of this breaks referential transparency; although under the hood there are some side effects they should be unobservable from the outside. 
+Html nodes: better programming experience. Commands: they need to be threaded through and returned from update functions. Rascal does not have syntactic sugar to make this "monadic" style convenient. Since the HTML nodes are produced implicitly anyway, doing commands implicitly is a compatible design choice. Note that nothing of this breaks referential transparency; although under the hood there are some side effects they should be unobservable from the outside.
+
+The effects of views (in terms of DOM construction) and update functions (in terms of generated commands) are captured by the following two functions: 
 
 ```rascal
    // turn a message, update function and current model into new model + list of commands
@@ -321,19 +317,32 @@ Html nodes: better programming experience. Commands: they need to be threaded th
    // render a model through a view function to obtain a Node
    Node render(&T model, void(&T) view);
 ```
+The function `execute` creates an updated model including a list of generated commands. The function `render` turns a `void` view function in a `Node` structure for some model. Both are called by the top-level `app` function; you should probably never have to call them yourself, except if you'd like to inspect nodes or commands for debugging purposes.  
 
-TODO:
-update/view/init function should *never* be called by the programmer,
-but only framework functions (execute, mapCmd, mapView, render).
+The current design leads to the following rule of thumb for the application programmer: `update`, `init` or `view` functions should *never* be called directly. As soon as you call  do this, you're bound to break important invariants maintained by the framework.
+
+#### Why is mapping part of the framework?
+
+You'd think it would easy to realize mapping just using a standard `map` function, or comprehensions. You could just simply transform an embedded function, say of type `Msg(int)` using a transformer `Msg(Msg)`. The transformed function would simply be attached at right position in the `Node` tree, -- nothing special.
+
+Unfortunately, such transformed embedded functions can't be serialized over the wire. That's why they are encoded. When receiving a result, the encoding is used to find the original function again. This requires equality on functions. Function equality in Rascal is tricky: two functions are considered equal if they correspond to the same declaration, or if they are *exactly* the same closure (i.e. created at the same execution point). This basically means that you cannot use inline closures as handlers, because on every render, they will lead to new identities, and hence, spurious event handler updates in the browser.  
+
+The same holds for arguments to the mapping functions. Basically this means that you only nest components that are statically known :-(. For instance, a generic editable-list component won't work, since such a component will nest a statically unknown number of element components.
+
 
 #### Why only a single, universal Msg type?
 
-TBD
+In Elm, the type for nodes and attributes is parametric on the application defined message type. This adds another level of additional type checking: you can't simply nested HTML generated for one component inside another, because their message types won't match. The type system thus enforces "mapping". Furthermore, the update functions can be checked for completeness, since there's no overlap between constructors from one message type and another. 
+
+In Salix, I've opted to not make the node and attribute types parametric, since the generics of Rascal are rather verbose. All messages are thus represented by the universal `Msg` type. Rascal supports extension of algebraic data types, so each component will simply add their message constructors as they see fit. Note however, that the application programmer has a slightly bigger obligation to make sure that mapping is performed where needed, and that all (relevant) messages are handled correctly.  
 
 #### How to communicate from child to parent?
 
+Whenever a component is nested inside another one, the mapping of command and event messages ensures that messages created in a child component will be routed back to that very same child component. Sometimes, however, you'd like to communicate message *up*, because the responsibility of handling them lies outside the local level.
+ 
+Here's an example. Imagin a read-eval-print-loop (REPL) component showing a commandline where commands can be entered. The REPL is in charge of maintaining history, printing the prompt, interpreting key strokes etc. Whenever the user presses enter however, some command or expression needs to be evaluated, but this is not the responsibility of the REPL itself: the effect of evaluation depends on what the REPL is used for, probably defined in its container. 
 
-Example: REPL component showing a commandline where commands can be entered etc. The repl is in charge of maintaining history, printing the prompt, interpreting key strokes etc. Whenever the user presses enter however, some command or expression needs to be evaluated, but this is not the responsibility of the REPL itself: the effect of evaluation depends on what the REPL is used for. One solution is to pass down an `eval` function to the `update` function of the REPL component. Whenever the user now presses enter, the REPL will call eval, and print out the result at the command line. This is only half the story however: often the evaluation of a command also requires some domain-specific effect outside the REPL itself. How do we get it there? We can't simply trigger messages from the REPL, since nesting the REPL in some context using mapping  will make them "local" to the REPL.
+Part of the solution is to pass down an `eval` function to the `update` function of the REPL component. Whenever the user now presses enter, the REPL will call that `eval` function, and print out the result at the command line. This is only half the story however: often the evaluation of a command also requires some domain-specific effect outside the REPL itself. How do we get it there? We can't simply trigger messages from the REPL, since nesting the REPL in some context using mapping will make them "local" to the REPL.
 
 A solution is to model such child-parent communication through dedicated message constructors which are to be intercepted by the container. In our simplified REPL example, let's say we have the following update function which receives an additional `eval` function as a parameter. This eval function returns a parent-level message encapsulating what needs to be done upon command evaluation.
 
@@ -352,7 +361,7 @@ A solution is to model such child-parent communication through dedicated message
     }
 ```
 
-Whenever the user enters a command (`enter(str)`), the REPL responds by evaluating the command and writing ok to the command line. The command `write` in turn triggers the message returned by `eval` wrapped in the `parent` constructor.
+Whenever the user enters a command (`enter(str)`), the REPL responds by evaluating the command and writing ok to the command line. The command `write` in turn triggers the message returned by `eval` wrapped in the `parent` constructor. The `parent` constructor here functions as the dedicated *up* message constructor.
 
 At the container level, we might have something like this:
 
@@ -378,15 +387,5 @@ At the container level, we might have something like this:
    }
 ```
 
-The first key thing here is that eval is passed to `updateRepl` using an anonymous function. So eval is communicated *down*. Second, the function `updateMain` intercepts the `parent` `repl` message by pattern matching on `msg`, in this case only intercepting the `result(str)` message. Because this case comes before the normal `repl` message handling, it will prevent the REPL from handling a message it does not know about. 
- 
-
-
-
-
-
-
-
-
-TODO: `parent` constructors.
+The first key thing to note here, is that eval is passed to `updateRepl` using an anonymous function. So eval is communicated *down*. Second, the function `updateMain` intercepts the `parent` `repl` message by pattern matching on `msg`, in this case only intercepting the `result(str)` message. Because this case comes before the normal `repl` message handling, it will prevent the REPL from handling a message it does not know about (`result(str)`). 
 
