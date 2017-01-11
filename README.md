@@ -3,9 +3,9 @@
 
 © Tijs van der Storm [@tvdstorm](https://twitter.com/tvdstorm) 
 
-DISCLAIMER: this very much work in progress; the design may change in signficant ways, especially on the Javascript side of things.  
+DISCLAIMER: this very much work in progress; the design may change in significant ways, especially on the Javascript side of things.  
 
-Salix is Rascal library for developing Web-based GUI programs. It emulates the [Elm Architecture](https://guide.elm-lang.org/architecture/), but since Rascal does not run in the browser (yet), all user code written in Rascal is executed on the server. HTML is sent to the browser and the browser sends messages back to the server, where they are interpreted on the model, to construct the new view. 
+Salix is Rascal library for developing Web-based GUI programs. It emulates the [Elm Architecture](https://guide.elm-lang.org/architecture/), but since Rascal does not run in the browser (yet), all user code written in Rascal is executed on the server. HTML patches are sent to the browser and the browser sends messages back to the server, where they are interpreted on the model, to construct the new view. 
 
 The concepts described below are shamelessly copied from Elm; this document describes merely how they are realized in the context of Rascal.
 
@@ -98,7 +98,7 @@ Components encapsulate their own models and sets of messages. In order to nest c
 
 As an example, let's consider an app that contains the counter app twice. Clicking increment or decrement on either of the counters should not affect the other. Here's how mapping solves this problem.
 
- ```rascal
+```rascal
     import Counter;
     import salix::HTML;
     
@@ -298,7 +298,7 @@ You can define a new parser in a similar way, this time dispatching on a differe
 
 Salix can be extended with new kinds of subscriptions and commands, similar to how new handlers are defined (e.g., `targetValue`. The only difference is that instead of the `Hnd` type and the `handler` constructor, you now use `Cmd` and `command`, and `Sub` and `subscription` types and constructors, respectively.  
 
-#### Embedding Unmanaged Javascript
+#### Embedding "native" Javascript components
 
 TBD
 
@@ -366,7 +366,7 @@ Whenever the user enters a command (`enter(str)`), the REPL responds by evaluati
 At the container level, we might have something like this:
 
 ```rascal
-   Msg eval(str x) {
+	Msg eval(str x) {
      str y = ...; // do some eval
      return result(y);
    }
@@ -388,4 +388,24 @@ At the container level, we might have something like this:
 ```
 
 The first key thing to note here, is that eval is passed to `updateRepl` using an anonymous function. So eval is communicated *down*. Second, the function `updateMain` intercepts the `parent` `repl` message by pattern matching on `msg`, in this case only intercepting the `result(str)` message. Because this case comes before the normal `repl` message handling, it will prevent the REPL from handling a message it does not know about (`result(str)`). 
+
+So update functions can not only pass arbitrary additional data down the component tree, but they also can intercept messages coming in from above, but headed downwards, for specific purposes. 
+
+#### How are sequences of commands executed?
+
+Lists of commands are executed in sequence, causing one synchronous roundtrip to the server at every step. Commands are furthermore always executed before any (queued) events are handled, because commands might invalidate the UI that was actual at the time of queueing such events. It's perfectly possible to starve the UI by producing an infinite command loop. 
+
+One invocation of a model update function might produce a list of commands. Since every message sent back to the server produces a new model, this means that messages from consecutive commands, will be processed in the context of consecutive models, and *not* on the original model that produced the list of commands in the first place. Worse, if such intermediate steps on the model produce commands themselves, they are executed first, before continuing on the remainder of the original list of commands. 
+
+*Aside*: this describes the current situation of the implementation; I'm unsure of the general semantics of sequences of commands produced by a single `update` step. An obvious way out would be to disallow sequences of commands and only allow a single one per update; but, on the other hand, this seems overly restricted and inflexible. 
+
+#### Why is it slow?
+
+Since Rascal does not run in the browser, all communication between user events and commands and the main application loop requires HTTP communication. Basically, all code in Rascal is executed on the server, including differencing of two views. Patches are sent to the browser which updates the actual DOM accordingly, executes commands (if any), and sends back messages (from commands, subscriptions or user events). Then the cycle repeats.
+
+Moreover, to guarantee that model and view evolve in lock-step, the communication between client and server is *synchronous*. This means, events occurring during processing of a previous event (or command) are queued up until the new view is ready. When processing a queued event, Salix detects if it is still valid with respect to the current view before starting to handle it; if an event turns out to be stale (because its handler has been removed, or it's node is not attached to the DOM anymore), it's discarded. 
+
+Subscription events are treated just like user events, except that there's no way to detect staleness. It is therefore possible to retrieve notifications of a subscription *after* you've stopped subscribing to it.
+
+ 
 
