@@ -261,7 +261,7 @@ Just like views and subscriptions, commands should be mapped whenever components
 
 - [salix::demo::shop::Shop](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/shop/Shop.rsc): a simple shop application (adapted from the [Mobx shop demo](https://www.mendix.com/tech-blog/making-react-reactive-pursuit-high-performing-easily-maintainable-react-apps/)).
 
-- [salix::demo::todomvc::TodoMVC](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/todomvc/TodoMVC.rsc): a 90% implementation of [TodoMVC](http://todomvc.com/). 
+- [salix::demo::todomvc::TodoMVC](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/todomvc/TodoMVC.rsc): a 90% implementation of [TodoMVC](http://todomvc.com/), ported from [TodoMVC in Elm](https://github.com/evancz/elm-todomvc). 
 
 - [salix::demo::ide::IDE](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/ide/IDE.rsc): simple live programming IDE for a state machine DSL; includes embedded [CodeMirror](http://codemirror.net/) and [xterm.js](http://xtermjs.org/) REPL.
 
@@ -411,13 +411,13 @@ One invocation of a model update function might produce a list of commands. Sinc
 
 *Aside*: this describes the current situation of the implementation; I'm unsure of the general semantics of sequences of commands produced by a single `update` step. An obvious way out would be to disallow sequences of commands and only allow a single one per update; but, on the other hand, this seems overly restricted and inflexible. 
 
-#### Why is it slow?
+#### Why is it 'slow'?
 
 Since Rascal does not run in the browser, all communication between user events and commands and the main application loop requires HTTP communication. Basically, all code in Rascal is executed on the server, including differencing of two views. Patches are sent to the browser which updates the actual DOM accordingly, executes commands (if any), and sends back messages (from commands, subscriptions or user events). Then the cycle repeats.
 
-Moreover, to guarantee that model and view evolve in lock-step, the communication between client and server is *synchronous*. This means, events occurring during processing of a previous event (or command) are queued up until the new view is ready. When processing a queued event, Salix detects if it is still valid with respect to the current view before starting to handle it; if an event turns out to be stale (because its handler has been removed, or it's node is not attached to the DOM anymore), it's discarded. 
+Moreover, to guarantee that model and view evolve in lock-step, the communication between client and server is *synchronous*. This means, events occurring during processing of a previous event (or command) are queued up until the new view is ready. When processing a queued event, Salix detects if it is still valid with respect to the current view before starting to handle it; if an event turns out to be stale (because its handler has been removed, or it's node is not attached to the DOM anymore), it's discarded. Subscription events are treated just like user events, except that staleness is currently not detected. It is therefore possible to retrieve notifications of a subscription *after* you've stopped subscribing to it.
 
-Subscription events are treated just like user events, except that staleness is currently not detected. It is therefore possible to retrieve notifications of a subscription *after* you've stopped subscribing to it.
+In my experience however, which is as of yet rather limited I must admit, average performance is just fine for many use cases. For doing things like animations, however, the possible latencies introduced by HTTP might present a problem. Fortunately, there are enough use cases left that don't require that kind of performance. Note further that Salix is not meant for developing *web* applications; it's meant to develop browser-based GUI applications. It's not a goal to serve Salix apps over the WWW; HTTP just represents a transport layer for messages, until Rascal can be run in the browser itself.  
 
  
 
