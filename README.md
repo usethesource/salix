@@ -371,7 +371,7 @@ Whenever the user enters a command (`enter(str)`), the REPL responds by evaluati
 At the container level, we might have something like this:
 
 ```rascal
-	Msg eval(str x) {
+   Msg eval(str x) {
      str y = ...; // do some eval
      return result(y);
    }
@@ -387,7 +387,8 @@ At the container level, we might have something like this:
           // interpret result 
           
        case repl(Msg sub):
-         model.repl = mapCmds(Msg::repl, sub, model.repl, ReplModel(Msg m, ReplModel rm) { return updateRepl(m, rm, eval); });  
+         model.repl = mapCmds(Msg::repl, sub, model.repl, 
+             ReplModel(Msg m, ReplModel rm) { return updateRepl(m, rm, eval); });  
      }   
    }
 ```
@@ -396,7 +397,7 @@ The first key thing to note here, is that eval is passed to `updateRepl` using a
 
 So update functions can not only pass arbitrary additional data down the component tree, but they also can intercept messages coming in from above, but headed downwards, for specific purposes. 
 
-#### How are sequences of commands executed?
+#### How are lists of commands executed?
 
 Lists of commands are executed in sequence, causing one synchronous roundtrip to the server at every step. Commands are furthermore always executed before any (queued) events are handled, because commands might invalidate the UI that was actual at the time of queueing such events. It's perfectly possible to starve the UI by producing an infinite command loop. 
 
@@ -410,7 +411,7 @@ Since Rascal does not run in the browser, all communication between user events 
 
 Moreover, to guarantee that model and view evolve in lock-step, the communication between client and server is *synchronous*. This means, events occurring during processing of a previous event (or command) are queued up until the new view is ready. When processing a queued event, Salix detects if it is still valid with respect to the current view before starting to handle it; if an event turns out to be stale (because its handler has been removed, or it's node is not attached to the DOM anymore), it's discarded. 
 
-Subscription events are treated just like user events, except that there's no way to detect staleness. It is therefore possible to retrieve notifications of a subscription *after* you've stopped subscribing to it.
+Subscription events are treated just like user events, except that staleness is currently not detected. It is therefore possible to retrieve notifications of a subscription *after* you've stopped subscribing to it.
 
  
 
