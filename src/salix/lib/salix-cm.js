@@ -1,9 +1,12 @@
-
 /*
- * CodeMirror sometimes generates 2 events in a row (very quickly)
- * As a result, they're flushed... We need an async event queue, which
- * will never be flushed. This is compatible with the idea that natives
- * manage their own state more or less. 
+ * Copyright (c) 2016-2017 CWI
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *  - Tijs van der Storm - storm@cwi.nl - CWI
  */
 
 function registerCodeMirror(salix) {

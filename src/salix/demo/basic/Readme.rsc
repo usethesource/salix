@@ -7,35 +7,47 @@
 }
 @contributor{Tijs van der Storm - storm@cwi.nl - CWI}
 
-module salix::demo::basic::Counter
+module salix::demo::basic::Readme
 
 import salix::App;
+import salix::Core;
 import salix::HTML;
 
 import String;
 import IO;
 
 
-alias Model = tuple[int count];
+alias Model = int;
 
-Model init() = <0>;
+Model init() = 0;
 
 
-App[Model] counterApp()
-  = app(init, view, update, |http://localhost:7000|, |project://salix/src|);
+App[Model] readmeApp()
+  = app(init, view, update, |http://localhost:7500|, |project://salix/src|
+        subs = counterSubs);
+
+list[Sub] counterSubs(Model m) = [timeEvery(tick, 5000)];
 
 data Msg
   = inc()
   | dec()
+  | tick(int time)
+  | jitter(int j)
   ;
 
-
-Model update(Msg msg, Model m) {
+Model update(Msg msg, Model model) {
   switch (msg) {
-    case inc(): m.count += 1;
-    case dec(): m.count -= 1;
+    case inc(): {
+      model += 1;
+      do(random(jitter, -10, 10));
+    }
+    case dec(): model -= 1;
+      
+    case tick(_): model += 1;
+    
+    case jitter(int j): model += j;
   }
-  return m;
+  return model;
 }
 
 void view(Model m) {
@@ -45,7 +57,7 @@ void view(Model m) {
     
     button(onClick(inc()), "▲");
     
-    div("<m.count>");
+    div("<m>");
     
     button(onClick(dec()), "▼");
 

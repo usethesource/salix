@@ -1,4 +1,16 @@
+@license{
+  Copyright (c) 2016-2017 CWI
+  All rights reserved. This program and the accompanying materials
+  are made available under the terms of the Eclipse Public License v1.0
+  which accompanies this distribution, and is available at
+  http://www.eclipse.org/legal/epl-v10.html
+}
+@contributor{Tijs van der Storm - storm@cwi.nl - CWI}
+
 module salix::Core
+
+// NB: don't `extend` this module, just import;
+// extending will mess up local state defined here.
 
 import salix::Node;
 
