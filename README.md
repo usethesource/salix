@@ -40,7 +40,7 @@ The evaluator (conventionally called `update`) can be implemented as follows:
 	  return model;
 	}
 ```
-Note that the `+=` and `-=` notation seems to suggest we're doing mutation of the model here, this is not the case: Rascal's assignments will create a new model and assign it to the model variable. 
+Note that the `+=` and `-=` notation seems to suggest we're doing in-place mutation of the model here, this is not the case (even if the model is a tuple or constructor): Rascal's assignments will create a new model and assign it to the model variable. 
 
 With the model and the `update` function in place, we can now define a view as follows: 
 
@@ -183,7 +183,7 @@ Finally modify the invocation to `app` as follows:
 	App[Model] counterApp() = app(..., subs = counterSubs);
 ```
       
-If your nested components have subscriptions, you need to map them in the same way as views are mapped, but this time using `mapSubs`. For instance, here's how to map the subscriptions of each counter to combine them into a list of subscriptions of `counterTwice`, assuming the counter app defines its list of subscriptions for a model as `counterSubs(Model m)`:
+If your nested components have subscriptions, you need to map them in the same way that views are mapped, but this time using `mapSubs`. For instance, here's how to map the subscriptions of each counter to combine them into a list of subscriptions of `counterTwice`, assuming the counter app defines its list of subscriptions for a model as `counterSubs(Model m)`:
 
 ```rascal
 	list[Sub] subsTwice(ModelTwice m)
@@ -193,7 +193,7 @@ If your nested components have subscriptions, you need to map them in the same w
 
 ### Commands
 
-Commands are used to trigger side-effects. Instead of simply returning a new model in `update`, this function will now also "do" commands. Commands are values of the type `Cmd`. The helper function `do` can be used to "execute" commands. Whenever you call `do`, however, the commands is merely *scheduled* for execution in the runtime (client). The top-level app function will collect all commands been "done" during `update` (or `init`) and send them over to the client for actual execution.
+Commands are used to trigger side-effects. Instead of simply returning a new model in `update`, this function will now also "do" commands. Commands are values of the type `Cmd`. The helper function `do` can be used to "execute" commands. Whenever you call `do`, however, the command is merely *scheduled* for execution in the runtime (client). The top-level `app` function will collect all commands that have been "done" during `update` (or `init`) and send them over to the client for actual execution.
 
 So, let's add some additional logic to the counter applicaiton: whenever you press the increment button, we'll generate a command to add some random "jitter" to the counter value.
 Here's how:
@@ -307,6 +307,63 @@ update/view/init function should *never* be called by the programmer,
 but only framework functions (execute, mapCmd, mapView, render).
 
 #### How to communicate from child to parent?
+
+
+Example: REPL component showing a commandline where commands can be entered etc. The repl is in charge of maintaining history, printing the prompt, interpreting key strokes etc. Whenever the user presses enter however, some command or expression needs to be evaluated, but this is not the responsibility of the REPL itself: the effect of evaluation depends on what the REPL is used for. One solution is to pass down an `eval` function to the `update` function of the REPL component. Whenever the user now presses enter, the REPL will call eval, and print out the result at the command line. This is only half the story however: often the evaluation of a command also requires some domain-specific effect outside the REPL itself. How do we get it there? We can't simply trigger messages from the REPL, since nesting the REPL in some context using mapping  will make them "local" to the REPL.
+
+A solution is to model such child-parent communication through dedicated message constructors which are to be intercepted by the container. In our simplified REPL example, let's say we have the following update function which receives an additional `eval` function as a parameter. This eval function returns a parent-level message encapsulating what needs to be done upon command evaluation.
+
+```rascal
+   data Msg
+     = enter(str x)
+     ...
+     | parent(Msg msg);
+    
+    ReplModel updateRepl(Msg msg, ReplModel model, Msg(str) eval) {
+      switch (msg) {
+        case enter(str x): 
+          do(write(parent(eval(x)), "ok"));
+        ...
+      }
+    }
+```
+
+Whenever the user enters a command (`enter(str)`), the REPL responds by evaluating the command and writing ok to the command line. The command `write` in turn triggers the message returned by `eval` wrapped in the `parent` constructor.
+
+At the container level, we might have something like this:
+
+```rascal
+   Msg eval(str x) {
+     str y = ...; // do some eval
+     return result(y);
+   }
+
+   data Msg
+     = ...
+     | result(str x)  // result of command eval
+     | repl(Msg msg); // repl messages
+     
+   Model updateMain(Msg msg, Model model) {
+     switch (msg) {
+       case repl(parent(result(str x))):
+          // interpret result 
+          
+       case repl(Msg sub):
+         model.repl = mapCmds(Msg::repl, sub, model.repl, 
+                         ReplModel(Msg m, ReplModel rm) { return updateRepl(m, rm, eval); });  
+     }   
+   }
+```
+
+The first key thing here is that eval is passed to `updateRepl` using an anonymous function. So eval is communicated *down*. Second, the function `updateMain` intercepts the `parent` `repl` message by pattern matching on `msg`, in this case only intercepting the `result(str)` message. Because this case comes before the normal `repl` message handling, it will prevent the REPL from handling a message it does not know about. 
+ 
+
+
+
+
+
+
+
 
 TODO: `parent` constructors.
 
