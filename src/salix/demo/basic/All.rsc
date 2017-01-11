@@ -91,5 +91,5 @@ AllModel editAll(Msg msg, AllModel m) {
       m.clock = mapCmds(Msg::clock, msg, m.clock, salix::demo::basic::Clock::update);
   }
   
-  return withCmd(m, cmd);
+  return m;
 }
