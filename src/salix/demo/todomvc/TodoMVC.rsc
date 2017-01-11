@@ -19,6 +19,8 @@ import List;
  * - persistence
  * - routing?
  * - keyed elements
+ *
+ * Note: directly ported from todomvc in elm (https://github.com/evancz/elm-todomvc)
  */
 
 // The full application state of our todo app.
@@ -49,13 +51,11 @@ data Msg
   | changeVisibility(str filt)
   ;
 
-// TODO: we don't have commands yet.
-
 Msg(str) updateEntry(int id) = Msg(str x) { return updateEntry(id, x); };
 
 Model update(Msg msg, Model model) {
   switch (msg) {
-    case update(noOp()) : 
+    case noOp() : 
       ;
       
     case add(): {
