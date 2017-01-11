@@ -245,6 +245,26 @@ Just like views and subscriptions, commands should be mapped whenever components
 
 - `Diff`, `Patch`: internal modules for diffing and patching `Node`. You should never have to import these modules. 
 
+#### Example programs
+
+- [salix::demo::basic::Celsius](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/basic/Celsius.rsc): celsius to fahrenheit converter; demonstrates `onInput`.
+
+- [salix::demo::basic::Counter](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/basic/Celsius.rsc): increase and decrease a counter; demonstrates `onClick`.
+
+- [salix::demo::basic::Random](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/basic/Random.rsc): random dice; demonstrates commands.
+
+- [salix::demo::basic::Loop](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/basic/Loop.rsc): run loops via commands; pathological example of commands.
+
+- [salix::demo::basic::Clock](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/basic/Clock.rsc): clock using SVG; demonstrates subscriptions.
+
+- [salix::demo::basic::All](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/basic/All.rsc): combines all previous (basic) demos; demonstrates nesting of components.
+
+- [salix::demo::shop::Shop](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/shop/Shop.rsc): a simple shop application (adapted from the [Mobx shop demo](https://www.mendix.com/tech-blog/making-react-reactive-pursuit-high-performing-easily-maintainable-react-apps/)).
+
+- [salix::demo::todomvc::TodoMVC](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/todomvc/TodoMVC.rsc): a 90% implementation of [TodoMVC](http://todomvc.com/). 
+
+- [salix::demo::ide::IDE](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/ide/IDE.rsc): simple live programming IDE for a state machine DSL; includes embedded [CodeMirror](http://codemirror.net/) and [xterm.js](http://xtermjs.org/) REPL.
+
 
 ### Extending the Framework
 
