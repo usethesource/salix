@@ -19,6 +19,7 @@ private salix::Node::Node node2node(lang::xml::DOM::Node n) {
       list[salix::Node::Node] nodes = [ node2node(kid) | lang::xml::DOM::Node kid <- kids, attribute(_, _, _) !:= kid ];
       return svgElement(name, nodes, attrs, (), ());
     } 
+    
     case charData(str text):
       return txt(text);
       
@@ -30,6 +31,9 @@ private salix::Node::Node node2node(lang::xml::DOM::Node n) {
       
     case charRef(int code):
       return txt("&#<code>;");
+      
+    case comment(_):
+      return txt("");
       
     default:
       throw "Unsupported node: <n>";     
