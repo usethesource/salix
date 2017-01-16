@@ -57,7 +57,7 @@ Msg(str) updateEntry(int id) = Msg(str x) { return updateEntry(id, x); };
 
 Model update(Msg msg, Model model) {
   switch (msg) {
-    case noOp() : 
+    case noOp(): 
       ;
       
     case add(): {
@@ -86,7 +86,7 @@ Model update(Msg msg, Model model) {
       model.entries = [ e | Entry e <- model.entries, e.id != id ];
        
     case deleteComplete():
-      model.entries =  [ e | e <- model.entries, !e.completed ];
+      model.entries =  [ e | Entry e <- model.entries, !e.completed ];
 
     case check(int id, bool isCompleted):
       if (int i <- [0..size(model.entries)], model.entries[i].id == id) {
@@ -94,7 +94,7 @@ Model update(Msg msg, Model model) {
       }
       
     case checkAll(bool isCompleted): 
-      model.entries= [ e[completed=isCompleted] | Entry e <- model.entries ];
+      model.entries = [ e[completed=isCompleted] | Entry e <- model.entries ];
   
     case changeVisibility(str visibility):
       model.visibility = visibility;
@@ -129,7 +129,6 @@ void viewInput(str task) {
   });
 }
 
-// Ok, this doesn't work as of now...
 Attr onEnter(Msg msg) 
   = event("keydown", handler("theKeyCode", encode(msg), args = ("keyCode": 13)));
 
@@ -157,7 +156,7 @@ void viewEntries(str visibility, list[Entry] entries) {
     label(\for("toggle-all"), "Mark all as complete");
   
     ul(class("todo-list"), () {
-      for (e <- entries, isVisible(e)) {
+      for (Entry e <- entries, isVisible(e)) {
         viewEntry(e);
       }
     });
@@ -167,12 +166,6 @@ void viewEntries(str visibility, list[Entry] entries) {
 }
 
 // VIEW INDIVIDUAL ENTRIES
-
-//viewKeyedEntry : Entry -> ( String, void Msg )
-//viewKeyedEntry todo =
-//    ( toString todo.id, lazy viewEntry todo )
-//
-
 
 void viewEntry(Entry todo) {
   li(classList(<"completed", todo.completed>, <"editing", todo.editing>), () {
@@ -238,10 +231,11 @@ void infoFooter() {
     p(() {
       text("Written by ");
       a(href("http://www.cwi.nl~/storm"), "Tijs van der Storm");
-      text(", transcribed from Evan\'s version in Elm");
+      text(", transcribed from ");
+      a(href("https://github.com/evancz/elm-todomvc"), "Evan\'s version in Elm");
     });
     p(() {
-      text("Based ");
+      text("Based on ");
       a(href("http://todomvc.com"), "TodoMVC");
     });
   });

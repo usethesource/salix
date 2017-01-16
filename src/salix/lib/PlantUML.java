@@ -1,0 +1,37 @@
+package salix.lib;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
+
+import org.rascalmpl.interpreter.utils.RuntimeExceptionFactory;
+import org.rascalmpl.value.IString;
+import org.rascalmpl.value.IValueFactory;
+
+import net.sourceforge.plantuml.FileFormat;
+import net.sourceforge.plantuml.FileFormatOption;
+import net.sourceforge.plantuml.SourceStringReader;
+
+public class PlantUML {
+
+	private IValueFactory vf;
+	
+	public PlantUML(IValueFactory factory) {
+		this.vf = factory;
+	}
+	
+	public IString uml2svg(IString src) {
+		String source = src.getValue();
+		SourceStringReader reader = new SourceStringReader(source);
+		final ByteArrayOutputStream os = new ByteArrayOutputStream();
+		// Write the first image to "os"
+		try {
+			reader.generateImage(os, new FileFormatOption(FileFormat.SVG));
+			os.close();
+			return vf.string(new String(os.toByteArray(), Charset.forName("UTF-8")));
+
+		} catch (IOException e) {
+			throw RuntimeExceptionFactory.io(vf.string(e.getMessage()), null, null);
+		}
+	}
+}
