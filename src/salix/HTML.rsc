@@ -351,7 +351,7 @@ Attr onSubmit(Msg msg) = event("submit", succeed(msg));
 Attr onBlur(Msg msg) = event("blur", succeed(msg));
 Attr onSubmit(Msg msg) = event("focus", succeed(msg));
 Attr onInput(Msg(str) f) = event("input", targetValue(f)); 
-Attr onCheck(Msg(bool) f) = event("check", targetChecked(f));
+Attr onCheck(Msg(bool) f) = event("change", targetChecked(f));
 
   
 @doc{Smart constructors for constructing encoded event decoders.}
