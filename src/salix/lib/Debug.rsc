@@ -37,7 +37,7 @@ App[DebugModel[&T]] debug(&T() model,
 Subs[DebugModel[&T]] wrapSubs(Subs[&T] subs) 
   = list[Sub](DebugModel[&T] m) { return mapSubs(Msg::sub, m.models[m.current], subs); };
 
-DebugModel[&T] wrapModel(&T() model, &T(Msg, &T) upd) 
+DebugModel[&T]() wrapModel(&T() model, &T(Msg, &T) upd) 
   = DebugModel[&T]() {
       &T m = mapCmds(Msg::sub, model);
       return <0, [m], [], upd>;
