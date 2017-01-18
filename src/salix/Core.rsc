@@ -42,7 +42,8 @@ data Handle
 private value viewContext; 
 
 // a bidirectional map from values (functions/Msg) to ints, with an id counter.
-alias Encoding = tuple[int id, map[int, value] from, map[value, int] to]; 
+// the closures map is use to implement sharing of anonymous functions created through `partial`.
+alias Encoding = tuple[int id, map[int, value] from, map[value, int] to, map[int, value] closures]; 
 
 alias RenderState = map[value viewContext, Encoding encoding];
 
@@ -54,7 +55,7 @@ private void initViewContext(void(&T) view) {
   // might change the encoding table during `update`.
   value x = view; // workaround bug.
   if (x notin state) {
-    state[x] = <0, (), ()>;
+    state[x] = <0, (), (), ()>;
   }
 }
  
@@ -69,6 +70,30 @@ private int _encode(value x) {
   }
   return enc.to[x];
 }
+
+private &T(&V) _partial(list[value] key, &T(&V) closure) {
+  int h = _encode(key);
+  if (h notin state[viewContext].closures) {
+    state[viewContext].closures[h] = closure; 
+  }
+  if (&T(&V) f := state[viewContext].closures[h]) {
+    return f;
+  }
+  assert false: "couldn\'t find closure";
+}
+
+&T(&V) partial(&T(&U0, &V) f, &U0 u0) 
+  = _partial([f, u0], &T(&V v) { return f(u0, v); });
+  
+&T(&V) partial(&T(&U0, &U1, &V) f, &U0 u0, &U1 u1) 
+  = _partial([f, u0, u1], &T(&V v) { return f(u0, u1, v); });
+   
+&T(&V) partial(&T(&U0, &U1, &U2, &V) f, &U0 u0, &U1 u1, &U2 u2) 
+  = _partial([f, u0, u1, u2], &T(&V v) { return f(u0, u1, u2, v); });
+   
+&T(&V) partial(&T(&U0, &U1, &U2, &U3, &V) f, &U0 u0, &U1 u1, &U2 u2, &U3 u3) 
+  = _partial([f, u0, u1, u2], &T(&V v) { return f(u0, u1, u2, u3, v); }); 
+
 
 // retrieve the actual function corresponding to a handle identity.
 private &U _decode(int id, type[&U] t) = d
@@ -236,7 +261,7 @@ Msg parseMsg("string", Handle h, map[str,str] p)
   = applyMaps(h, decode(h, #Msg(str))(p["value"]));
 
 Msg parseMsg("boolean", Handle h, map[str,str] p) 
-  = applyMaps(h, decode(h, #Msg(bool))(p["value"] == true));
+  = applyMaps(h, decode(h, #Msg(bool))(p["value"] == "true"));
 
 Msg parseMsg("integer", Handle h, map[str,str] p) 
   = applyMaps(h, decode(h, #Msg(int))(toInt(p["value"])));
