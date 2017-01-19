@@ -139,6 +139,14 @@ tuple[list[Cmd], &T] initialize(&T() init, void(&T) view) {
   return execute(init);
 }
 
+Node render(void() block) {
+  //initViewContext(block);
+  push([]); 
+  block();
+  // TODO: assert top is not empty and size == 1
+  return pop()[0];
+}
+
 @doc{Render turns void returning views for a model &T into an Node node.}  
 Node render(&T model, void(&T) block) {
   //println("Rendering <model> through <block>");
