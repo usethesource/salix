@@ -20,16 +20,20 @@ function registerDagre(salix) {
 		var nodes = extra.nodes;
 		var edges = extra.edges;
 		
-		for (var i = 0; i < nodes.length; i++) {
-			var theNode = nodes[i].gnode;
-			var nodeAttrs = {};
-			nodeAttrs.label = function() {
+		function labelBuilder(label) {
+			return function() {
 				var myDomNode = undefined;
-				salix.build(theNode.label, function(kid) {
+				salix.build(label, function(kid) {
 					myDomNode = kid;
 				});
 				return myDomNode;
 			};
+		}
+		
+		for (var i = 0; i < nodes.length; i++) {
+			var theNode = nodes[i].gnode;
+			var nodeAttrs = {};
+			nodeAttrs.label = labelBuilder(theNode.label);
 			
 			for (var k in theNode.attrs) {
 				if (theNode.attrs.hasOwnProperty(k)) {

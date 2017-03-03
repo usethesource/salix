@@ -42,7 +42,9 @@ Attr arrowheadStyle(map[str,str] styles) = attr("arrowHeadStyle", intercalate(";
 
 //style() is also supported
 
+// https://github.com/d3/d3-3.x-api-reference/blob/master/SVG-Shapes.md#line_interpolate
 Attr lineInterpolate(str interp) = attr("lineInterpolate", interp);
+
 Attr arrowheadClass(str class) = attr("arrowheadClass", class);
 
 

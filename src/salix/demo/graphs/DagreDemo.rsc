@@ -3,6 +3,7 @@ module salix::demo::graphs::DagreDemo
 import salix::App;
 import salix::HTML;
 import salix::lib::Dagre;
+import IO;
 
 alias Model = tuple[int clicks, rel[str, str] graph];
 
@@ -28,9 +29,11 @@ void view(Model m) {
     
     dagre("myGraph", (N n, E e) {
       for (str x <- m.graph<0> + m.graph<1>) {
+        println("x = <x>");
         n(x, fill("#fff"), shape("ellipse"), () { // todo: allow lists of things, not just a single elt
           div(() {
-	          h3("Here\'s some HTML and a button");
+            println("XXX = <x>");
+	          h3("Here\'s node <x>");
 	          p("A paragraph");
 	          button(onClick(click()), "Click <x>");
 	        });
