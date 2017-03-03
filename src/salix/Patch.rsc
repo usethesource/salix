@@ -33,9 +33,11 @@ data Edit
   | setAttr(str name, str val)
   | setProp(str name, str val)
   | setEvent(str name, Hnd handler)
+  | setExtra(str name, value \value)
   | removeAttr(str name)
   | removeProp(str name)
   | removeEvent(str name)
+  | removeExtra(str name)
   ; 
 
 @doc{Applying a patch to an Node node; only for testing.}
