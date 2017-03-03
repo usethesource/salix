@@ -43,8 +43,6 @@ function registerCharts(salix) {
 		chart.draw(parseDataTable(extra.dataTable), extra.options);
 		charts[id] = chart;
 		
-		// TODO: apply data change incrementally
-
 		var myHandlers = {};
 
 		function patch(edits, attach) {
@@ -58,10 +56,8 @@ function registerCharts(salix) {
 				switch (type) {
 				
 				case 'setExtra':
-					console.log(edit.setExtra);
 					if (edit.setExtra.name === 'dataTable') {
-						console.log("Redrawing");
-						// todo: options can have changed to
+						// todo: options may have changed to
 						patching.draw(parseDataTable(edit.setExtra.value), extra.options);
 					}
 					else if (edit.setExtra.name === 'options') {
