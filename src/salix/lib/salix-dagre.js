@@ -23,18 +23,17 @@ function registerDagre(salix) {
 		for (var i = 0; i < nodes.length; i++) {
 			var theNode = nodes[i].gnode;
 			var nodeAttrs = {};
-			nodeAttrs.label = 
-				function() {
-					var myDomNode = undefined;
-					salix.build(theNode.label, function(kid) {
-						myDomNode = kid;
-					});
-					return myDomNode;
-				};
+			nodeAttrs.label = function() {
+				var myDomNode = undefined;
+				salix.build(theNode.label, function(kid) {
+					myDomNode = kid;
+				});
+				return myDomNode;
+			};
 			
-			for (var k in attrs) {
-				if (attrs.hasOwnProperty(k)) {
-					nodeAttrs[k] = attrs[k];
+			for (var k in theNode.attrs) {
+				if (theNode.attrs.hasOwnProperty(k)) {
+					nodeAttrs[k] = theNode.attrs[k];
 				}
 			}
 			g.setNode(theNode.id, nodeAttrs);
@@ -42,7 +41,7 @@ function registerDagre(salix) {
 		
 		for (var i = 0; i < edges.length; i++) {
 			var theEdge = edges[i].gedge;
-			g.setEdge(theEdge.from, theEdge.to, theEdge.attrs || {label: 'bla'});
+			g.setEdge(theEdge.from, theEdge.to, theEdge.attrs || {});
 		}
 		
 		var _svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
