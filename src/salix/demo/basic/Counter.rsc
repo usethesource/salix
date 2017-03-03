@@ -42,11 +42,11 @@ void view(Model m) {
     
     h2("My first counter app in Rascal");
     
-    button(onClick(inc()), "▲");
+    button(onClick(inc()), "+");
     
     div("<m.count>");
     
-    button(onClick(dec()), "▼");
+    button(onClick(dec()), "-");
 
   });
 }
