@@ -38,20 +38,36 @@ function registerCharts(salix) {
 		var div = document.createElement('div');
 		attach(div);
 
+		
 		var chart = new google.visualization[chartType](div);
 		chart.draw(parseDataTable(extra.dataTable), extra.options);
 		charts[id] = chart;
+		
+		// TODO: apply data change incrementally
 
 		var myHandlers = {};
 
 		function patch(edits, attach) {
 			edits = edits || [];
-
+			var patching = charts[id];
+			
 			for (var i = 0; i < edits.length; i++) {
 				var edit = edits[i];
 				var type = salix.nodeType(edit);
 
 				switch (type) {
+				
+				case 'setExtra':
+					console.log(edit.setExtra);
+					if (edit.setExtra.name === 'dataTable') {
+						console.log("Redrawing");
+						// todo: options can have changed to
+						patching.draw(parseDataTable(edit.setExtra.value), extra.options);
+					}
+					else if (edit.setExtra.name === 'options') {
+						console.log("ERROR: options not support yet");
+					}
+					break;
 				
 				case 'replace':
 					delete charts[id];
