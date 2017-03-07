@@ -13,8 +13,9 @@ function registerDagre(salix) {
 	
 	var graphs = {};
 	
-	function dagreGraph(nodes, edges) {
-		var g = new dagreD3.graphlib.Graph().setGraph({});
+	function dagreGraph(nodes, edges, props) {
+		// props are interpreted on the Dagre graph
+		var g = new dagreD3.graphlib.Graph().setGraph(props);
 		
 		function labelBuilder(label) {
 			return function() {
@@ -43,7 +44,7 @@ function registerDagre(salix) {
 			var theEdge = edges[i].gedge;
 			g.setEdge(theEdge.from, theEdge.to, theEdge.attrs || {});
 		}
-		
+
 		return g;
 	}
 	
@@ -54,33 +55,30 @@ function registerDagre(salix) {
 		var nodes = extra.nodes;
 		var edges = extra.edges;
 		
-		var g = dagreGraph(nodes, edges);
+		var g = dagreGraph(nodes, edges, props);
 		
 		var _svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		_svg.id = id;
 		attach(_svg);
-		// todo: these attrs should come from this function.
-		_svg.setAttribute('width', 960);
-		_svg.setAttribute('height', 600);
 		
-
+		// attrs are interpreted on the svg dom
+		for (var k in attrs) {
+			if (attrs.hasOwnProperty(k)) {
+				_svg.setAttribute(k, attrs[k]);
+			}
+		}
+		
 		var svg = d3.select('#' + id),
 	    	svgGroup = svg.append('g');
 		
 		var render = new dagreD3.render();
 		render(svgGroup, g);
 		
-		var xCenterOffset = (svg.attr('width') - g.graph().width) / 2;
-		svgGroup.attr('transform', 'translate(' + xCenterOffset + ', 20)');
-		svg.attr('height', g.graph().height + 40);
-		
 		function patch(edits, attach) {
 			edits = edits || [];
-			// todo: we need to lookup the graph, no?
-			//var patching = charts[id];
-			
 			var newNodes;
 			var newEdges;
+			var rerender = false;
 			
 			for (var i = 0; i < edits.length; i++) {
 				var edit = edits[i];
@@ -88,6 +86,24 @@ function registerDagre(salix) {
 
 				switch (type) {
 				
+				case 'setAttr': 
+					_svg.setAttribute(edit[type].name, edit[type].val);
+					break;
+					
+				case 'removeAttr': 
+					_svg.removeAttribute(edit[type].name);
+					break;
+
+				case 'setProp': 
+					props[edit[type].name] = edit[type].val;
+					rerender = true;
+					break;
+					
+				case 'removeProp': 
+					delete props[edit[type].name];
+					rerender = true;
+					break;
+
 				case 'setExtra':
 					if (edit.setExtra.name === 'nodes') {
 						newNodes = edit.setExtra.value;
@@ -98,25 +114,29 @@ function registerDagre(salix) {
 					break;
 				
 				case 'replace':
-					return salix.build(edit[type].html, attach);
-
+					salix.build(edit[type].html, attach);
+					break;
 				}
 			}
 			
 			if (newNodes && newEdges) {
-				var newG = dagreGraph(newNodes, newEdges);
+				var newG = dagreGraph(newNodes, newEdges, props);
 				nodes = newNodes;
 				edges = newEdges;
 				render(svgGroup, newG);
 			}
 			else if (newNodes) {
-				var newG = dagreGraph(newNodes, edges);
+				var newG = dagreGraph(newNodes, edges, props);
 				nodes = newNodes;
 				render(svgGroup, newG);
 			}
 			else if (newEdges) {
-				var newG = dagreGraph(nodes, newEdges);
+				var newG = dagreGraph(nodes, newEdges, props);
 				edges = newEdges;
+				render(svgGroup, newG);
+			}
+			else if (rerender) { // because of props change
+				var newG = dagreGraph(nodes, edges, props);
 				render(svgGroup, newG);
 			}
 			

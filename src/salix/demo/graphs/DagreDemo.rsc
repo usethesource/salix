@@ -8,16 +8,17 @@ import util::Math;
 import Set;
 import List;
 
-alias Model = tuple[int clicks, rel[str, str] graph];
+alias Model = tuple[int clicks, rel[str, str] graph, str line];
 
 App[Model] graphApp()
   = app(init, view, update, |http://localhost:7002|, |project://salix/src|);
 
-Model init() = <0, {<"a", "b">, <"b", "c">, <"a", "c">}>;
+Model init() = <0, {<"a", "b">, <"b", "c">, <"a", "c">}, "cardinal">;
 
 data Msg
   = addNode()
   | click()
+  | changeEdgeLine(str x)
   ;
 
 
@@ -32,6 +33,10 @@ Model update(Msg msg, Model m) {
       str n2 = nodes[arbInt(size(nodes))];
       m.graph += {<n1, n2>}; 
     }
+    
+    case changeEdgeLine(str x):
+      m.line = x;
+    
   }
   return m;
 }
@@ -44,13 +49,16 @@ void view(Model m) {
     h3("Clicks: <m.clicks>");
     
     button(onClick(addNode()), "Add a node!");
+    button(onClick(changeEdgeLine("cardinal")), "Cardinal");
+    button(onClick(changeEdgeLine("linear")), "Linear");
+    button(onClick(changeEdgeLine("step")), "Step");
+    button(onClick(changeEdgeLine("monotone")), "Monotone");
     
-    dagre("myGraph", (N n, E e) {
+    
+    dagre("myGraph", rankdir("LR"), width(960), height(600), (N n, E e) {
       for (str x <- m.graph<0> + m.graph<1>) {
-        println("x = <x>");
-        n(x, fill("#fff"), shape("ellipse"), () { // todo: allow lists of things, not just a single elt
+        n(x, shape("ellipse"), () { // todo: allow lists of things, not just a single elt
           div(() {
-            println("XXX = <x>");
 	          h3("Here\'s node <x>");
 	          p("A paragraph");
 	          button(onClick(click()), "Click <x>");
@@ -58,7 +66,7 @@ void view(Model m) {
         });
       }
       for (<str x, str y> <- m.graph) {
-        e(x, y, lineInterpolate("cardinal"));
+        e(x, y, lineInterpolate(m.line));
       }
     });    
     

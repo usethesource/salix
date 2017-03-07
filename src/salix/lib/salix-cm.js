@@ -116,7 +116,8 @@ function registerCodeMirror(salix) {
 				switch (type) {
 				
 				case 'replace':
-					return salix.build(edit[type].html, attach);
+					salix.build(edit[type].html, attach);
+					break;
 
 				case 'setProp': 
 					var key = edit[type].name;

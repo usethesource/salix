@@ -47,7 +47,7 @@ function registerCharts(salix) {
 
 		function patch(edits, attach) {
 			edits = edits || [];
-			var patching = charts[id];
+			var patching = charts[id]; // TODO: this is not needed because of capturing data from myCharts.
 			
 			for (var i = 0; i < edits.length; i++) {
 				var edit = edits[i];
@@ -61,13 +61,14 @@ function registerCharts(salix) {
 						patching.draw(parseDataTable(edit.setExtra.value), extra.options);
 					}
 					else if (edit.setExtra.name === 'options') {
-						console.log("ERROR: options not support yet");
+						console.log("ERROR: options not supported yet");
 					}
 					break;
 				
 				case 'replace':
 					delete charts[id];
-					return salix.build(edit[type].html, attach);
+					salix.build(edit[type].html, attach);
+					break;
 
 				}
 			}
