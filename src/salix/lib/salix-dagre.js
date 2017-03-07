@@ -13,12 +13,8 @@ function registerDagre(salix) {
 	
 	var graphs = {};
 	
-	function myDagre(attach, id, attrs, props, events, extra) {
-
+	function dagreGraph(nodes, edges) {
 		var g = new dagreD3.graphlib.Graph().setGraph({});
-
-		var nodes = extra.nodes;
-		var edges = extra.edges;
 		
 		function labelBuilder(label) {
 			return function() {
@@ -48,9 +44,22 @@ function registerDagre(salix) {
 			g.setEdge(theEdge.from, theEdge.to, theEdge.attrs || {});
 		}
 		
+		return g;
+	}
+	
+	function myDagre(attach, id, attrs, props, events, extra) {
+
+		
+		//NB: used down below in patch
+		var nodes = extra.nodes;
+		var edges = extra.edges;
+		
+		var g = dagreGraph(nodes, edges);
+		
 		var _svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		_svg.id = id;
 		attach(_svg);
+		// todo: these attrs should come from this function.
 		_svg.setAttribute('width', 960);
 		_svg.setAttribute('height', 600);
 		
@@ -67,7 +76,11 @@ function registerDagre(salix) {
 		
 		function patch(edits, attach) {
 			edits = edits || [];
-			var patching = charts[id];
+			// todo: we need to lookup the graph, no?
+			//var patching = charts[id];
+			
+			var newNodes;
+			var newEdges;
 			
 			for (var i = 0; i < edits.length; i++) {
 				var edit = edits[i];
@@ -76,6 +89,12 @@ function registerDagre(salix) {
 				switch (type) {
 				
 				case 'setExtra':
+					if (edit.setExtra.name === 'nodes') {
+						newNodes = edit.setExtra.value;
+					}
+					if (edit.setExtra.name === 'edges') {
+						newEdges = edit.setExtra.value;
+					}
 					break;
 				
 				case 'replace':
@@ -83,11 +102,29 @@ function registerDagre(salix) {
 
 				}
 			}
+			
+			if (newNodes && newEdges) {
+				var newG = dagreGraph(newNodes, newEdges);
+				nodes = newNodes;
+				edges = newEdges;
+				render(svgGroup, newG);
+			}
+			else if (newNodes) {
+				var newG = dagreGraph(newNodes, edges);
+				nodes = newNodes;
+				render(svgGroup, newG);
+			}
+			else if (newEdges) {
+				var newG = dagreGraph(nodes, newEdges);
+				edges = newEdges;
+				render(svgGroup, newG);
+			}
+			
 		}
 		
         
-		svgGroup.salix_native = {patch: patch};
-		return svgGroup;
+		_svg.salix_native = {patch: patch};
+		return _svg;
 	}
 	
 	salix.registerNative('dagre', myDagre);
