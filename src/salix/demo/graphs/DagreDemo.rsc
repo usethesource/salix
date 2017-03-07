@@ -68,7 +68,7 @@ void view(Model m) {
     
         
     
-    dagre("myGraph", rankdir("LR"), width(960), height(600), (N n, E e) {
+    dagre(rankdir("LR"), width(960), height(600), (N n, E e) {
       for (str x <- m.graph<0> + m.graph<1>) {
         n(x, shape(m.shape), () { 
           div(() {

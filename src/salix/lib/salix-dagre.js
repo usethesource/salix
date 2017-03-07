@@ -11,8 +11,6 @@
 
 function registerDagre(salix) {
 	
-	var graphs = {};
-	
 	function dagreGraph(nodes, edges, props) {
 		// props are interpreted on the Dagre graph
 		var g = new dagreD3.graphlib.Graph().setGraph(props);

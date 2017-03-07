@@ -6,32 +6,8 @@ import salix::Node;
 
 import IO;
 
-alias N = void(str, list[value]);
-alias E = void(str, str, list[value]);
-
-alias G = void(N, E);
-
-/*
-
-void view() {
-  dagre("myGraph", (N n, E e) {
-     n("a", () {
-       button(onClick(bla()), "Hello");
-     });
-     
-     n("b", ...)
-     
-     e("a", "b");
-     e("b", "c");
-  });
-
-}
-
-
-*/
-
 // SVG *attributes* from salix::SVG can be given to the dagre function and will be put on the SVG container
-// The following props given to the dagre function will be interpreted as props for Dagre layout algo.
+// The following props given to the dagre function will be interpreted as props for Dagre graph layout algo.
 // This means that for now, you can't set props on the SVG dom object, only attributes.
 // Source: https://github.com/cpettitt/dagre/wiki#configuring-the-layout
 
@@ -54,7 +30,6 @@ Attr labelStyle(tuple[str,str] styles...) = attr("labelStyle", intercalate("; ",
 Attr labelStyle(map[str,str] styles) = attr("labelStyle", intercalate("; ", ["<k>: <styles[k]>" | k <- styles ]));
 Attr fill(str color) = attr("fill", color);
 
-
 // Edge attributes (provide to an E function)
 
 // The following ones are from dagre-d3
@@ -62,7 +37,7 @@ Attr arrowheadStyle(tuple[str,str] styles...) = attr("arrowHeadStyle", intercala
 Attr arrowheadStyle(map[str,str] styles) = attr("arrowHeadStyle", intercalate("; ", ["<k>: <styles[k]>" | k <- styles ])); 
 Attr arrowheadClass(str class) = attr("arrowheadClass", class);
 
-// https://github.com/d3/d3-3.x-api-reference/blob/master/SVG-Shapes.md#line_interpolate
+// See here for options: https://github.com/d3/d3-3.x-api-reference/blob/master/SVG-Shapes.md#line_interpolate
 Attr lineInterpolate(str interp) = attr("lineInterpolate", interp);
 
 // And these are from Dagre itself (height and width are also supported).
@@ -75,6 +50,43 @@ Attr labelOffset(int n) = attr("labeloffset", n); // 10  How many pixels to move
 data GNode = gnode(str id, map[str,str] attrs = (), Node label = txt(""));
 data GEdge = gedge(str from, str to, map[str, str] attrs = ());
 
+alias N = void(str, list[value]);
+alias E = void(str, str, list[value]);
+
+alias G = void(N, E);
+
+@doc{
+A function to render Dagre-D3 graphs.
+
+Usage:
+dagre("myGraph", (N n, E e) {
+   n("a", () {
+     button(onClick(clicked()), "Hello");
+   });
+   
+   n("b", ...)
+   
+   e("a", "b");
+   e("b", "c");
+});
+
+The function accepts an graph id (gid) and any number of vals representing
+ - attributes (put on the resulting SVG dom node)
+ - props (put on the Dagre graph object (see above)
+ - or a function of type G; as last argument 
+
+The G function will be called from within `dagre` with two additional functions as arguments, n and e.
+The function n is a node drawing function; e is an edge drawing function. Call these to draw nodes and edges, in
+the body of the provided G function. 
+
+N needs a node id as first argument, and accepts attrs/props and a block or string. 
+If the block is given it is assumed to be a salix view function, the resulting HTML of which will 
+be embedded in the Dagre node. If it's a string it will simply be the node label. 
+Attributes are interpreted as Dagre node attributes; props are ignored.
+
+The E function receives two required node ids to draw an edge. Additionally it accepts
+edge attributes (listed above).  
+}
 void dagre(str gid, value vals...) {
   list[GNode] nodes = [];
   list[GEdge] edges = [];
@@ -102,10 +114,8 @@ void dagre(str gid, value vals...) {
     edges += [myEdge];
   }
   
-  if (vals != []) {
-    if (G g := vals[-1]) {
-      g(n, e);
-    }
+  if (vals != [], G g := vals[-1]) {
+    g(n, e);
   }
 
   list[Attr] myAttrs = [ a | Attr a <- vals ];  
