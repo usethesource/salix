@@ -57,7 +57,7 @@ void view(Model m) {
     
     dagre("myGraph", rankdir("LR"), width(960), height(600), (N n, E e) {
       for (str x <- m.graph<0> + m.graph<1>) {
-        n(x, shape("ellipse"), () { // todo: allow lists of things, not just a single elt
+        n(x, shape("ellipse"), () { 
           div(() {
 	          h3("Here\'s node <x>");
 	          p("A paragraph");

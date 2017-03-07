@@ -47,24 +47,17 @@ Attr acyclicer() = prop("acyclicer", "greedy"); //undefined If set to greedy, us
 Attr ranker(str name) = prop("ranker", name); // network-simplex  Type of algorithm to assigns a rank to each node in the input graph. Possible values: network-simplex, tight-tree or longest-path  network-
 
 
-// Node attributes/props
-
-
-
 // Node rendering attributes (provide to N function)
-// rect, circle, ellipse, diamond
-Attr shape(str name) = attr("shape", name);
+// height/width are reused from SVG; style is also supported 
+Attr shape(str name) = attr("shape", name); // // rect, circle, ellipse, diamond
 Attr labelStyle(tuple[str,str] styles...) = attr("labelStyle", intercalate("; ", ["<k>: <v>" | <k, v> <- styles ]));
 Attr labelStyle(map[str,str] styles) = attr("labelStyle", intercalate("; ", ["<k>: <styles[k]>" | k <- styles ]));
 Attr fill(str color) = attr("fill", color);
 
-//Attr nodeWidth(int w) = attr("
-//node  width 0 The width of the node in pixels.
-//node  height  0 The height of the node in pixels. 
-
-//style() is also supported
 
 // Edge attributes (provide to an E function)
+
+// The following ones are from dagre-d3
 Attr arrowheadStyle(tuple[str,str] styles...) = attr("arrowHeadStyle", intercalate("; ", ["<k>: <v>" | <k, v> <- styles ]));
 Attr arrowheadStyle(map[str,str] styles) = attr("arrowHeadStyle", intercalate("; ", ["<k>: <styles[k]>" | k <- styles ])); 
 Attr arrowheadClass(str class) = attr("arrowheadClass", class);
@@ -72,7 +65,11 @@ Attr arrowheadClass(str class) = attr("arrowheadClass", class);
 // https://github.com/d3/d3-3.x-api-reference/blob/master/SVG-Shapes.md#line_interpolate
 Attr lineInterpolate(str interp) = attr("lineInterpolate", interp);
 
-
+// And these are from Dagre itself (height and width are also supported).
+Attr minLen(int ml) = attr("minlen", "<ml>"); // 1 The number of ranks to keep between the source and target of the edge.
+Attr weight(int w) = attr("weight", "<w>"); //  1 The weight to assign edges. Higher weight edges are generally made shorter and straighter than lower weight edges.
+Attr labelPos(str pos) = attr("labelpos", pos); //  r Where to place the label relative to the edge. l = left, c = center r = right.
+Attr labelOffset(int n) = attr("labeloffset", n); // 10  How many pixels to move the label away from the edge. Applies only when labelpos is l or r.
 
 
 data GNode = gnode(str id, map[str,str] attrs = (), Node label = txt(""));
