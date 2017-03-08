@@ -35,7 +35,9 @@ function registerCharts(salix) {
 	function myCharts(attach, id, attrs, props, events, extra) {
 		var chartType = extra.chartType;
 
+		// todo: attrs and props on this div.
 		var div = document.createElement('div');
+		div.style = 'position: relative;';
 		attach(div);
 
 		
