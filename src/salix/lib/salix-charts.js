@@ -37,7 +37,6 @@ function registerCharts(salix) {
 
 		// todo: attrs and props on this div.
 		var div = document.createElement('div');
-		div.style = 'position: relative;';
 		attach(div);
 
 		

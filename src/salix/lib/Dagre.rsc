@@ -80,9 +80,9 @@ The function n is a node drawing function; e is an edge drawing function. Call t
 the body of the provided G function. 
 
 N needs a node id as first argument, and accepts attrs/props and a block or string. 
-If the block is given it is assumed to be a salix view function, the resulting HTML of which will 
-be embedded in the Dagre node. If it's a string it will simply be the node label. 
-Attributes are interpreted as Dagre node attributes; props are ignored.
+If the block is given it is assumed to be a salix view function, the resulting (single) 
+HTML node of which will  be embedded in the Dagre node. If it's a string it will simply 
+be the node label. Attributes are interpreted as Dagre node attributes; props are ignored.
 
 The E function receives two required node ids to draw an edge. Additionally it accepts
 edge attributes (listed above).  
