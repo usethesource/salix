@@ -6,12 +6,15 @@ import salix::Node;
 import salix::Core;
 
 import lang::json::IO;
+import IO;
 
 data TreeState
   = tstate(bool checked = false, bool disabled = false, bool expanded = false, bool selected = false);
 
+// If id is absent, use text as identifier.
+
 data TreeNode
-  = tnode(str text, list[TreeNode] nodes = [], 
+  = tnode(str text, str id = "", list[TreeNode] nodes = [], 
           str icon = "", str selectedIcon = "", str color = "", str backColor = "", str href = "", bool selectable = true, 
           TreeState state = tstate(), list[str] tags = [], map[str, value] \data = ());
           
@@ -42,22 +45,49 @@ Attr showIcon(bool b) = attr("showIcon", "<b>");
 Attr showTags() = attr("showTags", "true");
 Attr uncheckedIcon(str glyph) = attr("uncheckedIcon", glyph);
 
-Attr onNodeChecked(Msg(TreeNode) tn2msg) = event("nodeChecked", handler("node", encode(tn2msg)));
-Attr onNodeCollapsed(Msg(TreeNode) tn2msg) = event("nodeCollapsed", handler("node", encode(tn2msg)));
-Attr onNodeDisabled(Msg(TreeNode) tn2msg) = event("nodeDisabled", handler("node", encode(tn2msg)));
-Attr onNodeEnabled(Msg(TreeNode) tn2msg) = event("nodeEnabled", handler("node", encode(tn2msg)));
-Attr onNodeExpanded(Msg(TreeNode) tn2msg) = event("nodeExpanded", handler("node", encode(tn2msg)));
-Attr onNodeSelected(Msg(TreeNode) tn2msg) = event("nodeSelected", handler("node", encode(tn2msg)));
-Attr onNodeUnchecked(Msg(TreeNode) tn2msg) = event("nodeUnchecked", handler("node", encode(tn2msg)));
-Attr onNodeUnselected(Msg(TreeNode) tn2msg) = event("nodeUnselected", handler("node", encode(tn2msg)));
-Attr onSearchComplete(Msg(list[TreeNode]) tns2msg) = event("searchComplete", handler("results", encode(tns2msg)));
-Attr onSearchCleared(Msg(list[TreeNode]) tns2msg) = event("searchCleared", handler("results", encode(tns2msg)));
+Attr onNodeChecked(Msg(str) tn2msg) = event("nodeChecked", handler("node", encode(tn2msg)));
+Attr onNodeCollapsed(Msg(str) tn2msg) = event("nodeCollapsed", handler("node", encode(tn2msg)));
+Attr onNodeDisabled(Msg(str) tn2msg) = event("nodeDisabled", handler("node", encode(tn2msg)));
+Attr onNodeEnabled(Msg(str) tn2msg) = event("nodeEnabled", handler("node", encode(tn2msg)));
+Attr onNodeExpanded(Msg(str) tn2msg) = event("nodeExpanded", handler("node", encode(tn2msg)));
+Attr onNodeSelected(Msg(str) tn2msg) = event("nodeSelected", handler("node", encode(tn2msg)));
+Attr onNodeUnchecked(Msg(str) tn2msg) = event("nodeUnchecked", handler("node", encode(tn2msg)));
+Attr onNodeUnselected(Msg(str) tn2msg) = event("nodeUnselected", handler("node", encode(tn2msg)));
+Attr onSearchComplete(Msg(list[str]) tns2msg) = event("searchComplete", handler("results", encode(tns2msg)));
+Attr onSearchCleared(Msg(list[str]) tns2msg) = event("searchCleared", handler("results", encode(tns2msg)));
 
-Msg parseMsg("treeNode", Handle h, map[str, str] p)
-  = applyMaps(h, decode(h, #(Msg(TreeNode)))(fromJSON(#TreeNode, params["node"])));
 
-Msg parseMsg("listOfTreeNode", Handle h, map[str, str] p)
-  = applyMaps(h, decode(h, #(Msg(list[TreeNode])))(fromJSON(#list[TreeNode], params["results"])));
+Msg parseMsg("nodeId", Handle h, map[str, str] p)
+  = applyMaps(h, decode(h, #(Msg(str)))(p["node"]));
+
+// TODO: fix this
+Msg parseMsg("listOfNodeId", Handle h, map[str, str] p)
+  = applyMaps(h, decode(h, #(Msg(list[str])))(p["results"]));
+
+alias T = void(str id, list[value] vals);
+alias TV = void(T);
+
+//void treeView(str id, value vals...) {
+//  list[list[TreeNode]] n = [[]];
+//
+//  void t(str id, value vals...) {
+//     if (void() block := vals[-1]) {
+//       n += [];
+//       block();
+//       n = n[0..-2] + [n[-2] + n[-1][0]]; 
+//     }
+//  }
+//  
+//  if (vals != []) {
+//    if (TV tv := vals[-1]) {
+//      tv(t);
+//    }
+//  }
+//  
+//  build(vals, Node(list[Node] _, list[Attr] attrs) {
+//     return native("treeView", "treeView", attrsOf(attrs), (), eventsOf(attrs), extra = ("data": n[0]));
+//  });
+//}
 
 void treeView(str id, list[TreeNode] tree, value vals...)
   = build(vals, Node(list[Node] _, list[Attr] attrs) {

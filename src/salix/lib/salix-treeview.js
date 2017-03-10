@@ -22,13 +22,43 @@ function registerTreeView(salix) {
 			if (cur.tnode.state) {
 				node.state = cur.tnode.state.tstate;
 			}
+			if (!cur.tnode.id) {
+				node.data = {id: node.text};
+			}
 			tree.push(node);
 		}
 		return tree;
 	}
 	
 	function toTreeNode(node) {
-		// TODO
+		var tn = {tnode: {}};
+		for (var k in node) {
+			if (node.hasOwnProperty(k)) {
+				if (k === 'nodes') {
+					tn.tnode.nodes = [];
+					for (var i = 0; i < node.nodes.length; i++) {
+						tn.tnode.nodes.push(toTreeNode(node.nodes[i]));
+					}
+				}
+				else if (k === 'state') {
+					tn.tnode.state = {tstate: node.state};
+				}
+				else if (k === 'data') {
+					if (node[k].id) {
+						tn.tnode.id = node[k].id;
+					}
+					tn.tnode[k] = node[k];
+				}
+				else if (k === 'text' || k === 'icon'
+						|| k === 'selectedIcon' || k === 'color'
+						|| k === 'backColor' || k === 'href'
+						|| k === 'tags'
+						|| k === 'selectable') {
+					tn.tnode[k] = node[k];
+				}
+			}
+		}
+		return tn;
 	}
 	
 	function toTreeNodes(nodes) {
@@ -40,15 +70,19 @@ function registerTreeView(salix) {
 	}
 	
 	
-	salix.Decoders.treeNode = function (args) {
-		return function (node) {
-			return {type: 'treeNode', node: JSON.stringify(toTreeNode(node))};
+	salix.Decoders.node = function (args) {
+		return function (event, node) {
+			return {type: 'nodeId', node: node.data.id};
 		}
 	};
 	
-	salix.Decoders.listOfTreeNode = function (args) {
-		return function (nodes) {
-			return  {type: 'listOfTreeNode', results: JSON.stringify(toTreeNodes(nodes))};
+	salix.Decoders.results = function (args) {
+		return function (event, nodes) {
+			var nodeIds = [];
+			for (var i = 0; i < nodes.length; i++) {
+				nodeIds.push(nodes[i].data.id);
+			}
+			return  {type: 'listOfNodeId', results: JSON.stringify(toTreeNodes(nodes))};
 		};
 	};
 	
