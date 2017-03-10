@@ -11,62 +11,38 @@
 
 function registerTreeView(salix) {
 	
-	function fromTreeNode(treeNode) {
+	function fromTreeNode(treeNodes) {
 		var tree = [];
-		for (var i = 0; i < treeNode.length; i++) {
-			var cur = treeNode[i];
-			var node = cur.tnode;
-			if (cur.tnode.nodes) {
-				node.nodes = fromTreeNode(cur.tnode.nodes);
+		for (var i = 0; i < treeNodes.length; i++) {
+			var cur = treeNodes[i];
+			var node = {text: cur.tree.text};
+			node.data = {id: cur.tree.text};
+			if (cur.tree.nodes) {
+				node.nodes = fromTreeNode(cur.tree.nodes);
 			}
-			if (cur.tnode.state) {
-				node.state = cur.tnode.state.tstate;
-			}
-			if (!cur.tnode.id) {
-				node.data = {id: node.text};
+			if (cur.tree.attrs) {
+				var attrs = cur.tree.attrs;
+				if (attrs.id) {
+					node.data = {id: attrs.id};
+				}
+				for (var k in attrs) {
+					if (attrs.hasOwnProperty(k)) {
+						if (k === 'checked' || k === 'disabled' ||
+								k === 'expanded' || k === 'selected') {
+							if (!node.state) {
+								node.state = {};
+							}
+							node.state[k] = attrs[k];
+						}
+						else {
+							node[k] = attrs[k];
+						}
+					}
+				}
 			}
 			tree.push(node);
 		}
 		return tree;
-	}
-	
-	function toTreeNode(node) {
-		var tn = {tnode: {}};
-		for (var k in node) {
-			if (node.hasOwnProperty(k)) {
-				if (k === 'nodes') {
-					tn.tnode.nodes = [];
-					for (var i = 0; i < node.nodes.length; i++) {
-						tn.tnode.nodes.push(toTreeNode(node.nodes[i]));
-					}
-				}
-				else if (k === 'state') {
-					tn.tnode.state = {tstate: node.state};
-				}
-				else if (k === 'data') {
-					if (node[k].id) {
-						tn.tnode.id = node[k].id;
-					}
-					tn.tnode[k] = node[k];
-				}
-				else if (k === 'text' || k === 'icon'
-						|| k === 'selectedIcon' || k === 'color'
-						|| k === 'backColor' || k === 'href'
-						|| k === 'tags'
-						|| k === 'selectable') {
-					tn.tnode[k] = node[k];
-				}
-			}
-		}
-		return tn;
-	}
-	
-	function toTreeNodes(nodes) {
-		var result = [];
-		for (var i = 0; i < nodes.length; i++) {
-			result.push(toTreeNode(nodes[i]));
-		}
-		return result;
 	}
 	
 	
@@ -76,15 +52,15 @@ function registerTreeView(salix) {
 		}
 	};
 	
-	salix.Decoders.results = function (args) {
-		return function (event, nodes) {
-			var nodeIds = [];
-			for (var i = 0; i < nodes.length; i++) {
-				nodeIds.push(nodes[i].data.id);
-			}
-			return  {type: 'listOfNodeId', results: JSON.stringify(toTreeNodes(nodes))};
-		};
-	};
+//	salix.Decoders.results = function (args) {
+//		return function (event, nodes) {
+//			var nodeIds = [];
+//			for (var i = 0; i < nodes.length; i++) {
+//				nodeIds.push(nodes[i].data.id);
+//			}
+//			return  {type: 'listOfNodeId', results: JSON.stringify(toTreeNodes(nodes))};
+//		};
+//	};
 	
 	function treeView(attach, id, attrs, props, events, extra) {
 		var div = document.createElement('div');

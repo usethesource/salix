@@ -8,18 +8,29 @@ import salix::Core;
 import lang::json::IO;
 import IO;
 
-data TreeState
-  = tstate(bool checked = false, bool disabled = false, bool expanded = false, bool selected = false);
 
-// If id is absent, use text as identifier.
+// Attributes to control state of tree node.
+Attr checked() = attr("checked", "true");
+Attr disabled() = attr("disabled", "true");
+Attr expanded() = attr("expanded", "true");
+Attr selected() = attr("selected", "true"); // same as HTML?
 
-data TreeNode
-  = tnode(str text, str id = "", list[TreeNode] nodes = [], 
-          str icon = "", str selectedIcon = "", str color = "", str backColor = "", str href = "", bool selectable = true, 
-          TreeState state = tstate(), list[str] tags = [], map[str, value] \data = ());
-          
+// Attributes to control appearance of treenode
+Attr icon(str glyph) = attr("icon", glyph);
+Attr selectedIcon(str glyph) = attr("selectedIcon", glyph);
+Attr color(str color) = attr("color", color);
+Attr backColor(str color) = attr("backColor", color);
+Attr href(str uri) = attr("href", uri); // same as HTML?
+Attr selectable(bool b) = attr("selectable", "<b>");
 
-// Attrs are interpreted as options to the treeview.
+// todo: make this reliable
+Attr tags(list[str] ts) = attr("tags", intercalate("|", ts));
+
+data _Tree
+  = tree(str text, list[_Tree] nodes = [], map[str, str] attrs = ());
+
+
+// The following attrs are interpreted as options to the treeview.
 Attr backColor(str color) = attr("backColor", color);
 Attr borderColor(str color) = attr("borderColor", color);
 Attr checkedIcon(str glyph) = attr("checkedIcon", glyph);
@@ -64,32 +75,52 @@ Msg parseMsg("nodeId", Handle h, map[str, str] p)
 Msg parseMsg("listOfNodeId", Handle h, map[str, str] p)
   = applyMaps(h, decode(h, #(Msg(list[str])))(p["results"]));
 
-alias T = void(str id, list[value] vals);
+alias T = void(str text, list[value] vals);
 alias TV = void(T);
 
-//void treeView(str id, value vals...) {
-//  list[list[TreeNode]] n = [[]];
-//
-//  void t(str id, value vals...) {
-//     if (void() block := vals[-1]) {
-//       n += [];
-//       block();
-//       n = n[0..-2] + [n[-2] + n[-1][0]]; 
-//     }
-//  }
-//  
-//  if (vals != []) {
-//    if (TV tv := vals[-1]) {
-//      tv(t);
-//    }
-//  }
-//  
-//  build(vals, Node(list[Node] _, list[Attr] attrs) {
-//     return native("treeView", "treeView", attrsOf(attrs), (), eventsOf(attrs), extra = ("data": n[0]));
-//  });
-//}
+void viewTree(value vals...) {
+  list[_Tree] stack = [tree("dummy")];
+  
+  _Tree top() = stack[-1];
+  
+  void push(_Tree t) {
+    stack += [t];
+  }
+  
+  _Tree pop() {
+    _Tree t = top();
+    stack = stack[0..-1];
+    return t;
+  }
 
-void treeView(str id, list[TreeNode] tree, value vals...)
-  = build(vals, Node(list[Node] _, list[Attr] attrs) {
-       return native("treeView", id, attrsOf(attrs), (), eventsOf(attrs), extra = ("data": tree));
-    });
+  void t(str text, value vals...) {
+    _Tree cur = tree(text);
+    
+    if (vals != [], void() block := vals[-1]) {
+      stack += [cur];
+      block();
+      cur = pop();
+    }
+    map[str,str] attrs = attrsOf([ a | Attr a <- vals ]);
+    if (attrs != ()) {
+      cur.attrs = attrs;
+    }
+    stack = stack[0..-1] + stack[-1][nodes = stack[-1].nodes + [cur]];
+    //stack[-1].nodes += [cur];
+  }
+  
+  if (vals != [], TV tv := vals[-1]) {
+    tv(t);
+  }
+  
+  build(vals, Node(list[Node] _, list[Attr] attrs) {
+     return native("treeView", "treeView", attrsOf(attrs), (), eventsOf(attrs), extra = ("data": stack[0].nodes));
+  });
+}
+
+// TODO: use the immediate style here with a local tree function
+// to draw a node; this avoids marshalling to TreeNode data type.
+//void treeView(str id, list[TreeNode] tree, value vals...)
+//  = build(vals, Node(list[Node] _, list[Attr] attrs) {
+//       return native("treeView", id, attrsOf(attrs), (), eventsOf(attrs), extra = ("data": tree));
+//    });
