@@ -8,11 +8,13 @@ import IO;
 
 import lang::json::IO;
 
-App[list[node]] treeViewApp()
+alias Model = str;
+
+App[Model] treeViewApp()
   = app(init, view, update, |http://localhost:7031|, |project://salix/src|
        , parser = parseMsg);
 
-list[node] init() = [];
+Model init() = "";
 
 data Msg
   = click()
@@ -20,18 +22,19 @@ data Msg
   ;
   
 
-list[node] update(Msg msg, list[node] m) {
+Model update(Msg msg, Model m) {
   switch (msg) {
-    case click(): println("click");
-    case selected(str id) : println("id = <id>");
+    case selected(str id) : m = id;
   }
   return m;
 }
 
-void view(list[node] m) {
+void view(Model m) {
   div(() {
-    //treeView("myTree", m, onNodeCollapsed(Msg::selected));
-    viewTree(onNodeCollapsed(Msg::selected), (T tnode) {
+    h3("Tree view demo");
+    h5("Selected: <m>");
+    
+    viewTree(onNodeSelected(Msg::selected), (T tnode) {
       tnode("Parent 1", () {
         tnode("Child 1", () {
           tnode("Grandchild 1");
@@ -39,10 +42,13 @@ void view(list[node] m) {
         });
         tnode("Child 2");
      });
-    tnode("Parent 2", color("red"));
-    tnode("Parent 3", selected());
-    tnode("Parent 4");
-    tnode("Parent 5");
-    });
-  });
+     tnode("Parent 2", color("red"));
+     tnode("Parent 3");
+     tnode("Parent 4");
+     tnode("Parent 5");
+     if (/1$/ := m) {
+       tnode("Another one!!!");
+     }
+   });
+ });
 }  

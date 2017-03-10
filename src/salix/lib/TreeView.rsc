@@ -10,12 +10,13 @@ import IO;
 
 
 // Attributes to control state of tree node.
+// TODO: these could be passed back upon events.
 Attr checked() = attr("checked", "true");
 Attr disabled() = attr("disabled", "true");
 Attr expanded() = attr("expanded", "true");
 Attr selected() = attr("selected", "true"); // same as HTML?
 
-// Attributes to control appearance of treenode
+// Attributes to control appearance of a treenode
 Attr icon(str glyph) = attr("icon", glyph);
 Attr selectedIcon(str glyph) = attr("selectedIcon", glyph);
 Attr color(str color) = attr("color", color);
@@ -26,11 +27,7 @@ Attr selectable(bool b) = attr("selectable", "<b>");
 // todo: make this reliable
 Attr tags(list[str] ts) = attr("tags", intercalate("|", ts));
 
-data _Tree
-  = tree(str text, list[_Tree] nodes = [], map[str, str] attrs = ());
-
-
-// The following attrs are interpreted as options to the treeview.
+// The following attrs and events are interpreted as options to the treeview.
 Attr backColor(str color) = attr("backColor", color);
 Attr borderColor(str color) = attr("borderColor", color);
 Attr checkedIcon(str glyph) = attr("checkedIcon", glyph);
@@ -78,6 +75,9 @@ Msg parseMsg("listOfNodeId", Handle h, map[str, str] p)
 alias T = void(str text, list[value] vals);
 alias TV = void(T);
 
+private data _Tree
+  = tree(str text, list[_Tree] nodes = [], map[str, str] attrs = ());
+
 void viewTree(value vals...) {
   list[_Tree] stack = [tree("dummy")];
   
@@ -97,10 +97,11 @@ void viewTree(value vals...) {
     _Tree cur = tree(text);
     
     if (vals != [], void() block := vals[-1]) {
-      stack += [cur];
+      push(cur);
       block();
       cur = pop();
     }
+    
     map[str,str] attrs = attrsOf([ a | Attr a <- vals ]);
     if (attrs != ()) {
       cur.attrs = attrs;
@@ -118,9 +119,3 @@ void viewTree(value vals...) {
   });
 }
 
-// TODO: use the immediate style here with a local tree function
-// to draw a node; this avoids marshalling to TreeNode data type.
-//void treeView(str id, list[TreeNode] tree, value vals...)
-//  = build(vals, Node(list[Node] _, list[Attr] attrs) {
-//       return native("treeView", id, attrsOf(attrs), (), eventsOf(attrs), extra = ("data": tree));
-//    });

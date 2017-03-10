@@ -62,6 +62,24 @@ function registerTreeView(salix) {
 //		};
 //	};
 	
+	function addEvents(jqElt, myHandlers, events) {
+		for (var key in events) {
+			if (events.hasOwnProperty(key)) {
+				var handler = salix.getNativeHandler(events[key]);
+				myHandlers[key] = handler;
+				jqElt.on(key, handler);
+			}
+		}
+	}
+	
+	function reinstallHandlers(jqElt, myHandlers) {
+		for (var ev in myHandlers) {
+			if (myHandlers.hasOwnProperty(ev)) {
+				jqElt.on(ev, myHandlers[ev]);
+			}
+		}
+	}
+	
 	function treeView(attach, id, attrs, props, events, extra) {
 		var div = document.createElement('div');
 		div.id = id;
@@ -75,15 +93,7 @@ function registerTreeView(salix) {
 		options.data = fromTreeNode(treeNode);
 		var dom = '#' + id;
 		$(dom).treeview(options);
-		
-		for (var key in events) {
-			if (events.hasOwnProperty(key)) {
-				var handler = salix.getNativeHandler(events[key]);
-				myHandlers[key] = handler;
-				$(dom).on(key, handler);
-			}
-		}
-
+		addEvents($(dom), myHandlers, events);
 		
 		function patch(edits, attach) {
 			edits = edits || [];
@@ -97,17 +107,20 @@ function registerTreeView(salix) {
 				case 'setExtra':
 					options.data = fromTreeNode(edit[type].value);
 					$(dom).treeview(options);
+					reinstallHandlers($(dom), myHandlers);
 					break;
 					
 				
 				case 'setAttribute':
 					options[edit[type].name] = edit[type].value;
 					$(dom).treeview(options);
+					reinstallHandlers($(dom), myHandlers);
 					break;
 					
 				case 'removeAttribute':
 					delete options[edit[type].name];
 					$(dom).treeview(options);
+					reinstallHandlers($(dom), myHandlers);
 					break;
 				
 				case 'replace':
