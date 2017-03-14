@@ -97,7 +97,8 @@ CRStat ::= col(str type, ColAttr*) | row(RBlock)
 ColAttr ::= (see above)
 RBlock ::= (Ce cell) { RStat* }
 RStat ::= cell(value, CellAttr*)
-CellAttr ::= (see above) }
+CellAttr ::= (see above) 
+}
 void chart(str id, str chartType, value vals...) {
   DataTable myTable = gtable([], []); 
   

@@ -93,8 +93,8 @@ Grammar
 Dagre ::= dagre(str, DAttr*, DBlock?)
 DAttr ::= (see graph attributes above)
 DBlock ::== (N n, E e) { NEStat* }
-NEStat ::= n(str, NAttr*, NBlock?); | e(str, str, EAttr*);
-NBlock ::= () { HTML } // NB: not HTML*
+NEStat ::= n(str, NAttr*, NLabel); | e(str, str, EAttr*);
+NLabel ::= str label | () { HTML } // NB: not HTML*
 NAttr ::= (see node attributes above)
 EAttr ::= (see edge attributes above)
 
@@ -130,15 +130,10 @@ void dagre(str gid, value vals...) {
     g(n, e);
   }
 
-  list[Attr] myAttrs = [ a | Attr a <- vals ];  
-  
-  build([], Node(list[Node] _, list[Attr] _) {
-       return native("dagre", gid, attrsOf(myAttrs), propsOf(myAttrs), (),
-         extra = (
-           "nodes": nodes,
-           "edges": edges
-         ));
-    });
+  build(vals, Node(list[Node] _, list[Attr] attrs) {
+    return native("dagre", gid, attrsOf(attrs), propsOf(attrs), (),
+      extra = ("nodes": nodes, "edges": edges));
+  });
   
 }
 
