@@ -20,6 +20,8 @@ data Cell
 Attr legend(str pos) = attr("legend", pos); // e.g. left
 Attr title(str t) = attr("title", t); 
 
+// TODO: think about using keyword params after all for this
+// the namespace is getting saturated...
 
 data ColAttr
  = role(str name) 
