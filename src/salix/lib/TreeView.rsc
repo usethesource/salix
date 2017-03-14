@@ -17,6 +17,8 @@ Attr expanded() = attr("expanded", "true");
 Attr selected() = attr("selected", "true"); // same as HTML?
 
 // Attributes to control appearance of a treenode
+// NB: if id(str) isn't given, the text argument of a T
+// will be used as the identifier of the node.
 Attr icon(str glyph) = attr("icon", glyph);
 Attr selectedIcon(str glyph) = attr("selectedIcon", glyph);
 Attr color(str color) = attr("color", color);

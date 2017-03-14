@@ -47,7 +47,10 @@ void view(Model m) {
      tnode("Parent 4");
      tnode("Parent 5");
      if (/1$/ := m) {
-       tnode("Another one!!!");
+       tnode("Another one because 1!!!");
+     }
+     if (/2$/ := m) {
+       tnode("Another one because 2!!!");
      }
    });
  });
