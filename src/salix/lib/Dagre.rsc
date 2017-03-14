@@ -47,8 +47,8 @@ Attr labelPos(str pos) = attr("labelpos", pos); //  r Where to place the label r
 Attr labelOffset(int n) = attr("labeloffset", n); // 10  How many pixels to move the label away from the edge. Applies only when labelpos is l or r.
 
 
-data GNode = gnode(str id, map[str,str] attrs = (), Node label = txt(""));
-data GEdge = gedge(str from, str to, map[str, str] attrs = ());
+private data GNode = gnode(str id, map[str,str] attrs = (), Node label = txt(""));
+private data GEdge = gedge(str from, str to, map[str, str] attrs = ());
 
 alias N = void(str, list[value]);
 alias E = void(str, str, list[value]);
