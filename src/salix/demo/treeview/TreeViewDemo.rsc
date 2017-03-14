@@ -34,7 +34,7 @@ void view(Model m) {
     h3("Tree view demo");
     h5("Selected: <m>");
     
-    viewTree(onNodeSelected(Msg::selected), (T tnode) {
+    treeView(onNodeSelected(Msg::selected), (T tnode) {
       tnode("Parent 1", () {
         tnode("Child 1", () {
           tnode("Grandchild 1");

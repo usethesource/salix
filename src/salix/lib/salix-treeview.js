@@ -15,8 +15,6 @@ function registerTreeView(salix) {
 		for (var i = 0; i < nodes.length; i++) {
 			var node = nodes[i];
 			map[node.data.id] = {};
-//			console.log("ID " + node.data.id);
-//			console.log(node.state);
 			for (var k in node.state) {
 				if (node.state.hasOwnProperty(k)) {
 					map[node.data.id][k] = node.state[k];

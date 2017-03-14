@@ -15,6 +15,7 @@ data Column
 data Cell
   = gcell(value v, str formatted = "", map[str, value] props = ());
   
+// TODO: make this immediate like dagre/treeView
 
 void chart(str id, str chartType, DataTable table, map[str,value] options=()) 
   = build([], Node(list[Node] _, list[Attr] attrs) {

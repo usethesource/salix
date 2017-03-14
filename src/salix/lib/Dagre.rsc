@@ -56,6 +56,7 @@ alias E = void(str, str, list[value]);
 alias G = void(N, E);
 
 @doc{
+
 A function to render Dagre-D3 graphs.
 
 Usage:
@@ -86,6 +87,17 @@ be the node label. Attributes are interpreted as Dagre node attributes; props ar
 
 The E function receives two required node ids to draw an edge. Additionally it accepts
 edge attributes (listed above).  
+
+Grammar
+
+Dagre ::= dagre(str, DAttr*, DBlock?)
+DAttr ::= (see graph attributes above)
+DBlock ::== (N n, E e) { NEStat* }
+NEStat ::= n(str, NAttr*, NBlock?); | e(str, str, EAttr*);
+NBLock ::= () { HTML } // NB: not HTML*
+NAttr ::= (see node attributes above)
+EAttr ::= (see edge attributes above)
+
 }
 void dagre(str gid, value vals...) {
   list[GNode] nodes = [];

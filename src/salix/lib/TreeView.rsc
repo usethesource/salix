@@ -45,8 +45,8 @@ Attr multiSelect() = attr("multiSelect", "true");
 Attr nodeIcon(str glyph) = attr("nodeIcon", glyph);
 Attr onhoverColor(str color) = attr("onhoverColor", color);
 Attr selectedIcon(str glyph) = attr("selectedIcon", glyph);
-Attr searchResultBackColor(str color) = attr("searchResultBackColor", color);
-Attr searchResultColor(str color) = attr("searchResultColor", color);
+//Attr searchResultBackColor(str color) = attr("searchResultBackColor", color);
+//Attr searchResultColor(str color) = attr("searchResultColor", color);
 Attr selectedBackColor(str color) = attr("selectedBackColor", color);
 Attr selectedColor(str color) = attr("selectedColor", color);
 Attr showBorder(bool b) = attr("showBorder", "<b>");
@@ -63,16 +63,9 @@ Attr onNodeExpanded(Msg(str) tn2msg) = event("nodeExpanded", handler("node", enc
 Attr onNodeSelected(Msg(str) tn2msg) = event("nodeSelected", handler("node", encode(tn2msg)));
 Attr onNodeUnchecked(Msg(str) tn2msg) = event("nodeUnchecked", handler("node", encode(tn2msg)));
 Attr onNodeUnselected(Msg(str) tn2msg) = event("nodeUnselected", handler("node", encode(tn2msg)));
-Attr onSearchComplete(Msg(list[str]) tns2msg) = event("searchComplete", handler("results", encode(tns2msg)));
-Attr onSearchCleared(Msg(list[str]) tns2msg) = event("searchCleared", handler("results", encode(tns2msg)));
-
 
 Msg parseMsg("nodeId", Handle h, map[str, str] p)
   = applyMaps(h, decode(h, #(Msg(str)))(p["node"]));
-
-// TODO: fix this
-Msg parseMsg("listOfNodeId", Handle h, map[str, str] p)
-  = applyMaps(h, decode(h, #(Msg(list[str])))(p["results"]));
 
 alias T = void(str text, list[value] vals);
 alias TV = void(T);
@@ -80,7 +73,17 @@ alias TV = void(T);
 private data _Tree
   = tree(str text, list[_Tree] nodes = [], map[str, str] attrs = ());
 
-void viewTree(value vals...) {
+@doc{
+
+TreeView ::= treeView(TVAttr*, TVBlock?)
+TVAttr ::= (see above) | on(see above)
+TVBlock ::= (T t) {  TVNode* }
+TVNode ::= t(str, NAttr*, NBlock?)
+NBlock ::= () { TVNode* }
+NAttr ::= (see above) | on(see above)
+
+}
+void treeView(value vals...) {
   list[_Tree] stack = [tree("dummy")];
   
   _Tree top() = stack[-1];
