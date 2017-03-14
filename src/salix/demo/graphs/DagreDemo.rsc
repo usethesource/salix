@@ -3,18 +3,18 @@ module salix::demo::graphs::DagreDemo
 import salix::App;
 import salix::HTML;
 import salix::lib::Dagre;
-import salix::lib::Charts;
+import salix::demo::charts::ChartDemo;
 import IO;
 import util::Math;
 import Set;
 import List;
 
-alias Model = tuple[int clicks, rel[str, str] graph, str line, str shape, str word];
+alias GModel = tuple[int clicks, rel[str, str] graph, str line, str shape, str word, real gold];
 
-App[Model] graphApp()
-  = app(init, view, update, |http://localhost:7002|, |project://salix/src|);
+App[GModel] graphApp()
+  = app(ginit, gview, gupdate, |http://localhost:7002|, |project://salix/src|);
 
-Model init() = <0, {<"a", "b">, <"b", "c">, <"a", "c">}, "cardinal", "rect", "">;
+GModel ginit() = <0, {<"a", "b">, <"b", "c">, <"a", "c">}, "cardinal", "rect", "", 19.30>;
 
 data Msg
   = addNode()
@@ -24,7 +24,7 @@ data Msg
   ;
 
 
-Model update(Msg msg, Model m) {
+GModel gupdate(Msg msg, GModel m) {
   switch (msg) {
     case click(str l): {
       m.clicks += 1;
@@ -44,25 +44,15 @@ Model update(Msg msg, Model m) {
     case changeShape(str x):
       m.shape = x;
     
+    case incGold(): m.gold += 1.0;
+    case decGold(): m.gold -= 1.0;
   }
   return m;
 }
 
-DataTable exampleTable() = gtable(
-  [gcolumn("string", label="Element"),
-   gcolumn("number", label="Density"),
-   gcolumn("string", role="style")],
-   [
-     grow([gcell("Copper"), gcell(8.94), gcell("color: #b87333")]), 
-     grow([gcell("Silver"), gcell(10.49), gcell("color: silver")]), 
-     grow([gcell("Gold"), gcell(19.30), gcell("color: gold")]),
-     grow([gcell("Platinum"), gcell(21.45), gcell("color: #e5e4e2")]) 
-  ]
-);
-
 // http://stackoverflow.com/questions/26348038/svg-foreignobjects-draw-over-all-other-elements-in-chrome?rq=1
 
-void view(Model m) {
+void gview(GModel m) {
   div(() {
     
     h2("Dagre graph demo with embedded HTML");
@@ -93,22 +83,7 @@ void view(Model m) {
 	          h3("Here\'s node <x>");
 	          p("A paragraph");
 	          
-	          //chart("myChart_<x>", "BarChart", exampleTable(), options=("legend": "left", "title": "Hello charts <x>", 
-            //   "width": 100, "height": 80));
-            
-            DataTable tbl = exampleTable();
-            chart("myChart_<x>", "BarChart", legend("left"), title("Hello Charts"), width(100), height(80), (C col, R row) {
-               for (Column c <- tbl.columns) {
-                 col(c.\type, ColAttr::label(c.label), ColAttr::role(c.role));
-               }
-               for (Row r <- tbl.rows) {
-                 row((Ce cell) {
-                    for (Cell c <- r.cells) {
-                      cell(c.v);
-                    }
-                 });
-               }
-            });
+	          salix::demo::charts::ChartDemo::view(m.gold, w = 100, h = 80);
             
 	          button(onClick(click(x)), "Click <x>");
 	        });

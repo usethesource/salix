@@ -35,25 +35,43 @@ data CellAttr
   ;
 
 
-/*
-chart("bla", "BarChart", (C col, R row) {
-  col("number"); col("string");
-  for (bla <- foo) {
-     row((Cell cell) { 
-       cell(bla[0]);
-       cell(bla[1]);
-       ...
-     }
-  }
-});
-
-*/
 
 alias DT = void(C, R);
 alias C = void(str, list[value]);
 alias R = void(void(Ce));
 alias Ce = void(value, list[value]);
 
+@doc{
+Chart: draw a google chart; the API provides functions to "draw"
+a Google Chart DataTable which will be rendered as a chart.
+
+Example:
+
+```
+chart("bla", "BarChart", (C col, R row) {
+  col("number"); col("string");
+  for (bla <- foo) {
+     row((Ce cell) { 
+       cell(bla[0]);
+       cell(bla[1]);
+       ...
+     }
+  }
+});
+```
+
+Grammar:
+
+Chart ::= char(str id, str type, TAttr*, CRBlock?)
+TAttr ::= (see above)
+CRBlock ::= (C col, R row) { CRStat* }
+CRStat ::= col(str type, ColAttr*) | row(RBlock)
+ColAttr ::= (see above)
+RBlock ::= (Ce cell) { RStat* }
+RStat ::= cell(value, CellAttr*)
+CellAttr ::= (see above) 
+
+}
 void chart(str id, str chartType, value vals...) {
   DataTable myTable = gtable([], []); 
   
@@ -102,14 +120,4 @@ void chart(str id, str chartType, value vals...) {
     });
 } 
 
-
-void chart_(str id, str chartType, DataTable table, map[str,value] options=()) 
-  = build([], Node(list[Node] _, list[Attr] attrs) {
-       return native("charts", id, (), (), (),
-         extra = (
-           "chartType": chartType,
-           "dataTable": table,
-           "options": options
-         ));
-    });
   

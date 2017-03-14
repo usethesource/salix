@@ -26,7 +26,7 @@ Model update(Msg msg, Model m) {
  return m;
 } 
 
-void view(Model gold) {
+void view(Model gold, int w = 400, int h = 300) {
   div(() {
     
     h2("Google Charts demo");
@@ -34,7 +34,7 @@ void view(Model gold) {
     button(onClick(incGold()), "Increase gold");
     button(onClick(decGold()), "Decrease gold");
     
-    chart("myChart", "BarChart", legend("left"), title("Hello Charts"), width(400), height(300), (C col, R row) {
+    chart("myChart", "BarChart", legend("left"), title("Hello Charts"), width(w), height(h), (C col, R row) {
        col("string", ColAttr::label("Element"));
        col("number", ColAttr::label("Density"));
        col("string", role("style"));
