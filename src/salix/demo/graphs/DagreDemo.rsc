@@ -92,8 +92,24 @@ void view(Model m) {
           div(() {
 	          h3("Here\'s node <x>");
 	          p("A paragraph");
-	          chart("myChart_<x>", "BarChart", exampleTable(), options=("legend": "left", "title": "Hello charts <x>", 
-               "width": 100, "height": 80));
+	          
+	          //chart("myChart_<x>", "BarChart", exampleTable(), options=("legend": "left", "title": "Hello charts <x>", 
+            //   "width": 100, "height": 80));
+            
+            DataTable tbl = exampleTable();
+            chart("myChart_<x>", "BarChart", legend("left"), title("Hello Charts"), width(100), height(80), (C col, R row) {
+               for (Column c <- tbl.columns) {
+                 col(c.\type, ColAttr::label(c.label), ColAttr::role(c.role));
+               }
+               for (Row r <- tbl.rows) {
+                 row((Ce cell) {
+                    for (Cell c <- r.cells) {
+                      cell(c.v);
+                    }
+                 });
+               }
+            });
+            
 	          button(onClick(click(x)), "Click <x>");
 	        });
         });

@@ -6,6 +6,7 @@ import salix::Node;
 import salix::Core;
 
 import lang::json::IO;
+import List;
 import IO;
 
 
@@ -76,11 +77,11 @@ private data _Tree
 @doc{
 
 TreeView ::= treeView(TVAttr*, TVBlock?)
-TVAttr ::= (see above) | on(see above)
+TVAttr ::= (see above) | on(see above)  
 TVBlock ::= (T t) {  TVNode* }
-TVNode ::= t(str, NAttr*, NBlock?)
+TVNode ::= t(str, NAttr*, NBlock?) // if id attribute is absent, the text arg is used as id
 NBlock ::= () { TVNode* }
-NAttr ::= (see above) | on(see above)
+NAttr ::= (see above) | on(see above) 
 
 }
 void treeView(value vals...) {

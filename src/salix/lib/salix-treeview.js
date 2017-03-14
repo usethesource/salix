@@ -45,9 +45,9 @@ function registerTreeView(salix) {
 					if (attrs.hasOwnProperty(k)) {
 						if (k === 'checked' || k === 'disabled' || k === 'expanded' || k === 'selected') {
 							if (!node.state) {
-								node.state = {};
+								node.state = {checked: false, disabled: false, expanded: false, selected: false};
 							}
-							node.state[k] = attrs[k];
+							node.state[k] = Boolean(attrs[k]);
 						}
 						else {
 							node[k] = attrs[k];

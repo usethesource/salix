@@ -51,13 +51,37 @@ void view(DataTable m) {
     button(onClick(incGold()), "Increase gold");
     button(onClick(decGold()), "Decrease gold");
     
-    chart("myChart", "BarChart", m, options=("legend": "left", "title": "Hello charts", 
-       "width": 400, "height": 300));
-
-
-    h3("More!");
-    chart("pie", "PieChart", m, options=("legend": "left", "title": "Hello charts", 
-       "width": 400, "height": 300));
+    chart("myChart", "BarChart", legend("left"), title("Hello Charts"), width(400), height(300), (C col, R row) {
+       for (Column c <- m.columns) {
+         col(c.\type, ColAttr::label(c.label), ColAttr::role(c.role));
+       }
+       for (Row r <- m.rows) {
+         row((Ce cell) {
+            for (Cell c <- r.cells) {
+              cell(c.v);
+            }
+         });
+       }
+    });
     
   });
 }
+
+//void view_(DataTable m) {
+//  div(() {
+//    
+//    h2("Google Charts demo");
+//    
+//    button(onClick(incGold()), "Increase gold");
+//    button(onClick(decGold()), "Decrease gold");
+//    
+//    chart_("myChart", "BarChart", m, options=("legend": "left", "title": "Hello charts", 
+//       "width": 400, "height": 300));
+//
+//
+//    h3("More!");
+//    chart("pie", "PieChart", m, options=("legend": "left", "title": "Hello charts", 
+//       "width": 400, "height": 300));
+//    
+//  });
+//}

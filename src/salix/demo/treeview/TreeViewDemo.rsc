@@ -40,7 +40,7 @@ void view(Model m) {
           tnode("Grandchild 1");
           tnode("Grandchild 2");
         });
-        tnode("Child 2");
+        tnode("Child 2", selected());
      });
      tnode("Parent 2", color("red"));
      tnode("Parent 3");
