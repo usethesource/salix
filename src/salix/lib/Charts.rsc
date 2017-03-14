@@ -3,16 +3,16 @@ module salix::lib::Charts
 import salix::Node;
 import salix::Core;
 
-data DataTable
+private data DataTable
   = gtable(list[Column] columns, list[Row] rows);
 
-data Row
+private data Row
   = grow(list[Cell] cells);  
 
-data Column
+private data Column
   = gcolumn(str \type, str role="", str label="", str id="");
   
-data Cell
+private data Cell
   = gcell(value v, str formatted = "", map[str, value] props = ());
   
 

@@ -113,7 +113,6 @@ void treeView(value vals...) {
       cur.attrs = attrs;
     }
     stack = stack[0..-1] + stack[-1][nodes = stack[-1].nodes + [cur]];
-    //stack[-1].nodes += [cur];
   }
   
   if (vals != [], TV tv := vals[-1]) {

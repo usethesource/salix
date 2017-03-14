@@ -94,7 +94,7 @@ Dagre ::= dagre(str, DAttr*, DBlock?)
 DAttr ::= (see graph attributes above)
 DBlock ::== (N n, E e) { NEStat* }
 NEStat ::= n(str, NAttr*, NBlock?); | e(str, str, EAttr*);
-NBLock ::= () { HTML } // NB: not HTML*
+NBlock ::= () { HTML } // NB: not HTML*
 NAttr ::= (see node attributes above)
 EAttr ::= (see edge attributes above)
 
