@@ -98,6 +98,8 @@ NLabel ::= str label | () { HTML } // NB: not HTML*
 NAttr ::= (see node attributes above)
 EAttr ::= (see edge attributes above)
 
+NOTE: embedding another SVG image inside the HTML of a node label only works
+on Firefox (as of March 2017).  
 }
 void dagre(str gid, value vals...) {
   list[GNode] nodes = [];
