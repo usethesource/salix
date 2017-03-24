@@ -122,6 +122,8 @@ private list[list[Node]] stack = [];
 @doc{Basic stack management functions.}
 private void add(Node h) = push(pop() + [h]);
 
+public void addNode(Node h) = add(h);
+
 private void push(list[Node] l) { stack += [l]; }
 
 private list[Node] top() = stack[-1];
