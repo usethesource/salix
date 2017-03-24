@@ -87,7 +87,7 @@ Figure setProps(Figure f, list[value] vals) {
   map[str,value] update(map[str,value] kws, FProp fp)
     = kws + (getName(fp): getChildren(fp)[0]); // assumes all props have 1 arg
     
-  return ( f | setKeywordParameters(f, update(getKeywordParameters(f), fp)) | FProp fp <- vals );
+  return ( f | setKeywordParameters(it, update(getKeywordParameters(it), fp)) | FProp fp <- vals );
 }
 
 void figure(num w, num h, void(Fig) block) {
@@ -149,6 +149,7 @@ void figure(num w, num h, void(Fig) block) {
   
   block(<_box, _ellipse, _circle, _ngon, _polygon, _hcat, _vcat, _overlay, _grid, _html>);
   
+  iprintln(stack[-1].figs[0]);
   salix::lib::LayoutFigure::fig(stack[-1].figs[0], width=w, height=h);
   //addNode(render(eval(stack[-1].figs[0])));
 }

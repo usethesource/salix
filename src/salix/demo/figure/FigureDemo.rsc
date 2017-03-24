@@ -22,10 +22,31 @@ void view(Model m) {
     salix::lib::RenderFigure::figure(100, 200, (Fig f) {
       f.vcat(() {
         f.box(lineColor("black"), () {
-          f.circle(lineColor("blue"));
+          f.hcat(() {
+            f.circle(lineColor("blue"));
+            f.ellipse(cx(40), cy(90), lineColor("green"));
+          });
         });
         f.box(lineColor("red"));
       });
     });
   });
 }
+
+//void view(Model m) { 
+//  div {
+//    h2 "Immediate mode figures";
+//    figure(100, 200) {
+//      vcat {
+//        box(lineColor: "black") {
+//          hcat {
+//            circle(lineColor: "blue");
+//            circle(lineColor: "green");
+//          }
+//        }
+//        box(lineColor: "red");
+//      }
+//    }
+//  }
+//}
+//
