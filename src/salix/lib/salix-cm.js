@@ -25,11 +25,17 @@ function registerCodeMirror(salix) {
 				var rule = state.state.rules[j];
 				var token = rule.rule.tokens.length > 1 
 					? rule.rule.tokens : rule.rule.tokens[0];
-				jsMode[name].push({regex: new RegExp(rule.rule.regex),
-						token: token});
+				var obj = {regex: new RegExp(rule.rule.regex), token: token};
+				if (rule.rule.indent) {
+					obj.indent = true;
+				}
+				if (rule.rule.dedent) {
+					obj.dedent = true;
+				}
+				jsMode[name].push(obj);
 			}
 		}
-		
+		jsMode.meta = mode.mode.meta;
 		return jsMode;
 	}
 	
