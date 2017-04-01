@@ -22,7 +22,7 @@ function registerCodeMirror(salix) {
 			var name = state.state.name;
 			jsMode[name] = []; 
 			for (var j = 0; j < state.state.rules.length; j++) {
-				var rule = state.state.rules[i];
+				var rule = state.state.rules[j];
 				var token = rule.rule.tokens.length > 1 
 					? rule.rule.tokens : rule.rule.tokens[0];
 				jsMode[name].push({regex: new RegExp(rule.rule.regex),
