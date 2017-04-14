@@ -69,8 +69,22 @@ function registerDagre(salix) {
 		var svg = d3.select('#' + id),
 	    	svgGroup = svg.append('g');
 		
+		var zoom = d3.behavior.zoom().on("zoom", function() {
+		      svgGroup.attr("transform", "translate(" + d3.event.translate + ")" +
+		                                     "scale(" + d3.event.scale + ")");
+		    });
+		svg.call(zoom);
+
 		var render = new dagreD3.render();
 		render(svgGroup, g);
+		
+		var initialScale = 1;
+		zoom
+		  .translate([(svg.attr("width") - g.graph().width * initialScale) / 2, 20])
+		  .scale(initialScale)
+		  .event(svg);
+		svg.attr('height', g.graph().height * initialScale + 40);
+		svg.attr('width', g.graph().width * initialScale + 40);
 		
 		function patch(edits, attach) {
 			edits = edits || [];
