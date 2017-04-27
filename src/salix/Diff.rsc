@@ -39,6 +39,9 @@ Patch diff(Node old, Node new, int idx) {
     edits = diffMap(old.props, new.props, setProp, removeProp)
       + diffMap(old.events, new.events, setEvent, removeEvent)
       + diffMap(old.extra, new.extra, setExtra, removeExtra);
+    if (old.id != new.id) {
+      edits += setProp("id", new.id);
+    }
     return patch(idx, edits = edits);  
   }
   
