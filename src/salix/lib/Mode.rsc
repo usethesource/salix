@@ -47,7 +47,7 @@ Mode grammar2mode(str name, type[&T <: Tree] sym) {
   opRule = rule("(?:<intercalate("|", [ reEsc(l) | l <- ops ])>)", ["operator"]);
   // todo: add Variable with word boundaries.
      
-  return mode(name, [state("start", [kwRule, opRule])]);
+  return mode(name, [state("start", [kwRule, opRule])], meta = ());
 }  
   
   
