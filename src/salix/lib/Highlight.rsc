@@ -20,6 +20,7 @@ public map[str, lrel[str, str]] cat2styles = (
   "Constant": [<"color", "#CB4B16">],
   "Comment": [<"font-style", "italic">, <"color", "#8a8a8a">],
   "Todo": [<"font-weight", "bold">, <"color", "#af0000">],
+//  "Focus": [<"border", "1px">, <"border-style", "solid">],
   "MetaAmbiguity": [<"color", "#af0000">, <"font-weight", "bold">, <"font-style", "italic">],
   "MetaVariable": [<"color", "#0087ff">],
   "MetaKeyword": [<"color", "#859900">],
@@ -28,21 +29,25 @@ public map[str, lrel[str, str]] cat2styles = (
 
 
 
+alias MoreCSS = lrel[str,str](Tree);
 
-void highlightToHtml(Tree t, void(list[value]) container = pre, map[str,lrel[str,str]] cats = cat2styles, int tabSize = 2) {
+lrel[str,str] noMore(Tree t) = [];
+
+void highlightToHtml(Tree t, void(list[value]) container = pre, map[str,lrel[str,str]] cats = cat2styles, 
+   int tabSize = 2, MoreCSS more = noMore) {
   container([() {
-    str pending = highlightRec(t, "", cats, tabSize);
+    str pending = highlightRec(t, "", cats, tabSize, more);
     if (pending != "") {
       text(pending);
     }
   }]);
 }
 
-private str highlightRec(Tree t, str current, map[str, lrel[str, str]] cats, int tabSize) {
+private str highlightRec(Tree t, str current, map[str, lrel[str, str]] cats, int tabSize, MoreCSS more) {
   
   void highlightArgs(list[Tree] args) {
     for (Tree a <- args) {
-      current = highlightRec(a, current, cats, tabSize);
+      current = highlightRec(a, current, cats, tabSize, more);
     }
   }
   
@@ -60,9 +65,16 @@ private str highlightRec(Tree t, str current, map[str, lrel[str, str]] cats, int
     }
 
     case appl(prod(Symbol d, list[Symbol] ss, set[Attr] as), list[Tree] args): {
-      if (\tag("category"(str cat)) <- as) {
+      if (\tag("category"(str cat)) <- as, cat in cats) {
         commitPending();
-        span(class(cat), style(cats[cat]), () {
+        span(class(cat), style(cats[cat] + more(t)), () {
+          highlightArgs(args);
+          commitPending();
+        });  
+      }
+      else if (more(t) != []) {
+        commitPending();
+        span(style(more(t)), () {
           highlightArgs(args);
           commitPending();
         });  
@@ -82,7 +94,7 @@ private str highlightRec(Tree t, str current, map[str, lrel[str, str]] cats, int
     
     case amb(set[Tree] alts): {
       if (Tree a <- alts) {
-        current = highlightRec(a, current, cats);
+        current = highlightRec(a, current, cats, more);
       }
     }
   
@@ -111,7 +123,7 @@ str highlightToAnsi(Tree t, map[str,str] cats = cat2ansi, int tabsize = 2) {
   str reset = "\u001B[0m";
   
   str highlightArgs(list[Tree] args) 
-    = ("" | it + highlightRec(a, cats, tabsize) | Tree a <- args );
+    = ("" | it + highlightToAnsi(a, cats, tabsize) | Tree a <- args );
   
   switch (t) {
     
@@ -137,7 +149,7 @@ str highlightToAnsi(Tree t, map[str,str] cats = cat2ansi, int tabsize = 2) {
     
     case amb(set[Tree] alts): {
       if (Tree a <- alts) {
-        return highlightRec(a, cats);
+        return highlightToAnsi(a, cats);
       }
     }
 
