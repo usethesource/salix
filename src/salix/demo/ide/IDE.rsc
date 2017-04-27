@@ -17,6 +17,8 @@ import salix::lib::CodeMirror;
 import salix::lib::XTerm;
 import salix::lib::Mode;
 import salix::lib::REPL;
+import salix::lib::Charts;
+import salix::lib::UML;
 import util::Maybe;
 import ParseTree;
 import String;
@@ -35,7 +37,8 @@ alias IDEModel = tuple[
   list[str] output,
   str currentCommand,
   Mode mode, // put it here, so not regenerated at every click..
-  REPLModel repl
+  REPLModel repl,
+  map[str, int] visitCount
 ];
   
 Maybe[start[Controller]] maybeParse(str src) {
@@ -50,7 +53,7 @@ Maybe[start[Controller]] maybeParse(str src) {
 IDEModel ideInit() {
   replModel = mapCmds(Msg::repl, REPLModel() { return initRepl("myXterm", "$ "); });
   Mode stmMode = grammar2mode("statemachine", #Controller);
-  IDEModel model = <"", nothing(), nothing(), [], "", stmMode, replModel>;
+  IDEModel model = <"", nothing(), nothing(), [], "", stmMode, replModel, ()>;
   
   model.src = doors();
   model.lastParse = maybeParse(model.src);
@@ -61,6 +64,24 @@ IDEModel ideInit() {
   }  
  
   return model;
+}
+
+str ctl2plantuml(start[Controller] ctl, Maybe[str] currentState) {
+  list[str] states = [ "<s.name>" | salix::demo::ide::StateMachine::State s <- ctl.top.states ];
+  
+  list[str] trans = [ "<s.name> --\> <t.state> : <t.event>" |
+     salix::demo::ide::StateMachine::State s <- ctl.top.states,
+     Transition t <- s.transitions ];
+     
+  bool isActive(str s) = s == cur
+    when just(str cur) := currentState;
+  
+  return 
+    "@startuml
+    '<intercalate("\n", [ "<s> : <isActive(s) ? "active" :"">" | s <- states ])>
+    '[*] -\> <states[0]>
+    '<intercalate("\n", trans)>
+    '@enduml";
 }
 
 list[str] stmComplete(IDEModel model, str prefix) {
@@ -149,6 +170,7 @@ IDEModel ideUpdate(Msg msg, IDEModel model) {
       if (just(str current) := model.currentState) {
         Next nxt = transition(current, event, ctl);
         if (just(str nextState) := nxt.state) {
+          model.visitCount[nextState]?0 += 1;
           model.currentState = just(nextState);
         }
         if (just(str token) := nxt.token) {
@@ -174,6 +196,7 @@ IDEModel ideUpdate(Msg msg, IDEModel model) {
     case repl(parent(gotoState(str state))): {
        if (just(start[Controller] ctl) := model.lastParse) {
          if (salix::demo::ide::StateMachine::State s <- ctl.top.states, "<s.name>" == state) {
+           model.visitCount["<s.name>"]?0 += 1;
            model.currentState = just("<s.name>");
          } 
        }
@@ -246,7 +269,7 @@ void ideView(IDEModel model) {
     div(class("row"), () {
       div(class("col-md-6"), () {
         h4("Edit the state machine.");
-        codeMirrorWithMode("myCodeMirror", model.mode, onChange(stmChange), height(500), 
+        codeMirrorWithMode("myCodeMirror", model.mode, onChange(stmChange), height(400), 
             mode("statemachine"), indentWithTabs(false), lineNumbers(true), \value(model.src));
       });
         
@@ -265,9 +288,40 @@ void ideView(IDEModel model) {
               }
             });
             h4("Command line");
-            repl(Msg::repl, model.repl, model.repl.id, cursorBlink(true), cols(30), rows(10));       
+            repl(Msg::repl, model.repl, model.repl.id, cursorBlink(true), cols(30), rows(10));
           });
-        }
+       }
+     });
+   });
+   
+   div(class("row"), () {
+     div(class("col-md-6"), () {
+       if (just(start[Controller] ctl) := model.lastParse) {
+         //dagre("mygraph", rankdir("LR"), width(400), height(400), (N n, E e) {
+         //  for (salix::demo::ide::StateMachine::State s <- ctl.top.states) {
+         //    str name = "<s.name>";
+         //    n(name, shape("ellipse"), () {
+         //     p("State: <name>");
+         //    });
+         //  }
+         //  for (salix::demo::ide::StateMachine::State s <- ctl.top.states, Transition t <- s.transitions) {
+         //    e("<s.name>", "<t.state>"); 
+         //  } 
+         //});
+         div(uml2svgNode(ctl2plantuml(ctl, model.currentState)));
+       }
+     }); 
+     div(class("col-md-6"), () {
+        h4("Analytics");
+        
+        chart("myChart", "BarChart", legend("left"), title("Visits to States"), width(300), height(300), (C col, R row) {
+           col("string", ColAttr::label("State"));
+           col("number", ColAttr::label("#Visits"));
+           list[str] cols = sort([ k | k <- model.visitCount ]);
+           for (str c <- cols) {
+             row((Ce cell) { cell(c); cell(model.visitCount[c]); });
+           } 
+        });  
       });
     });
     
