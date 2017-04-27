@@ -22,14 +22,20 @@ function registerCodeMirror(salix) {
 			var name = state.state.name;
 			jsMode[name] = []; 
 			for (var j = 0; j < state.state.rules.length; j++) {
-				var rule = state.state.rules[i];
+				var rule = state.state.rules[j];
 				var token = rule.rule.tokens.length > 1 
 					? rule.rule.tokens : rule.rule.tokens[0];
-				jsMode[name].push({regex: new RegExp(rule.rule.regex),
-						token: token});
+				var obj = {regex: new RegExp(rule.rule.regex), token: token};
+				if (rule.rule.indent) {
+					obj.indent = true;
+				}
+				if (rule.rule.dedent) {
+					obj.dedent = true;
+				}
+				jsMode[name].push(obj);
 			}
 		}
-		
+		jsMode.meta = mode.mode.meta || {};
 		return jsMode;
 	}
 	
@@ -122,6 +128,37 @@ function registerCodeMirror(salix) {
 				case 'setProp': 
 					var key = edit[type].name;
 					var val = edit[type].val;
+					// ok this is truly a mess...
+					// a change in Id, means, we need to "fake" the whole diff again.
+					if (key === 'id') {
+						var newProps = {};
+						var newEvents = {};
+						var newAttrs = {};
+						for  (var j = 0; j < edits.length; j++) {
+							if (salix.nodeType(edits[j]) === 'setProp') {
+								newProps[edits[j]['setProp'].name] = edits[j]['setProp'].val;
+							}
+							if (salix.nodeType(edits[j]) === 'setEvent') {
+								newEvents[edits[j]['setEvent'].name] = edits[j]['setEvent'].handler;
+							}
+						}
+						
+						// overwrite the old ones with new ones...
+						for (var p in newProps) {
+							if (newProps.hasOwnProperty(p)) {
+								props[p] = newProps[p];
+							}
+						}
+						for (var e in newEvents) {
+							if (newEvents.hasOwnProperty(e)) {
+								events[e] = newEvents[e];
+							}
+						}
+						
+						// and, zap!
+						codeMirror(attach, val, attrs, props, events, extra);
+						return;
+					}
 					if (key === 'value') {
 						// ignore
 					}

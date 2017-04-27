@@ -234,6 +234,9 @@ Node _shadow(list[Node] kids, list[Attr] attrs) = shadow(kids, attrsOf(attrs), p
 Attr style(tuple[str, str] styles...) = attr("style", intercalate("; ", ["<k>: <v>" | <k, v> <- styles ])); 
 Attr style(map[str,str] styles) = attr("style", intercalate("; ", ["<k>: <styles[k]>" | k <- styles ])); 
 
+Attr align(str val) = attr("align", val);
+Attr valign(str val) = attr("valign", val);
+
 Attr property(str name, value val) = prop(name, "<val>");
 Attr attribute(str name, str val) = attr(name, val);
 Attr class(str val) = attr("class", val);
@@ -339,6 +342,8 @@ Attr manifest(str val) = attr("manifest", val);
  * Events
  */
  
+Attr onKeyPress(Msg(int) msg) = event("keypress", keyCode(msg));
+Attr onKeyDown(Msg(int) msg) = event("keydown", keyCode(msg));
 Attr onClick(Msg msg) = event("click", succeed(msg));
 Attr onDoubleClick(Msg msg) = event("dblclick", succeed(msg));
 Attr onMouseDown(Msg msg) = event("mousedown", succeed(msg));

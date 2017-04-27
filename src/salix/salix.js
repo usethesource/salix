@@ -385,11 +385,12 @@ function Salix(aRootId) {
 			targetChecked: function (args) {
 				return function (e) { return {type: 'boolean', value: e.target.checked}; };
 			},
-			theKeyCode: function (args) {
+			keyCode: function (args) {
 				return function (e) {
-					if (e.keyCode === args.keyCode) {
-						return {type: 'nothing'};
-					}
+//					if (e.keyCode === args.keyCode) {
+//						return {type: 'nothing'};
+//					}
+					return {type: 'integer', value: e.keyCode};
 				};
 			}
 	};

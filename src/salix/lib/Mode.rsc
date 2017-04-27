@@ -10,6 +10,7 @@ module salix::lib::Mode
 
 import Type;
 import ParseTree;
+import String;
 
 data Mode
   = mode(str name, list[State] states, map[str, value] meta = ());
@@ -32,7 +33,8 @@ str cat2token(str _) = "unknown";
 Mode grammar2mode(str name, type[&T <: Tree] sym) {
   defs = sym.definitions;
   
-  str reEsc(str c) = c in {"*", "\\", "+", "?", "|"} ? "\\<c>" : c;
+  str reEsc(str c) //= c in {"*", "\\", "+", "?", "|"} ? "\\<c>" : c;
+    = escape(c, ("*": "\\*", "\\": "\\\\", "+": "\\+", "?": "\\?", "|": "\\|"));
   
   set[str] lits = { x | /lit(x:/^[a-zA-Z0-9_]*$/) := defs };
   set[str] ops 
@@ -42,9 +44,10 @@ Mode grammar2mode(str name, type[&T <: Tree] sym) {
 
   // todo: sort by length, longest first.
   kwRule = rule("(?:<intercalate("|", [ l | l <- lits ])>)\\b", ["keyword"]);   
-  opRule = rule("(?:<intercalate("|", [ reEsc(l) | l <- ops ])>)\\b", ["operator"]);
+  opRule = rule("(?:<intercalate("|", [ reEsc(l) | l <- ops ])>)", ["operator"]);
+  // todo: add Variable with word boundaries.
      
-  return mode(name, [state("start", [kwRule, opRule])]);
+  return mode(name, [state("start", [kwRule, opRule])], meta = ());
 }  
   
   

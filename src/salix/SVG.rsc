@@ -18,6 +18,8 @@ Node svgElement(str name, list[Node] kids, map[str,str] attrs, map[str, str] pro
   
 // User functions
 
+void foreignObject(value vals...) = build(vals, _foreignObject);
+
 void svg(value vals...) = build(vals, _svg);
 void animate(value vals...) = build(vals, _animate);
 void animateColor(value vals...) = build(vals, _animateColor);
@@ -123,7 +125,11 @@ void style(value vals...) = build(vals, _style);
 void view(value vals...) = build(vals, _view);
   
 // basics  
-  
+
+
+Node _foreignObject(list[Node] kids, list[Attr] attrs)
+  = svgElement("foreignObject", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
+
 Node _svg(list[Node] kids, list[Attr] attrs)
   = svgElement("svg", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
