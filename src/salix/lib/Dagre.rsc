@@ -45,6 +45,7 @@ Attr minLen(int ml) = attr("minlen", "<ml>"); // 1 The number of ranks to keep b
 Attr weight(int w) = attr("weight", "<w>"); //  1 The weight to assign edges. Higher weight edges are generally made shorter and straighter than lower weight edges.
 Attr labelPos(str pos) = attr("labelpos", pos); //  r Where to place the label relative to the edge. l = left, c = center r = right.
 Attr labelOffset(int n) = attr("labeloffset", n); // 10  How many pixels to move the label away from the edge. Applies only when labelpos is l or r.
+Attr edgeLabel(value val) = attr("label", "<val>");
 
 
 private data GNode = gnode(str id, map[str,str] attrs = (), Node label = txt(""));
