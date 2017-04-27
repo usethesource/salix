@@ -13,7 +13,7 @@ import ParseTree;
 import IO;
 import String;
 
-private map[str, lrel[str, str]] cat2styles = (
+public map[str, lrel[str, str]] cat2styles = (
   "Type": [<"color", "#748B00">],
   "Identifier": [<"color", "#485A62">],
   "Variable": [<"color", "#268BD2">],
@@ -38,7 +38,7 @@ void highlightToHtml(Tree t, void(list[value]) container = pre, map[str,lrel[str
   }]);
 }
 
-private str highlightRec(Tree t, str current, Cat2Css cats, int tabSize) {
+private str highlightRec(Tree t, str current, map[str, lrel[str, str]] cats, int tabSize) {
   
   void highlightArgs(list[Tree] args) {
     for (Tree a <- args) {
