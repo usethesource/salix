@@ -10,6 +10,7 @@
 module salix::lib::Figure
 
 import util::Math;
+import util::Maybe;
 
 /* Properties */
 
@@ -93,7 +94,7 @@ public data Style (
     int width = -1,
     int height = -1,	
     int lineWidth = -1,			
-    str lineColor = "", 
+    str lineColor = "Black", 
     str fillColor= "", 
     num fillOpacity = -1.0, 
     num lineOpacity= -1.0   
@@ -109,6 +110,7 @@ public data Text (
 public alias Prop =
     tuple[Attr attr, Style style,  Property property, Text text, Timer timer];
     
+
  
 public data Figure(
         // Naming
@@ -138,7 +140,7 @@ public data Figure(
     bool print = true, 
   	// Line properties
 		int lineWidth = -1,			
-		str lineColor = "", 		
+		str lineColor = "Black", 		
 		list[int] lineDashing = [],	
 		num lineOpacity = -1,
 	
@@ -182,7 +184,8 @@ public data Figure(
 		int borderRightWidth=-1, 
 		str borderRightColor = "",
 		// Interaction
-		//Event event = noEvent(),
+		// temporary
+		//value event = -1,
 		
 		// Tooltip
 		value tooltip = "",
@@ -249,7 +252,7 @@ public data Figure(
    | hcat(Figures figs=[], bool form= false) 					// horizontal and vertical concatenation
    | vcat(Figures figs=[], bool form= false) 					// horizontal and vertical concatenation 
    | overlay(Figures figs=[])				
-   | grid(list[Figures] figArray = [[]], bool form= false) 	// grid of figures
+   | grid(list[Figures] figArray = [], bool form= false) 	// grid of figures
 
 // Figure transformations
 

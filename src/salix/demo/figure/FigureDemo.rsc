@@ -149,29 +149,29 @@ void view(Model m) {
       //gridExample4();
     });
     
-    //salix::lib::RenderFigure::figure(500, 700, (Fig f) {
-    //  f.vcat(gap(<20, 20>), () {
-    //    f.box(lineColor("black"), () {
-    //      f.hcat(() {
-    //        f.circle(shrink(0.8), lineColor("blue"));
-    //        f.ellipse(cx(40), cy(90), lineColor("green"));
-    //      });
-    //    });
-    //    f.box(lineColor("red"));
-    //    f.grid((GridRow row) {
-    //      row(() {
-    //        f.text("A");
-    //        f.text("B");
-    //      });
-    //      row(() {
-    //        f.text(align(bottomRight), "C");
-    //        f.text("D");
-    //        f.text("Jurgen");
-    //        f.text("Piet");
-    //      });
-    //    });
-    //  });
-    //});
+    salix::lib::RenderFigure::figure(500, 700, (Fig f) {
+      f.vcat(gap(<20, 20>), () {
+        f.box(lineColor("black"), () {
+          f.hcat(() {
+            f.circle(shrink(0.8), lineColor("blue"));
+            f.ellipse(cx(40), cy(90), lineColor("green"));
+          });
+        });
+        f.box(lineColor("red"));
+        f.grid((GridRow row) {
+          row(() {
+            f.text("A");
+            f.text("B");
+          });
+          row(() {
+            f.text(align(bottomRight), "C");
+            f.text("D");
+            f.text("Jurgen");
+            f.text("Piet");
+          });
+        });
+      });
+    });
   });
 }
 

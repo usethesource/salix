@@ -39,7 +39,8 @@ value hAlign(Alignment align) {
    if (!isEmpty(f.lineColor)) r+= salix::SVG::stroke(f.lineColor);
    if (f.lineWidth>=0) r+= salix::SVG::strokeWidth("<f.lineWidth>");
    if (!isEmpty(f.visibility)) r+= salix::SVG::visibility(f.visibility);
-   //if (Event q:= f.event)  if (onclick(Msg msg):=q) r+=salix::SVG::onClick(msg);
+   // temporary use value for events
+   //if (Attr q := f.event) r+=q;
    return r;
    }
    

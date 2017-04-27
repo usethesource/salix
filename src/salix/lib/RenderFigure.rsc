@@ -9,11 +9,14 @@ import Node;
 
 
 data FProp
-  = cx(num x)
+  = event(Attr svgEvent)
+  | tooltip(str txt)
+  | cx(num x)
   | cy(num y)
   | rx(num x)
   | ry(num y)
   | r(num r)
+  | size(tuple[int,int] wh)
   | text(str txt)
   | scaleX(Rescale rs)
   | scaleY(Rescale rs)
@@ -54,8 +57,10 @@ data FProp
   
 alias FigF = void(list[value]);
 alias HtmlF = void(int, int, void()); 
+alias GridRow = void(void());
 
 alias Fig = tuple[
+  FigF text,
 
   // Primitives
   FigF box,
@@ -112,7 +117,13 @@ void figure(num w, num h, void(Fig) block) {
     }
     else if (t has fig) {
       t.fig = f;
+    }
+    else if (t has figArray) {
+      list[Figure] lastRow = t.figArray[-1];
+      t.figArray = t.figArray[0..-1];
+      t.figArray += [lastRow + [f]];
     } // else ignore...
+    
     push(t);
   }
   
@@ -123,6 +134,10 @@ void figure(num w, num h, void(Fig) block) {
     }
     add(setProps(pop(), vals));
   }
+  
+  // todo: this should be html and embed salix into figure
+  void _text(value vals...) = makeFig(Figure::svgText("<v>"), vals)
+    when str v <- vals;
   
   void _box(value vals...) = makeFig(Figure::box(), vals);
   void _ellipse(value vals...) = makeFig(Figure::ellipse(), vals);
@@ -142,12 +157,29 @@ void figure(num w, num h, void(Fig) block) {
   void _hcat(value vals...) = makeFig(Figure::hcat(), vals);
   void _vcat(value vals...) = makeFig(Figure::vcat(), vals);
   void _overlay(value vals...) = makeFig(Figure::overlay(), vals);
-  void _grid(value vals...) = makeFig(Figure::grid(), vals);
+ 
+  void _grid(value vals...)  {
+    push(Figure::grid());
+    
+    void row(void() block) {
+      Figure g = pop();
+      assert g is grid;
+      g.figArray += [[]];
+      push(g);
+      block();
+    }
+    
+    if (vals != [], void(GridRow) block := vals[-1]) {
+      block(row);
+    }
+    
+    add(setProps(pop(), vals));
+  }
   
   // NB: block should draw 1 node
   void _html(int w, int h, void() block) = add(Figure::html(w, h, render(block))); 
   
-  block(<_box, _ellipse, _circle, _ngon, _polygon, _hcat, _vcat, _overlay, _grid, _html>);
+  block(<_text, _box, _ellipse, _circle, _ngon, _polygon, _hcat, _vcat, _overlay, _grid, _html>);
   
   iprintln(stack[-1].figs[0]);
   salix::lib::LayoutFigure::fig(stack[-1].figs[0], width=w, height=h);
