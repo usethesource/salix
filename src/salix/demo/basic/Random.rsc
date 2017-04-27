@@ -30,7 +30,6 @@ Model update(Msg msg, Model m) {
   switch (msg) {
     
     case roll(): 
-      // side-effects to capture commands at this point.
       do(random(newFace, 1, 6));
     
     case newFace(int n): 

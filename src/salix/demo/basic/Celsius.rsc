@@ -22,7 +22,7 @@ data Msg
   ;
 
 App[Model] celsiusApp() = 
-  app(init, |http://localhost:9193|, |project://salix/src|); 
+  app(init, view, update, |http://localhost:9193|, |project://salix/src|); 
 
 
 Model init() = 37.0;
