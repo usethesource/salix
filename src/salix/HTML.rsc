@@ -342,6 +342,8 @@ Attr manifest(str val) = attr("manifest", val);
  * Events
  */
  
+Attr onKeyPress(Msg(int) msg) = event("keypress", keyCode(msg));
+Attr onKeyDown(Msg(int) msg) = event("keydown", keyCode(msg));
 Attr onClick(Msg msg) = event("click", succeed(msg));
 Attr onDoubleClick(Msg msg) = event("dblclick", succeed(msg));
 Attr onMouseDown(Msg msg) = event("mousedown", succeed(msg));
