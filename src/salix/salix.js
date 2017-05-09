@@ -379,12 +379,24 @@ function Salix(aRootId) {
 			succeed: function (args) {
 				return function (e) { return {type: 'nothing'}; };
 			},
+
 			targetValue: function (args) {
 				return function (e) { return {type: 'string', value: e.target.value}; };
 			},
+
+			targetInt: function (args) {
+				return function (e) { return {type: 'integer', value: e.target.value}; };
+			},
+
+			targetReal: function (args) {
+				return function (e) { return {type: 'real', value: e.target.value}; };
+			},
+
+			
 			targetChecked: function (args) {
 				return function (e) { return {type: 'boolean', value: e.target.checked}; };
 			},
+			
 			keyCode: function (args) {
 				return function (e) {
 //					if (e.keyCode === args.keyCode) {
