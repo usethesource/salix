@@ -286,6 +286,8 @@ Msg parseMsg("boolean", Handle h, map[str,str] p)
 Msg parseMsg("integer", Handle h, map[str,str] p) 
   = applyMaps(h, decode(h, #Msg(int))(toInt(p["value"])));
 
+Msg parseMsg("real", Handle h, map[str,str] p)
+  = applyMaps(h, decode(h, #Msg(real))(toReal(p["value"])));
 
 Msg applyMaps(Handle h, Msg msg) = ( msg | decode(m, #(Msg(Msg)))(it) | int m <- h.maps );
 
