@@ -5,6 +5,7 @@
   and is available under https://opensource.org/licenses/BSD-2-Clause.
 }
 @contributor{Tijs van der Storm - storm@cwi.nl - CWI}
+@contributor{Bert Lisser - berlt@cwi.nl - CWI}
 
 module salix::HTML
 
@@ -337,6 +338,9 @@ Attr \datetime(str val) = attr("datetime", val);
 Attr pubdate(str val) = attr("pubdate", val);
 Attr manifest(str val) = attr("manifest", val);
 
+Attr valign(str val) = attr("valign", val);
+Attr cellpadding(str val) = attr("cellpadding", val);
+Attr cellspacing(str val) = attr("cellspacing", val);
 
 /*
  * Events
@@ -355,9 +359,18 @@ Attr onMouseOut(Msg msg) = event("mouseout", succeed(msg));
 Attr onSubmit(Msg msg) = event("submit", succeed(msg));
 Attr onBlur(Msg msg) = event("blur", succeed(msg));
 Attr onSubmit(Msg msg) = event("focus", succeed(msg));
-Attr onInput(Msg(str) f) = event("input", targetValue(f)); 
+
 Attr onCheck(Msg(bool) f) = event("change", targetChecked(f));
 
+Attr onInput(Msg(str) f) = event("input", targetValue(f)); 
+Attr onInput(Msg(int) f) = event("input", targetInt(f));
+Attr onInput(Msg(real) f) = event("input", targetReal(f));
+
+Attr onChange(Msg(int) f) = event("change", targetInt(f));
+Attr onChange(Msg(real) f) = event("change", targetReal(f));
+Attr onChange(Msg(str) f) = event("change", targetValue(f));
+
+Attr onCheck(Msg(bool) f) = event("check", targetChecked(f));
   
 @doc{Smart constructors for constructing encoded event decoders.}
 Hnd succeed(Msg msg) = handler("succeed", encode(msg));
@@ -367,5 +380,9 @@ Hnd targetValue(Msg(str) str2msg) = handler("targetValue", encode(str2msg));
 Hnd targetChecked(Msg(bool) bool2msg) = handler("targetChecked", encode(bool2msg));
 
 Hnd keyCode(Msg(int) int2msg) = handler("keyCode", encode(int2msg)); 
+
+Hnd targetInt(Msg(int) int2msg) = handler("targetInt", encode(int2msg));
+
+Hnd targetReal(Msg(real) real2msg) = handler("targetReal", encode(real2msg));
 
   
