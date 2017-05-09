@@ -119,6 +119,16 @@ Handle encode(value x)
 @doc{The html element stack used during rendering.}
 private list[list[Node]] stack = [];
 
+@doc{Print out the current node stack for debugging.}
+void printNodeStack() {
+ for (int i <- [0..size(stack)]) {
+   println("#<i>: #kids = <size(stack[i])>");
+   for (Node n <- stack[i]) {
+     println("  <n>");
+   }
+ }
+}
+
 @doc{Basic stack management functions.}
 private void add(Node h) = push(pop() + [h]);
 
