@@ -41,7 +41,7 @@ data Msg
   ;
 
 App[AllModel] allApp() 
-  = app(initAll, viewAll, editAll, |http://localhost:9213|, |project://salix/src|
+  = app(initAll, viewAll, editAll, |http://localhost:9213/salix/demo/basic/index.html|, |project://salix/src|
        , subs = allSubs, parser = parseMsg); 
 
 App[AllModel] debugAllApp() 
