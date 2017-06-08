@@ -28,7 +28,7 @@ import IO;
 
 App[IDEModel] ideApp() 
   = app(ideInit, ideView, ideUpdate, 
-        |http://localhost:8001|, |project://salix/src|, parser = parseMsg); 
+        |http://localhost:8001/salix/demo/ide/index.html|, |project://salix/src|, parser = parseMsg); 
 
 alias IDEModel = tuple[
   str src, 

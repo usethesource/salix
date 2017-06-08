@@ -11,7 +11,7 @@ import lang::json::IO;
 alias Model = str;
 
 App[Model] treeViewApp()
-  = app(init, view, update, |http://localhost:7031|, |project://salix/src|
+  = app(init, view, update, |http://localhost:7031/salix/demo/treeview/index.html|, |project://salix/src|
        , parser = parseMsg);
 
 Model init() = "";

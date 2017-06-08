@@ -21,7 +21,7 @@ Model init() = <0>;
 
 
 App[Model] counterApp()
-  = app(init, view, update, |http://localhost:7000|, |project://salix/src|);
+  = app(init, view, update, |http://localhost:7000/salix/demo/basic/index.html|, |project://salix/src|);
 
 data Msg
   = inc()

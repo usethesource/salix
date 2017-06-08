@@ -12,7 +12,7 @@ import List;
 alias GModel = tuple[int clicks, rel[str, str] graph, str line, str shape, str word, real gold];
 
 App[GModel] graphApp()
-  = app(ginit, gview, gupdate, |http://localhost:7002|, |project://salix/src|);
+  = app(ginit, gview, gupdate, |http://localhost:7002/salix/demo/graphs/index.html|, |project://salix/src|);
 
 GModel ginit() = <0, {<"a", "b">, <"b", "c">, <"a", "c">}, "cardinal", "rect", "", 19.30>;
 

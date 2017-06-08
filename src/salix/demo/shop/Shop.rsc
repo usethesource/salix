@@ -41,7 +41,7 @@ Model init() = <
 >;
 
 App[Model] shopApp() 
-  = app(init, shopDemoView, update, |http://localhost:9170|, |project://salix/src|);
+  = app(init, shopDemoView, update, |http://localhost:9170/salix/demo/shop/shop.html|, |project://salix/src|);
 
 data Msg
   = editName(int idx, str name)

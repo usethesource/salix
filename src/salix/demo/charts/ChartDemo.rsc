@@ -8,7 +8,7 @@ import salix::App;
 alias Model = real;
 
 App[DataTable] chartsApp()
-  = app(init, view, update, |http://localhost:7001|, |project://salix/src|);
+  = app(init, view, update, |http://localhost:7001/salix/demo/charts/index.html|, |project://salix/src|);
 
 Model init() = 19.30;
 

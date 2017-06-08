@@ -22,7 +22,7 @@ Model init() = 0;
 
 
 App[Model] readmeApp()
-  = app(init, view, update, |http://localhost:7500|, |project://salix/src|
+  = app(init, view, update, |http://localhost:7500/salix/demo/basic/index.html|, |project://salix/src|
         subs = counterSubs);
 
 list[Sub] counterSubs(Model m) = [timeEvery(tick, 5000)];

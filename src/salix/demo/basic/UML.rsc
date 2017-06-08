@@ -10,7 +10,7 @@ import IO;
 alias Model = tuple[str source];
 
 
-App[Model] umlApp() = app(init, view, update, |http://localhost:9120|, |project://salix/src|); 
+App[Model] umlApp() = app(init, view, update, |http://localhost:9120/salix/demo/basic/index.html|, |project://salix/src|); 
     
 Model init() = <"@startuml\nBob -\> Alice : hello\n@enduml\n">;
 
