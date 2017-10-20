@@ -3,5 +3,5 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Salix
 Bundle-SymbolicName: Salix
 Bundle-Version: 1.0.0
-Require-Bundle: rascal_eclipse 
+Require-Bundle: rascal_eclipse;bundle-version="0.9.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
