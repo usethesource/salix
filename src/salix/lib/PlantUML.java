@@ -5,9 +5,9 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 import org.rascalmpl.interpreter.utils.RuntimeExceptionFactory;
-import org.rascalmpl.value.IString;
-import org.rascalmpl.value.IValueFactory;
 
+import io.usethesource.vallang.IString;
+import io.usethesource.vallang.IValueFactory;
 import net.sourceforge.plantuml.FileFormat;
 import net.sourceforge.plantuml.FileFormatOption;
 import net.sourceforge.plantuml.SourceStringReader;
