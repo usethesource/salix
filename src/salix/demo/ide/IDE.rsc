@@ -308,7 +308,8 @@ void ideView(IDEModel model) {
          //    e("<s.name>", "<t.state>"); 
          //  } 
          //});
-         div(uml2svgNode(ctl2plantuml(ctl, model.currentState)));
+         //div(uml2svgNode(ctl2plantuml(ctl, model.currentState)));
+         ;
        }
      }); 
      div(class("col-md-6"), () {

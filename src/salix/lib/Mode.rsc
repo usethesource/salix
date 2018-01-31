@@ -27,7 +27,7 @@ str cat2token("StringLiteral") = "string";
 str cat2token("Comment") = "comment";
 str cat2token("Constant") = "atom";
 str cat2token("Variable") = "variable";
-str cat2token(str _) = "unknown";
+default str cat2token(str _) = "unknown";
 
 
 Mode grammar2mode(str name, type[&T <: Tree] sym) {

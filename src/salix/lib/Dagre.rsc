@@ -4,6 +4,7 @@ import salix::Core;
 import salix::HTML;
 import salix::Node;
 
+import List;
 import IO;
 
 // SVG *attributes* from salix::SVG can be given to the dagre function and will be put on the SVG container
@@ -38,14 +39,16 @@ Attr arrowheadStyle(map[str,str] styles) = attr("arrowHeadStyle", intercalate(";
 Attr arrowheadClass(str class) = attr("arrowheadClass", class);
 
 // See here for options: https://github.com/d3/d3-3.x-api-reference/blob/master/SVG-Shapes.md#line_interpolate
+// cardinal, linear, basis, step, monotone
 Attr lineInterpolate(str interp) = attr("lineInterpolate", interp);
 
 // And these are from Dagre itself (height and width are also supported).
 Attr minLen(int ml) = attr("minlen", "<ml>"); // 1 The number of ranks to keep between the source and target of the edge.
 Attr weight(int w) = attr("weight", "<w>"); //  1 The weight to assign edges. Higher weight edges are generally made shorter and straighter than lower weight edges.
 Attr labelPos(str pos) = attr("labelpos", pos); //  r Where to place the label relative to the edge. l = left, c = center r = right.
-Attr labelOffset(int n) = attr("labeloffset", n); // 10  How many pixels to move the label away from the edge. Applies only when labelpos is l or r.
+Attr labelOffset(int n) = attr("labeloffset", "<n>"); // 10  How many pixels to move the label away from the edge. Applies only when labelpos is l or r.
 Attr edgeLabel(value val) = attr("label", "<val>");
+// labelStyle also works on edges.
 
 
 private data GNode = gnode(str id, map[str,str] attrs = (), Node label = txt(""));
