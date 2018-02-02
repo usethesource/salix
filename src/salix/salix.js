@@ -26,7 +26,7 @@ function Salix(aRootId) {
 	var queue = [];
 	
 	function start() {
-		$.get('/init', {}, step).always(doSome);
+		$.get('/' + rootId + '/init', {}, step).always(doSome);
 	}
 	
 	function root() {
@@ -54,7 +54,7 @@ function Salix(aRootId) {
 					continue;
 				}
 				renderRequested = true;
-				$.get('/msg', event.message, step).fail(function () {
+				$.get('/' + rootId + '/msg', event.message, step).fail(function () {
 					renderRequested = false;
 					window.requestAnimationFrame(doSome);
 				}); 
