@@ -78,14 +78,19 @@ function registerDagre(salix) {
 		var render = new dagreD3.render();
 		render(svgGroup, g);
 		
+		if (!svg.hasOwnProperty('height')) {
+		    svg.attr('height', g.graph().height * initialScale + 40);
+		}
+		if (!svg.hasOwnProperty('width')) {
+		    svg.attr('width', g.graph().width * initialScale + 40);  	
+		}
+		
 		var initialScale = 1;
 		zoom
 		  .translate([(svg.attr("width") - g.graph().width * initialScale) / 2, 20])
 		  .scale(initialScale)
 		  .event(svg);
-		svg.attr('height', g.graph().height * initialScale + 40);
-		svg.attr('width', g.graph().width * initialScale + 40);
-		
+		  
 		function patch(edits, attach) {
 			edits = edits || [];
 			var newNodes;
