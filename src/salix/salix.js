@@ -54,9 +54,11 @@ function Salix(aRootId) {
 					continue;
 				}
 				renderRequested = true;
+				document.body.style.cursor = 'progress';
 				$.get('/msg', event.message, step).fail(function () {
 					renderRequested = false;
 					window.requestAnimationFrame(doSome);
+					document.body.style.cursor = 'auto';
 				}); 
 				break; // process one event at a time
 			}
@@ -71,6 +73,7 @@ function Salix(aRootId) {
 		// .always on the get request doesn't work....
 		renderRequested = false;
 		window.requestAnimationFrame(doSome);
+		document.body.style.cursor = 'auto';
 	}
 	
 	function render(patch) {
