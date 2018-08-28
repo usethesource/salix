@@ -48,13 +48,14 @@ function Salix(aRootId) {
 	function doSome() {
 		if (!renderRequested) {
 			while (queue.length > 0) {
+			    document.body.style.cursor = 'progress';
 				var event = queue.shift();
 				if (isStale(event)) {
 					console.log('Stale event');
 					continue;
 				}
 				renderRequested = true;
-				document.body.style.cursor = 'progress';
+				
 				$.get('/msg', event.message, step).fail(function () {
 					renderRequested = false;
 					window.requestAnimationFrame(doSome);
