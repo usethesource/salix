@@ -64,7 +64,7 @@ Msg(str) editPrice(int idx) = Msg(str s) { return editPrice(idx, s); };
 
 Article findArticle(int id, Model m) = [ a | Article a <- m.articles, a.id == id][0];
 
-Model update(Msg msg, str name) {
+Model update(Msg msg, Model m) {
   switch (msg) {
   
     case editName(int idx, str name):
@@ -115,7 +115,7 @@ Model update(Msg msg, str name) {
 void shopDemoView(Model m) {
   div(() {
     div(id("header"), () {
-      h1("Elm-in-Rascal shopping cart demo");
+      h1("Salix shopping cart demo");
     });  
     table(() {
       tr(() {
