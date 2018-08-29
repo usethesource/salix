@@ -19,6 +19,7 @@ import salix::lib::Mode;
 import salix::lib::REPL;
 import salix::lib::Charts;
 import salix::lib::UML;
+import salix::lib::Dagre;
 import util::Maybe;
 import ParseTree;
 import String;
@@ -210,7 +211,6 @@ IDEModel ideUpdate(Msg msg, IDEModel model) {
 
     case repl(Msg sub): 
       model.repl = mapCmds(Msg::repl, sub, model.repl, replUpdate(myEval, myComplete, stmHighlight));
-
   }
   
   return model;
@@ -297,18 +297,7 @@ void ideView(IDEModel model) {
    div(class("row"), () {
      div(class("col-md-6"), () {
        if (just(start[Controller] ctl) := model.lastParse) {
-         //dagre("mygraph", rankdir("LR"), width(400), height(400), (N n, E e) {
-         //  for (salix::demo::ide::StateMachine::State s <- ctl.top.states) {
-         //    str name = "<s.name>";
-         //    n(name, shape("ellipse"), () {
-         //     p("State: <name>");
-         //    });
-         //  }
-         //  for (salix::demo::ide::StateMachine::State s <- ctl.top.states, Transition t <- s.transitions) {
-         //    e("<s.name>", "<t.state>"); 
-         //  } 
-         //});
-         //div(uml2svgNode(ctl2plantuml(ctl, model.currentState)));
+         div(uml2svgNode(ctl2plantuml(ctl, model.currentState)));
          ;
        }
      }); 
