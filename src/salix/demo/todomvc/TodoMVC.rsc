@@ -129,8 +129,12 @@ void viewInput(str task) {
   });
 }
 
-Attr onEnter(Msg msg) 
-  = event("keydown", handler("theKeyCode", encode(msg), args = ("keyCode": 13)));
+Attr onEnter(Msg msg) = onKeyDown(Msg (int key) {
+  if (key == 13) {
+    return msg;
+  }
+  return noOp();
+});
 
 // VIEW ALL ENTRIES
 
