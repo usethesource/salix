@@ -141,7 +141,7 @@ tuple[Msg, str] myEval(str command) {
   if (/goto <state:.*>/ := command) {
     return <gotoState(state), "ok">;
   }
-  return <noOp(), "nothing">;
+  return <noOp(), "Not a command \"<command>\", try \"event \<eventName\>\", or \"goto \<stateName\>\"">;
 }
 
 
@@ -149,7 +149,7 @@ alias Next = tuple[Maybe[str] token, Maybe[str] state];
 
 Next transition(str currentState, str event, start[Controller] ctl) {
   Next result = <nothing(), nothing()>;
-  
+  println("transition: <currentState> (<event>)");
   if (salix::demo::ide::StateMachine::State s <- ctl.top.states, "<s.name>" == currentState) { 
     if (Transition t <- s.transitions, "<t.event>" == event) {
       result.state = just("<t.state>");
@@ -167,8 +167,11 @@ IDEModel ideUpdate(Msg msg, IDEModel model) {
   list[str] myComplete(str prefix) = stmComplete(model, prefix);
   
   void doTransition(str event) {
+    println("do trans <event>");
     if (just(start[Controller] ctl) := model.lastParse) {
+       println("ctl <ctl>");
       if (just(str current) := model.currentState) {
+         println("cur <current>");
         Next nxt = transition(current, event, ctl);
         if (just(str nextState) := nxt.state) {
           model.visitCount[nextState]?0 += 1;
