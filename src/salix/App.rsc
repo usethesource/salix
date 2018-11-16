@@ -14,10 +14,13 @@ import salix::Diff;
 import salix::Patch;
 
 import util::Webserver;
+import util::Reflective;
 import IO;
 import String;
 import Map;
 import List;
+
+private loc libRoot = getModuleLocation("salix::App").parent.parent;
 
 data Msg;
 
@@ -163,14 +166,18 @@ App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static,
     if (get("/<root>/msg") := req) {
       //println("Parsing request: <req.parameters>");
       Msg msg = params2msg(req.parameters, parser);
-      println("Processing: <msg>");
       <cmds, newModel> = execute(msg, update, currentModel);
       return transition(cmds, newModel);
     }
     
     // everything else is considered static files.
     if (get(p:/\.<ext:[^.]*>$/) := req, ext in mimeTypes) {
-      return fileResponse(static[path="<static.path>/<p>"], mimeTypes[ext], ());
+      if (exists(libRoot + p)) {
+        return fileResponse(libRoot + p, mimeTypes[ext], ());
+      }
+      else {
+        return fileResponse(static[path="<static.path>/<p>"], mimeTypes[ext], ());
+      }
     }
     
     // or not found
