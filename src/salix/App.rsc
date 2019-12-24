@@ -15,10 +15,8 @@ import salix::Patch;
 
 import util::Webserver;
 import util::Reflective;
+import util::Maybe;
 import IO;
-import String;
-import Map;
-import List;
 
 private loc libRoot = getModuleLocation("salix::App").parent.parent;
 
@@ -56,7 +54,7 @@ SalixApp[&T] makeApp(&T() init, void(&T) view, &T(Msg, &T) update, Subs[&T] subs
 
   Node currentView = empty();
   
-  &T currentModel;
+  Maybe[&T] currentModel = nothing();
   
   SalixResponse transition(list[Cmd] cmds, &T newModel, str scope) {
 
@@ -67,7 +65,7 @@ SalixApp[&T] makeApp(&T() init, void(&T) view, &T(Msg, &T) update, Subs[&T] subs
 
     //iprintln(myPatch);
     currentView = newView;
-    currentModel = newModel;
+    currentModel = just(newModel);
     
     return next(cmds, mySubs, myPatch);
   }
@@ -84,7 +82,7 @@ SalixApp[&T] makeApp(&T() init, void(&T) view, &T(Msg, &T) update, Subs[&T] subs
       case message(map[str,str] params): {
         Msg msg = params2msg(params, parser);
         println("Processing: <scope>/<msg>");
-        <cmds, newModel> = execute(msg, update, currentModel);
+        <cmds, newModel> = execute(msg, update, currentModel.val);
         return transition(cmds, newModel, scope);
       }
       default: throw "Invalid Salix request <req>";
@@ -134,7 +132,7 @@ App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static,
 
   Node currentView = empty();
   
-  &T currentModel;
+  Maybe[&T] currentModel = nothing();
   
   Response transition(list[Cmd] cmds, &T newModel ) {
 
@@ -145,7 +143,7 @@ App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static,
 
     //iprintln(myPatch);
     currentView = newView;
-    currentModel = newModel;
+    currentModel = just(newModel);
     
     return response(("commands": cmds, "subs": mySubs, "patch": myPatch));
   }
@@ -166,7 +164,7 @@ App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static,
     if (get("/<root>/msg") := req) {
       //println("Parsing request: <req.parameters>");
       Msg msg = params2msg(req.parameters, parser);
-      <cmds, newModel> = execute(msg, update, currentModel);
+      <cmds, newModel> = execute(msg, update, currentModel.val);
       return transition(cmds, newModel);
     }
     
