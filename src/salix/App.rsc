@@ -164,7 +164,9 @@ App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static,
     if (get("/<root>/msg") := req) {
       //println("Parsing request: <req.parameters>");
       Msg msg = params2msg(req.parameters, parser);
+
       <cmds, newModel> = execute(msg, update, currentModel.val);
+
       return transition(cmds, newModel);
     }
     

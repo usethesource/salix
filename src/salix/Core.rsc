@@ -55,7 +55,7 @@ private void initViewContext(void(&T) view) {
   // might change the encoding table during `update`.
   value x = view; // workaround bug.
   if (x notin state) {
-    state[x] = <0, (), (), ()>;
+    state[x] = <0, (), (), ()>; 
   }
 }
  
@@ -80,6 +80,8 @@ private &T(&V) _partial(list[value] key, &T(&V) closure) {
     return f;
   }
   assert false: "couldn\'t find closure";
+  
+  throw "couldn\'t find closure";
 }
 
 &T(&V) partial(&T(&U0, &V) f, &U0 u0) 
@@ -96,7 +98,7 @@ private &T(&V) _partial(list[value] key, &T(&V) closure) {
 
 
 // retrieve the actual function corresponding to a handle identity.
-private &U _decode(int id, type[&U] t) = d
+private &U _decode(int id, type[&U] _) = d
   when
     &U d := state[viewContext].from[id];
 
@@ -216,7 +218,7 @@ Sub timeEvery(Msg(int) int2msg, int interval)
 
 alias Subs[&T] = list[Sub](&T);
 
-list[Sub] noSubs(&T t) = [];
+list[Sub] noSubs(&T _) = [];
 
 
 @doc{Commands represent actions that need to be performed at the client.}

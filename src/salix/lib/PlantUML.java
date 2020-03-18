@@ -26,7 +26,8 @@ public class PlantUML {
 		final ByteArrayOutputStream os = new ByteArrayOutputStream();
 		// Write the first image to "os"
 		try {
-			reader.generateImage(os, new FileFormatOption(FileFormat.SVG));
+			String img = reader.outputImage(os, new FileFormatOption(FileFormat.SVG)).getDescription();
+			System.out.println(img);
 			os.close();
 			return vf.string(new String(os.toByteArray(), Charset.forName("UTF-8")));
 
