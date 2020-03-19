@@ -160,7 +160,7 @@ function registerCodeMirror(salix) {
 						return;
 					}
 					if (key === 'value') {
-						cm.getDoc().setValue(val);
+						//cm.getDoc().setValue(val);
 					}
 					else if (key === 'width') {
 						cm.setSize(val, null);
