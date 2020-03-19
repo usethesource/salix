@@ -25,7 +25,8 @@ data Msg;
 @doc{The basic Web App type for use within Rascal:
 - serve to start serving the application
 - stop to shutdown the server}
-alias App[&T] = tuple[void() serve, void() stop];
+//alias App[&T] = tuple[void() serve, void() stop];
+alias App[&T] = Content;
 
 @doc{SalixRequest and SalixResponse are HTTP independent types that model
 the basic workflow of Salix.}
@@ -94,13 +95,16 @@ SalixApp[&T] makeApp(&T() init, void(&T) view, &T(Msg, &T) update, Subs[&T] subs
 built-in web server, providing the http loc to serve the app to, and a 
 location to resolve static files. The keyword param scope identifies the
 element in the html document that Salix will be patching too.}
-App[&T] webApp(SalixApp[&T] app, loc http, loc static, str scope = "root") { 
+App[&T] webApp(SalixApp[&T] app, str id, loc index, loc static, str scope = "root") { 
 
   Response respondHttp(SalixResponse r)
     = response(("commands": r.cmds, "subs": r.subs, "patch": r.patch));
 
   Response _handle(Request req) {
     switch (req) {
+      case get("/"): 
+        return fileResponse(index, mimeTypes["html"], ());
+        
       case get("/<scope>/init"):
         return respondHttp(app(begin(), scope));
     
@@ -113,13 +117,13 @@ App[&T] webApp(SalixApp[&T] app, loc http, loc static, str scope = "root") {
       default: 
         return response(notFound(), "not handled: <req.path>");
     }
-    
   }
 
-  return <
-    () { println("Serving at (scope = <scope>): <http>"); serve(http, _handle); }, 
-    () { shutdown(http); }
-   >;
+  return content(id, _handle);
+  //return <
+  //  () { println("Serving at (scope = <scope>): <http>"); serve(http, _handle); }, 
+  //  () { shutdown(http); }
+  // >;
 }
 
 @doc{Construct an App over model type &T, providing a view, a model update,
@@ -164,9 +168,7 @@ App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static,
     if (get("/<root>/msg") := req) {
       //println("Parsing request: <req.parameters>");
       Msg msg = params2msg(req.parameters, parser);
-
       <cmds, newModel> = execute(msg, update, currentModel.val);
-
       return transition(cmds, newModel);
     }
     

@@ -21,9 +21,16 @@ data Msg
   | f(str f)
   ;
 
-App[Model] celsiusApp() = 
-  app(init, view, update, |http://localhost:9193/salix/demo/basic/index.html|, |project://salix/src|); 
+//App[Model] celsiusApp() = 
+//  app(init, view, update, |http://localhost:9193/salix/demo/basic/index.html|, |project://salix/src|); 
 
+App[Model] celsiusApp() 
+  = webApp(
+      makeApp(init, view, update),
+      "celsius2FahrenheitConverter", 
+      |project://salix/src/salix/demo/basic/index.html|, 
+      |project://salix/src|
+    ); 
 
 Model init() = 37.0;
 
@@ -32,11 +39,11 @@ void view(Model m) {
     h2("Celsius to fahrenheit converter");
     p(() {
       text("C: "); 
-      input(\value("<round(m)>"),\type("text"), onInput(c));
+      input(\value("<round(m)>"),\type("number"), onInput(c));
     });
     p(() {
       text("F: ");
-      input(\value("<round(toF(m))>"),\type("text"), onInput(f));
+      input(\value("<round(toF(m))>"),\type("number"), onInput(f));
     });
   });
 }

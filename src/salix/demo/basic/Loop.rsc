@@ -22,8 +22,13 @@ Model init() {
   return <100, []>;
 }
 
-App[Model] loopApp()
-  = app(init, view, update, |http://localhost:6001/salix/demo/basic/index.html|, |project://salix/src|); 
+App[Model] loopApp() 
+  = webApp(
+      makeApp(init, view, update), 
+      "loop",
+      |project://salix/src/salix/demo/basic/index.html|, 
+      |project://salix/src|
+    );
 
 data Msg
   = addNumber(int n)

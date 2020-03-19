@@ -11,23 +11,22 @@ module salix::demo::basic::Counter
 import salix::App;
 import salix::HTML;
 
-import String;
-import IO;
-
-
 alias Model = tuple[int count];
 
 Model init() = <0>;
 
-
 App[Model] counterApp()
-  = webApp(makeApp(init, view, update), |http://localhost:7000/salix/demo/basic/index.html|, |project://salix/src|);
+  = webApp(
+      makeApp(init, view, update), 
+      "CounterApp",
+      |project://salix/src/salix/demo/basic/index.html|, 
+      |project://salix/src|
+    );
 
 data Msg
   = inc()
   | dec()
   ;
-
 
 Model update(Msg msg, Model m) {
   switch (msg) {

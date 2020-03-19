@@ -33,11 +33,18 @@ Model update(Msg msg, Model t) {
   return t;
 }
 
-App[Model] clockApp() = 
-  app(init, view, update, 
-    |http://localhost:9100/salix/demo/basic/index.html|, |project://salix/src|,
-    subs = subs); 
+//App[Model] clockApp() = 
+//  app(init, view, update, 
+//    |http://localhost:9100/salix/demo/basic/index.html|, |project://salix/src|,
+//    subs = subs); 
 
+App[Model] clockApp() 
+  = webApp(
+      makeApp(init, view, update, subs=subs),
+      "clock", 
+      |project://salix/src/salix/demo/basic/index.html|, 
+      |project://salix/src|
+    );
 
 void view(Model m) {
   div(() {

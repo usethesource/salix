@@ -31,8 +31,15 @@ alias Model = tuple[list[Entry] entries, str field, int uid, str visibility];
 alias Entry = tuple[str description, bool completed, bool editing, int id];
 
 
+//App[Model] todoMVC() 
+//  = app(emptyModel, view, update, |http://localhost:9180/salix/demo/todomvc/todomvc.html|, |project://salix/src|);
+
 App[Model] todoMVC() 
-  = app(emptyModel, view, update, |http://localhost:9180/salix/demo/todomvc/todomvc.html|, |project://salix/src|);
+  = webApp(
+      makeApp(emptyModel, view, update), 
+      |http://localhost:9180/salix/demo/todomvc/todomvc.html|, 
+      |project://salix/src|
+    );
   
 Model emptyModel() = <[], "", 0, "All">;
 

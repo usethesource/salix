@@ -12,8 +12,6 @@ import salix::HTML;
 import salix::Core;
 import salix::App;
 
-import util::Math;
-
 alias Model = tuple[int dieFace];
 
 data Msg
@@ -21,8 +19,17 @@ data Msg
   | newFace(int face)
   ;
 
-App[Model] randomApp()
-  = app(init, view, update, |http://localhost:9098/salix/demo/basic/index.html|, |project://salix/src|); 
+//App[Model] randomApp()
+//  = app(init, view, update, |http://localhost:9098/salix/demo/basic/index.html|, |project://salix/src|); 
+
+App[Model] randomApp() 
+  = webApp(
+      makeApp(init, view, update), 
+      "random",
+      |project://salix/src/salix/demo/basic/index.html|, 
+      |project://salix/src|
+    );
+
 
 Model init() = <1>;
 
@@ -39,7 +46,6 @@ Model update(Msg msg, Model m) {
   
   return m;
 }
-
 
 void view(Model m) {
   div(() {
