@@ -30,14 +30,13 @@ alias Model = tuple[list[Entry] entries, str field, int uid, str visibility];
 
 alias Entry = tuple[str description, bool completed, bool editing, int id];
 
-
-//App[Model] todoMVC() 
-//  = app(emptyModel, view, update, |http://localhost:9180/salix/demo/todomvc/todomvc.html|, |project://salix/src|);
+SalixApp[Model] todoMVCApp(str id = "todoMVC") = makeApp(id, emptyModel, view, update); 
+ 
 
 App[Model] todoMVC() 
   = webApp(
-      makeApp(emptyModel, view, update), 
-      |http://localhost:9180/salix/demo/todomvc/todomvc.html|, 
+      todoMVCApp(), 
+      |project://salix/src/salix/demo/todomvc/todomvc.html|, 
       |project://salix/src|
     );
   

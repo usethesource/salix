@@ -7,15 +7,16 @@ import salix::lib::UML;
 
 alias Model = tuple[str source];
 
-App[Model] umlApp() 
+SalixApp[Model] umlApp(str id = "root") = makeApp(id, init, view, update);
+
+App[Model] umlWebApp() 
   = webApp(
-      makeApp(init, view, update), 
-      "umlExample",
+      umlApp(),
       |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     );
     
-Model init() = <"@startuml\nBob -\> Alice : hellooo\n@enduml\n">;
+Model init() = <"@startuml\nBob -\> Alice : hello\n@enduml\n">;
 
 public str uml = "@startuml
 'Class01 \<|-- Class02

@@ -7,10 +7,11 @@ import salix::App;
 
 alias Model = real;
 
-App[DataTable] chartsApp() 
+SalixApp[DataTable] chartsApp(str id = "chartsApp") = makeApp(id, init, view, update); 
+
+App[DataTable] chartsWebApp() 
   = webApp(
-      makeApp(init, view, update), 
-      "chartsDemo",
+      chartsApp(),
       |project://salix/src/salix/demo/charts/index.html|, 
       |project://salix/src|
     );
@@ -21,7 +22,6 @@ data Msg
   = incGold()
   | decGold()
   ;
-
 
 Model update(Msg msg, Model m) {
   switch (msg) {

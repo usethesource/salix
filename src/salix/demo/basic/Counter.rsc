@@ -15,10 +15,11 @@ alias Model = tuple[int count];
 
 Model init() = <0>;
 
-App[Model] counterApp()
+SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, view, update);
+
+App[Model] counterWebApp()
   = webApp(
-      makeApp(init, view, update), 
-      "CounterApp",
+      counterApp(),
       |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     );

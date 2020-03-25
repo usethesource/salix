@@ -23,7 +23,7 @@ data Msg
   | toggle()
   ;
 
-list[Sub] subs(Model m) = [timeEvery(tick, 1000) | m.running ];
+list[Sub] subs(str id, Model m) = [timeEvery(id, tick, 1000) | m.running ];
 
 Model update(Msg msg, Model t) {
   switch (msg) {
@@ -33,15 +33,12 @@ Model update(Msg msg, Model t) {
   return t;
 }
 
-//App[Model] clockApp() = 
-//  app(init, view, update, 
-//    |http://localhost:9100/salix/demo/basic/index.html|, |project://salix/src|,
-//    subs = subs); 
+SalixApp[Model] clockApp(str id = "root") 
+  = makeApp(id, init, view, update, subs=subs);
 
-App[Model] clockApp() 
+App[Model] clockWebApp() 
   = webApp(
-      makeApp(init, view, update, subs=subs),
-      "clock", 
+      clockApp(),
       |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     );

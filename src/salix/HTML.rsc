@@ -15,7 +15,7 @@ import List;
 import String; 
 
 data Msg;
-
+ 
 @doc{Create a text node.}
 void text(value v) = _text(v);
 

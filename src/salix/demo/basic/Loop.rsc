@@ -22,10 +22,11 @@ Model init() {
   return <100, []>;
 }
 
-App[Model] loopApp() 
+SalixApp[Model] loopApp(str id = "root") = makeApp(id, init, view, update); 
+
+App[Model] loopWebApp() 
   = webApp(
-      makeApp(init, view, update), 
-      "loop",
+      loopApp(), 
       |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     );

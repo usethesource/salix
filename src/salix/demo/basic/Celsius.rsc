@@ -21,13 +21,11 @@ data Msg
   | f(str f)
   ;
 
-//App[Model] celsiusApp() = 
-//  app(init, view, update, |http://localhost:9193/salix/demo/basic/index.html|, |project://salix/src|); 
+SalixApp[Model] celsiusApp(str id = "root") = makeApp(id, init, view, update);
 
-App[Model] celsiusApp() 
+App[Model] celsiusWebApp() 
   = webApp(
-      makeApp(init, view, update),
-      "celsius2FahrenheitConverter", 
+      celsiusApp(),
       |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     ); 

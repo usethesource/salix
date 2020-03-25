@@ -12,7 +12,6 @@ import salix::HTML;
 import salix::App;
 import String;
 import List;
-import IO;
 
 // This app is based on: https://www.mendix.com/tech-blog/making-react-reactive-pursuit-high-performing-easily-maintainable-react-apps/
 
@@ -33,15 +32,21 @@ alias Model = tuple[
 
 Model init() = <
   [Article::article("Funny Bunnies", 17.63, nextId()),
-    Article::article("Awesome React", 23.95, nextId()),
-    Article::article("Second hand Netbook", 50.00, nextId())],
+   Article::article("Awesome React", 23.95, nextId()),
+   Article::article("Second hand Netbook", 50.00, nextId())],
   [entry(0, 1)],
   "",
   0.0
 >;
 
-App[Model] shopApp() 
-  = app(init, shopDemoView, update, |http://localhost:9170/salix/demo/shop/shop.html|, |project://salix/src|);
+SalixApp[Model] shopApp(str id = "shopDemo") = makeApp(id, init, shopDemoView, update); 
+
+App[Model] shopWebApp()
+  = webApp(
+      shopApp(), 
+      |project://salix/src/salix/demo/shop/shop.html|, 
+      |project://salix/src|
+    ); 
 
 data Msg
   = editName(int idx, str name)
@@ -56,7 +61,7 @@ data Msg
   | createLots() // TODO
   ;
 
-int _id = -1;
+private int _id = -1;
 int nextId() { return _id += 1; }
 
 Msg(str) editName(int idx) = Msg(str s) { return editName(idx, s); };

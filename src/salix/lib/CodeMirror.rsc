@@ -12,15 +12,13 @@ import salix::HTML;
 import salix::Core;
 import salix::Node;
 import salix::lib::Mode;
-import IO;
 import String;
-import List;
 
 Attr onChange(Msg(int, int, int, int, str, str) ch2msg)
   = event("change", handler("codeMirrorChange", encode(ch2msg)));
 
-Msg parseMsg("codeMirrorChange", Handle h, map[str, str] p)
-  = applyMaps(h, decode(h.id, #Msg(int, int, int, int, str, str))(
+Msg parseMsg(str id, "codeMirrorChange", Handle h, map[str, str] p)
+  = applyMaps(id, h, decode(id, h.id, #Msg(int, int, int, int, str, str))(
            toInt(p["fromLine"]), toInt(p["fromCol"]), 
            toInt(p["toLine"]), toInt(p["toCol"]),
            p["text"], p["removed"]));

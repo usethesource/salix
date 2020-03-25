@@ -4,15 +4,20 @@ import salix::App;
 import salix::HTML;
 import salix::lib::Dagre;
 import salix::demo::charts::ChartDemo;
-import IO;
 import util::Math;
 import Set;
 import List;
 
 alias GModel = tuple[int clicks, rel[str, str] graph, str line, str shape, str word, real gold];
 
-App[GModel] graphApp()
-  = app(ginit, gview, gupdate, |http://localhost:7002/salix/demo/graphs/index.html|, |project://salix/src|);
+SalixApp[GModel] graphApp(str id = "graphDemo") = makeApp(id, ginit, gview, gupdate); 
+
+App[GModel] graphWebApp() 
+  = webApp(
+      graphApp(), 
+      |project://salix/src/salix/demo/graphs/index.html|, 
+      |project://salix/src|
+    );
 
 GModel ginit() = <0, {<"a", "b">, <"b", "c">, <"a", "c">}, "cardinal", "rect", "", 19.30>;
 

@@ -65,8 +65,8 @@ Attr onNodeSelected(Msg(str) tn2msg) = event("nodeSelected", handler("node", enc
 Attr onNodeUnchecked(Msg(str) tn2msg) = event("nodeUnchecked", handler("node", encode(tn2msg)));
 Attr onNodeUnselected(Msg(str) tn2msg) = event("nodeUnselected", handler("node", encode(tn2msg)));
 
-Msg parseMsg("nodeId", Handle h, map[str, str] p)
-  = applyMaps(h, decode(h, #(Msg(str)))(p["node"]));
+Msg parseMsg(str id, "nodeId", Handle h, map[str, str] p)
+  = applyMaps(id, h, decode(id, h, #(Msg(str)))(p["node"]));
 
 alias T = void(str text, list[value] vals);
 alias TV = void(T);

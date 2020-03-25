@@ -19,13 +19,11 @@ data Msg
   | newFace(int face)
   ;
 
-//App[Model] randomApp()
-//  = app(init, view, update, |http://localhost:9098/salix/demo/basic/index.html|, |project://salix/src|); 
+SalixApp[Model] randomApp(str id = "root") = makeApp(id, init, view, update);
 
-App[Model] randomApp() 
+App[Model] randomWebApp() 
   = webApp(
-      makeApp(init, view, update), 
-      "random",
+      randomApp(),
       |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     );
@@ -56,8 +54,8 @@ void view(Model m) {
 
 // Twice
 
-App[TwiceModel] twiceRandomApp()
-  = app(twiceInit, twiceView, twiceUpdate, |http://localhost:9098/salix/demo/basic/index.html|, |project://salix/src|); 
+//App[TwiceModel] twiceRandomApp()
+//  = app(twiceInit, twiceView, twiceUpdate, |http://localhost:9098/salix/demo/basic/index.html|, |project://salix/src|); 
 
 data TwiceModel 
   = twice(Model model1, Model model2);

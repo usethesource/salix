@@ -12,9 +12,6 @@ import salix::App;
 import salix::Core;
 import salix::HTML;
 
-import String;
-import IO;
-
 
 alias Model = int;
 

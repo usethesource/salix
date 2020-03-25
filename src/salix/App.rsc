@@ -17,8 +17,9 @@ import util::Webserver;
 import util::Reflective;
 import util::Maybe;
 import IO;
+import String;
 
-private loc libRoot = getModuleLocation("salix::App").parent.parent;
+//private loc libRoot = getModuleLocation("salix::App").parent.parent;
 
 data Msg;
 
@@ -44,24 +45,24 @@ particular HTTP server yet. The second argument represents the scope this
 app should operate on, which is the DOM element with that string as id.
 This allows using one web server to serve/multiplex different Salix apps
 on a single page.}
-alias SalixApp[&T] = SalixResponse(SalixRequest, str);
+alias SalixApp[&T] = tuple[str id, SalixResponse (SalixRequest) rr];
 
 @doc{Construct a SalixApp over model type &T, providing a view, a model update,
 and optionally a list of subscriptions, and a possibly extended parser for
 handling messages originating from wrapped "native" elements.}
-SalixApp[&T] makeApp(&T() init, void(&T) view, &T(Msg, &T) update, Subs[&T] subs = noSubs, Parser parser = parseMsg) {
-  
-  Node asRoot(Node h, str scope) = h[attrs=h.attrs + ("id": scope)];
+SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, Subs[&T] subs = noSubs, Parser parser = parseMsg) {
+   
+  Node asRoot(Node h) = h[attrs=h.attrs + ("id": appId)];
 
   Node currentView = empty();
   
   Maybe[&T] currentModel = nothing();
-  
-  SalixResponse transition(list[Cmd] cmds, &T newModel, str scope) {
+   
+  SalixResponse transition(list[Cmd] cmds, &T newModel) {
 
-    list[Sub] mySubs = subs(newModel);
+    list[Sub] mySubs = subs(appId, newModel);
     
-    Node newView = asRoot(render(newModel, view), scope);
+    Node newView = asRoot(render(appId, newModel, view));
     Patch myPatch = diff(currentView, newView);
 
     //iprintln(myPatch);
@@ -72,123 +73,72 @@ SalixApp[&T] makeApp(&T() init, void(&T) view, &T(Msg, &T) update, Subs[&T] subs
   }
 
 
-  return SalixResponse(SalixRequest req, str scope) {
+  SalixResponse reply(SalixRequest req) {
     // initially, just render the view, for the initial model.
     switch (req) {
       case begin(): {
         currentView = empty();
-        <cmds, model> = initialize(init, view);
-        return transition(cmds, model, scope);
-      }
+        <cmds, model> = initialize(appId, init, view);
+        return transition(cmds, model);
+      } 
       case message(map[str,str] params): {
-        Msg msg = params2msg(params, parser);
-        println("Processing: <scope>/<msg>");
+        Msg msg = params2msg(appId, params, parser);
+        println("Processing: <appId>/<msg>");
         <cmds, newModel> = execute(msg, update, currentModel.val);
-        return transition(cmds, newModel, scope);
+        return transition(cmds, newModel);
       }
       default: throw "Invalid Salix request <req>";
     }
   };
+  
+  return <appId, reply>;
 }
 
-@doc{Turn a Salix app App over model type &T into a webApp using Rascal's
-built-in web server, providing the http loc to serve the app to, and a 
-location to resolve static files. The keyword param scope identifies the
-element in the html document that Salix will be patching too.}
-App[&T] webApp(SalixApp[&T] app, str id, loc index, loc static, str scope = "root") { 
+App[&T] webApp(SalixApp[&T] app, loc index, loc static) = webApp(app.id, {app}, index, static);
 
+App[&T] webApp(str id, set[SalixApp[&T]] apps, loc index, loc static) {
+  mesh = webApp(id, index, static);
+  for (app <- apps) {
+    mesh.addApp(app);
+  } 
+  
+  return mesh.webApp;
+} 
+
+alias SalixMesh = tuple[App[&T] webApp, void (SalixApp[&T]) addApp];
+
+SalixMesh webApp(str id, loc index, loc static) { 
+  set[SalixApp[&T]] apps = {};
+  
+  void add(SalixApp[&T] app) {
+    apps += app;
+  }
+  
   Response respondHttp(SalixResponse r)
     = response(("commands": r.cmds, "subs": r.subs, "patch": r.patch));
-
+ 
   Response _handle(Request req) {
-    switch (req) {
-      case get("/"): 
-        return fileResponse(index, mimeTypes["html"], ());
-        
-      case get("/<scope>/init"):
-        return respondHttp(app(begin(), scope));
+    if (get("/") := req) {
+      return fileResponse(index, mimeTypes["html"], ());
+    } else if (get(p:/\.<ext:[^.]*>$/) := req) {
+      return fileResponse(static[path="<static.path>/<p>"], mimeTypes[ext], ());
+    }
     
-      case get("/<scope>/msg"): 
-        return respondHttp(app(message(req.parameters), scope));
-      
-      case get(p:/\.<ext:[^.]*>$/):
-        return fileResponse(static[path="<static.path>/<p>"], mimeTypes[ext], ());
-
-      default: 
+    list[str] path = split("/", req.path);
+    str curAppId = path[1];
+    
+    if (SalixApp[&T] app <- apps, app.id == curAppId) {
+      if (get("/<app.id>/init") := req) {
+        return respondHttp(app.rr(begin()));
+      } else if (get("/<app.id>/msg") := req) { 
+        return respondHttp(app.rr(message(req.parameters)));
+      } else { 
         return response(notFound(), "not handled: <req.path>");
-    }
-  }
-
-  return content(id, _handle);
-  //return <
-  //  () { println("Serving at (scope = <scope>): <http>"); serve(http, _handle); }, 
-  //  () { shutdown(http); }
-  // >;
-}
-
-@doc{Construct an App over model type &T, providing a view, a model update,
-a http loc to serve the app to, and a location to resolve static files.
-The keyword param root identifies the root element in the html document.}
-App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
-            Subs[&T] subs = noSubs, str root = "root", Parser parser = parseMsg) { 
-
-  Node asRoot(Node h) = h[attrs=h.attrs + ("id": root)];
-
-  Node currentView = empty();
-  
-  Maybe[&T] currentModel = nothing();
-  
-  Response transition(list[Cmd] cmds, &T newModel ) {
-
-    list[Sub] mySubs = subs(newModel);
-    
-    Node newView = asRoot(render(newModel, view));
-    Patch myPatch = diff(currentView, newView);
-
-    //iprintln(myPatch);
-    currentView = newView;
-    currentModel = just(newModel);
-    
-    return response(("commands": cmds, "subs": mySubs, "patch": myPatch));
-  }
-
-
-  Response _handle(Request req) {
-    // initially, just render the view, for the initial model.
-
-
-    if (get("/<root>/init") := req) {
-      currentView = empty();
-      <cmds, model> = initialize(init, view);
-      return transition(cmds, model);
-    }
-    
-    
-    // if receiving an (encoded) message
-    if (get("/<root>/msg") := req) {
-      //println("Parsing request: <req.parameters>");
-      Msg msg = params2msg(req.parameters, parser);
-      <cmds, newModel> = execute(msg, update, currentModel.val);
-      return transition(cmds, newModel);
-    }
-    
-    // everything else is considered static files.
-    if (get(p:/\.<ext:[^.]*>$/) := req, ext in mimeTypes) {
-      if (exists(libRoot + p)) {
-        return fileResponse(libRoot + p, mimeTypes[ext], ());
       }
-      else {
-        return fileResponse(static[path="<static.path>/<p>"], mimeTypes[ext], ());
-      }
-    }
-    
-    // or not found
-    return response(notFound(), "not handled: <req.path>");
+    } else { 
+      return response(notFound(), "no salix app configured with id `<curAppId>`");
+    } 
   }
 
-  return <
-    () { println("Serving at: <http>"); serve(http, _handle); }, 
-    () { shutdown(http); }
-   >;
+  return <content(id, _handle), add>;
 }
-

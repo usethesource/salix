@@ -10,17 +10,18 @@
 <script src="/salix/salix.js"></script>
 
 <script>
-  var salix = new Salix();
-  google.charts.load('current', {'packages':['corechart']});
+  var chartsApp = new Salix("chartsApp");
   
+  google.charts.load('current', {'packages':['corechart']});
   google.charts.setOnLoadCallback(function () {
-     registerCharts(salix);
-     $(document).ready(salix.start);  
+  registerCharts(chartsApp);
+  
+  $(document).ready(chartsApp.start);  
   });
 </script>
 <body>
 <div class="container">
-  <div id="root">
+  <div id="chartsApp">
   </div>
 </div>
 </body>

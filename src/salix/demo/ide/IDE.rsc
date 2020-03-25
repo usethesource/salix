@@ -24,12 +24,16 @@ import util::Maybe;
 import ParseTree;
 import String;
 import List;
-import IO;
+import IO; 
 
+SalixApp[IDEModel] ideApp(str id = "ideDemo") = makeApp(id, ideInit, ideView, ideUpdate, parser = parseMsg);
 
-App[IDEModel] ideApp() 
-  = app(ideInit, ideView, ideUpdate, 
-        |http://localhost:8001/salix/demo/ide/index.html|, |project://salix/src|, parser = parseMsg); 
+App[IDEModel] ideWebApp() 
+  = webApp(
+      ideApp(),
+      |project://salix/src/salix/demo/ide/index.html|, 
+      |project://salix/src|
+    ); 
 
 alias IDEModel = tuple[
   str src, 
