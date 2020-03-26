@@ -97,17 +97,17 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, Su
 App[&T] webApp(SalixApp[&T] app, loc index, loc static) = webApp(app.id, {app}, index, static);
 
 App[&T] webApp(str id, set[SalixApp[&T]] apps, loc index, loc static) {
-  mesh = webApp(id, index, static);
+  mashup = webApp(id, index, static);
   for (app <- apps) {
-    mesh.addApp(app);
+    mashup.addApp(app);
   } 
   
-  return mesh.webApp;
+  return mashup.webApp;
 } 
 
-alias SalixMesh = tuple[App[&T] webApp, void (SalixApp[&T]) addApp];
+alias SalixMashup = tuple[App[&T] webApp, void (SalixApp[&T]) addApp];
 
-SalixMesh webApp(str id, loc index, loc static) { 
+SalixMashup webApp(str id, loc index, loc static) { 
   set[SalixApp[&T]] apps = {};
   
   void add(SalixApp[&T] app) {
