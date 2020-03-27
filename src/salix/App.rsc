@@ -142,3 +142,12 @@ SalixMashup webApp(str id, loc index, loc static) {
 
   return <content(id, _handle), add>;
 }
+
+tuple[void () serve, void () stop] standalone(loc host, App[&T] webapp) 
+  = < void () { 
+        util::Webserver::serve(host, webapp.callback); 
+        println("Started serving Salix webapp at <host>");
+      },
+      void () { 
+        util::Webserver::shutdown(host); 
+      } >;

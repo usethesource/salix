@@ -21,10 +21,20 @@ data Msg
 
 SalixApp[Model] randomApp(str id = "root") = makeApp(id, init, view, update);
 
+// Single
 App[Model] randomWebApp() 
   = webApp(
       randomApp(),
       |project://salix/src/salix/demo/basic/index.html|, 
+      |project://salix/src|
+    );
+
+// Twice
+App[Model] twiceWebApp() 
+  = webApp(
+      "twiceApp",
+      {randomApp(id = "random1"), randomApp(id = "random2")},
+      |project://salix/src/salix/demo/basic/twice.html|, 
       |project://salix/src|
     );
 
@@ -51,14 +61,5 @@ void view(Model m) {
      text(m.dieFace);
   });
 }
-
-// Twice
-App[Model] twiceWebApp() 
-  = webApp(
-      "twiceApp",
-      {randomApp(id = "random1"), randomApp(id = "random2")},
-      |project://salix/src/salix/demo/basic/twice.html|, 
-      |project://salix/src|
-    );
    
 
