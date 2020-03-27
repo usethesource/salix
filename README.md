@@ -138,7 +138,7 @@ Here's how to implement this in Salix:
 ```
 We create the counter app twice but each is bound to a unique identifier using the `appId` keyword parameter.
 
-The only thing we now need is "twice" html file containg both versions of the app. Mind the id's!
+The only thing we need now is the "twice" html file containg both versions of the app. Mind the id's!
 
 ```rascal
   <!DOCTYPE html>
