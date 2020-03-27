@@ -241,8 +241,11 @@ void do(Cmd cmd) {
 }  
   
 // the pendant of render, but on init and update
-tuple[list[Cmd], &T] execute(Msg msg, &T(Msg, &T) update, &T model) 
-  = execute(&T() { return update(msg, model); });
+tuple[list[Cmd], &T] execute(str appId, Msg msg, &T(Msg, &T) update, &T model) 
+  = execute(&T() { 
+      curAppId = appId;
+      return update(msg, model); 
+    });
 
 tuple[list[Cmd], &T] execute(&T() init) {
   commands = [];

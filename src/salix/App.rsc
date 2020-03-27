@@ -81,7 +81,7 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, Su
       case message(map[str,str] params): {
         Msg msg = params2msg(appId, params, parser);
         println("Processing: <appId>/<msg>");
-        <cmds, newModel> = execute(msg, update, currentModel.val);
+        <cmds, newModel> = execute(appId, msg, update, currentModel.val);
         return transition(cmds, newModel);
       }
       default: throw "Invalid Salix request <req>";
