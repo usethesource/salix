@@ -5,6 +5,7 @@
   and is available under https://opensource.org/licenses/BSD-2-Clause.
 }
 @contributor{Tijs van der Storm - storm@cwi.nl - CWI}
+@contributor{Jouke Stoel - stoelm@cwi.nl - CWI}
 
 module salix::App
 
@@ -14,16 +15,13 @@ import salix::Diff;
 import salix::Patch;
 
 import util::Webserver;
-import util::Reflective;
 import util::Maybe;
 import IO;
 import String;
 
 data Msg;
 
-@doc{The basic Web App type for use within Rascal:
-- serve to start serving the application
-- stop to shutdown the server}
+@doc{The basic Web App type for use within Rascal.}
 alias App[&T] = Content;
 
 @doc{SalixRequest and SalixResponse are HTTP independent types that model
@@ -38,8 +36,8 @@ data SalixResponse
   ;
   
 @doc{A function type to describe a basic SalixApp without committing to a 
-particular HTTP server yet. The second argument represents the scope this
-app should operate on, which is the DOM element with that string as id.
+particular HTTP server yet. The first argument represents the unique id of this application, 
+which also must correspond to the DOM element with that string as id.
 This allows using one web server to serve/multiplex different Salix apps
 on a single page.}
 alias SalixApp[&T] = tuple[str id, SalixResponse (SalixRequest) rr];
@@ -91,8 +89,13 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, Su
   return <appId, reply>;
 }
 
+@doc{Turn a single Salix App into a web application. The index parameter should point to the local file which holds the index html.
+The static parameter should point to the base directory from where static files should be served}
 App[&T] webApp(SalixApp[&T] app, loc index, loc static) = webApp(app.id, {app}, index, static);
 
+@doc{Turn a set of Salix Apps (all identified with unique id's) into a single web application (with its own id). 
+The index parameter should point to the local file which holds the index html.
+The static parameter should point to the base directory from where static files should be served}
 App[&T] webApp(str id, set[SalixApp[&T]] apps, loc index, loc static) {
   mashup = webApp(id, index, static);
   for (app <- apps) {
@@ -104,6 +107,10 @@ App[&T] webApp(str id, set[SalixApp[&T]] apps, loc index, loc static) {
 
 alias SalixMashup = tuple[App[&T] webApp, void (SalixApp[&T]) addApp];
 
+@doc{Create a web application and add new Salix Apps dynamically to the set of served applications. Initially this is an empty set.
+The return type returns both the web app as well as a closure to add new Salix Apps.
+The index parameter should point to the local file which holds the index html.
+The static parameter should point to the base directory from where static files should be served}
 SalixMashup webApp(str id, loc index, loc static) { 
   set[SalixApp[&T]] apps = {};
   
