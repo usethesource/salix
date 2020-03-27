@@ -5,6 +5,7 @@
   and is available under https://opensource.org/licenses/BSD-2-Clause.
 }
 @contributor{Tijs van der Storm - storm@cwi.nl - CWI}
+@contributor{Jouke Stoel - stoelm@cwi.nl - CWI}
 
 module salix::Core
 

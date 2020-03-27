@@ -67,22 +67,38 @@ A few notes are in order here. A view in Salix is a function from a model (in th
 
 The `button` elements receive attributes to setup event-handling. In this case, the `onClick` attribute wraps an `Msg` value to indicate that this message must be sent if the button is clicked. The main render loop will forward such messages to `update` to obtain a new model value, which in turn is used to create the updated view.
 
-Now that we've defined all required components of a simple Salix app, how do we tie it all together? This is where the `app` function comes in: it takes a function to produce the initial model, a view function, an update function, and two locations capturing the host+port configuration and the path to serve static assets from, respectively. Here's the definition of the counter app: 
+Now that we've defined all required components of a simple Salix app, how do we tie it all together? 
+First we define a function to make a `SalixApp` using the `makeApp` function: it takes a unique identifier (as string), a function to produce the initial model, a view function and an update function.
+Salix applications could be served via other protocols than http, hence a `SalixApp` is a general model of the application.
 
 ```rascal
-    App[Model] counterApp() 
-      = app(init, view, update, |http://localhost:9197|, |file:///...|); 
+    SalixApp[Model] counterApp(str appId = "counterApp") = makeApp(appId, init, view, update);
 ```
+In the above example we have bound the `appId` using a keyword parameter. This means, if wanted, a user can give this application another id (see the section on Nesting Multiple Salix Apps).
 
-The returned value of type `App[Model]` is a tuple containing function to start and stop the application, like so:
+
+Now we can create a web application using the `webApp` function. 
+This function takes a `SalixApp`, the location of the index html file and the base directory for all other files that need to be served statically.
+Here's the definition of the counter web app: 
 
 ```rascal
-    counter = counterApp();
-    counter.serve(); // start the application
-    counter.stop(); // shut it down
+    App[Model] counterWebApp() 
+      = webApp(counterApp(), |file:///.../index.html|, |file:///...|); 
 ```
 
-And that's it! After calling `counter.serve()`, you can use the counter app at `http://localhost:9197/index.html`.
+The returned value of type `App[Model]` is a special Rascal type called `Content`. Whenever the Rascal REPL interprets this type a webserver 
+will automatically be started and its content shown in a tab in the IDE.
+
+So starting our counter application in the REPL is nothing more than importing the module and calling the function:
+
+```rascal
+    rascal> import Counter;
+     ok
+    rascal> counterWebApp();
+     Serving visual content at |http://localhost:9050/|
+```
+
+And that's it! You can use the counter app directly in the IDE or click on the link to open it in your favorite browser.
 
 Wait, we forgot one thing. Here's the minimally required `index.html`  file need to run Salix apps:
 
@@ -91,69 +107,67 @@ Wait, we forgot one thing. Here's the minimally required `index.html`  file need
 	<html>
 	  <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 	  <script src="<somewhere>/salix.js"></script>
-	  <script>$(document).ready(new Salix().start);</script>
-	  <body><div id="root"></div></body>
+	  <script>$(document).ready(new Salix("counterApp").start);</script>
+	  <body><div id="counterApp"></div></body>
 	</html>
 ```
 
-Salix currently requires JQuery to do Ajax calls. Salix apps hook into the `div` with `id` "root" by default. This default can be overridden, however, through the `root` keyword parameter of the `app` function, and providing it to the `Salix` constructor.
+Salix currently requires JQuery to do Ajax calls. 
+Both the Salix javascript object and the `div` that will hold the apps content must have the same name as the given id. In this case it is "counterApp".
 
-### Nesting Components by Mapping
+### Nesting Multiple Salix Applications
 
-Components encapsulate their own models and sets of messages. In order to nest components inside one another, parent components must route incoming messages to the originating child component. This is where "mapping" comes in.
+Applications encapsulate their own models and sets of messages. 
+Nesting multiple application (aka multiple `SalixApp`) is straightforward. 
 
-As an example, let's consider an app that contains the counter app twice. Clicking increment or decrement on either of the counters should not affect the other. Here's how mapping solves this problem.
+As an example, let's consider an app that contains the counter app twice. 
+Clicking increment or decrement on either of the counters should not affect the other. 
+Here's how to implement this in Salix:
 
 ```rascal
     import Counter;
-    import salix::HTML;
-    
-    // combine two counter models
-    alias ModelTwice = tuple[Model counter1, Model counter2];
-    
-    // extend Msg
-    data Msg = sub1(Msg msg) | sub2(Msg m);
-    
-    // update
-    ModelTwice updateTwice(Msg msg, ModelTwice model) {
-      switch (msg) {
-        case sub1(Msg m): model.counter1 = update(m, model.counter1);
-        case sub2(Msg m): model.counter2 = update(m, model.counter2);
-      }
-      return model;
-    }
-    
-    // define the view
-    void viewTwice(ModelTwice model) {
-      div(() {
-        mapView(sub1, model.counter1, view);
-        mapView(sub2, model.counter2, view);
-      });
-    }
+    import salix::App;
+
+    App[Model] twiceWebApp() 
+      = webApp(
+          "twiceApp",
+          {counterApp(appId = "counter1"), counterApp(appId = "counter2")},
+          |file:///.../twice.html|, 
+          |file:///...|
+        );        
 ```
+We create the counter app twice but each is bound to a unique identifier using the `appId` keyword parameter.
 
-The important bit here is that the `view` function of the counter app is embedded twice, via the special `mapView` function. It takes as its first argument a function of type `Msg(Msg)` (i.e., a message transformer), a model as its second argument, and a view (of type `void(&T)`) as its last argument. In this case we provide the `sub1` and `sub2` constructors as message transformers. The function `mapView` now ensures that whenever a message is received that originates from the first counter it is wrapped in `sub1`, and that any message from the second counter is wrapped in `sub2`. For instance, `inc()` from the first counter will be wrapped as `sub1(inc())` and passed to `updateTwice` who will route it to `update` on `m.counter1`. Same for the second counter.
-
-If we didn't use mapping here, the function `updateTwice` could directly interpret `inc()` and `dec()`, but it wouldn't know which counter model to update! Alternatively, however, you shouldn't use mapping if you *want* two views sharing the same model. In this case, there's no need for routing of messages, and the two `view` functions can be simply called twice, on the same model. For instance, like this:
+The only thing we now need is "twice" html file containg both versions of the app. Mind the id's!
 
 ```rascal
-    void viewTwice(Model model) {
-      div(() {
-        view(model);
-        view(model);
-      });
-    }
-```
+  <!DOCTYPE html>
+  <html>
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="<somewhere>/salix.js"></script>
+    <script>
+      $(document).ready(new Salix("counter1").start);
+      $(document).ready(new Salix("counter2").start);
+    </script>
+    <body>
+      <div id="counter1"></div>
+      <div id="counter2"></div>
+    </body>
+  </html>
+```   
     
 ### Subscriptions
 
-Subscriptions can be used to listen to events of interest which are not produced by users interacting with the page. Examples include incoming data on Web sockets, or timers. In Salix these are represented by the type `Sub` (defined in `salix::Core`). Currently, there's only one: 
+Subscriptions can be used to listen to events of interest which are not produced by users interacting with the page. 
+Examples include incoming data on Web sockets, or timers. 
+In Salix these are represented by the type `Sub` (defined in `salix::Core`). 
+Currently, there's only one: 
 
 ```rascal
-	timeEvery(Msg(int) time2msg, int interval) 
+	timeEvery(str appId, Msg(int) time2msg, int interval) 
 ```
 
-To be notified of subscriptions, provide a function of type `list[Sub](&T)` (where `&T` represents your model type) to the `subs` keyword parameter of `app`.
+To be notified of subscriptions, provide a function of type `list[Sub](str,&T)` (where `&T` represents your model type and `str` the bound application id) to the `subs` keyword parameter of `app`.
 
 As as example, let's say we'd like to automatically increment our counter every 5 seconds. This can be achieved as follows:
 
@@ -164,7 +178,7 @@ As as example, let's say we'd like to automatically increment our counter every 
      = ...
      | tick(int time);
 
-	list[Sub] counterSubs(Model m) = [timeEvery(tick, 5000)];
+	list[Sub] counterSubs(str appId, Model m) = [timeEvery(appId, tick, 5000)];
 	
 	Model update(Msg msg, Model model) {
 	  switch (msg) {
@@ -180,15 +194,7 @@ This code states that every 5 seconds we will be notified of the event through t
 Finally modify the invocation to `app` as follows:
 
 ```rascal
-	App[Model] counterApp() = app(..., subs = counterSubs);
-```
-      
-If your nested components have subscriptions, you need to map them in the same way that views are mapped, but this time using `mapSubs`. For instance, here's how to map the subscriptions of each counter to combine them into a list of subscriptions of `counterTwice`, assuming the counter app defines its list of subscriptions for a model as `counterSubs(Model m)`:
-
-```rascal
-	list[Sub] subsTwice(ModelTwice m)
-	  = mapSubs(sub1, m.counter1, counterSubs)
-	  + mapSubs(sub2, m.counter2, counterSubs);
+	SalixApp[Model] counterApp() = makeApp(..., subs = counterSubs);
 ```
 
 ### Commands
@@ -220,22 +226,9 @@ Here's how:
 
 We've added a new message, `jitter` with an integer argument. The `update` function is modified so that whenever the counter is incremented, we'll do that, but also produce a command using `do`, in this case the predefined `random` command which will generate a random integer in the provided range. When the resulting random number is sent back it will be wrapped in a `jitter` message. The `update` function uses this message to add "jitter" to the counter value.
 
-
-Just like views and subscriptions, commands should be mapped whenever components are nested. Here's how `mapCmds` can be used to wrap commands generated by childeren in the `twice` app:
-
-```rascal
-    ModelTwice updateTwice(Msg msg, ModelTwice model) {
-      switch (msg) {
-        case sub1(Msg m): model.counter1 = mapCmds(sub1, m, model.counter1, update);
-        case sub2(Msg m): model.counter2 = mapCmds(sub2, m, model.counter2, update);
-      }
-      return model;
-    }
-```
-
 ### Guide to the modules
 
-- [salix::App](https://github.com/cwi-swat/salix/blob/master/src/salix/App.rsc): defines the top-level `app` function and `App[&T]` data type.
+- [salix::App](https://github.com/cwi-swat/salix/blob/master/src/salix/App.rsc): defines the top-level `makeApp` and `webApp` functions and defines the `SalixApp[&T]` and `App[&T]` data type.
 
 - [salix::HTML](https://github.com/cwi-swat/salix/blob/master/src/salix/HTML.rsc), [salix::SVG](https://github.com/cwi-swat/salix/blob/master/src/salix/SVG.rsc): define  HTML5 resp. SVG elements and attributes as convenient functions. All element functions (such as `div`, `h2`, etc.) accept a variable sequence of `value`s (i.e. they are "vararg" functions). All values can be attributes (as, e.g., produced by `onClick`, `class` etc.). The last value (if any) can also be either a block (of type `void()`), a `Node`, or a plain Rascal value. In the latter case, it's converted to a string and rendered as an HTML text node.  
 
@@ -257,7 +250,7 @@ Just like views and subscriptions, commands should be mapped whenever components
 
 - [salix::demo::basic::Clock](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/basic/Clock.rsc): clock using SVG; demonstrates subscriptions.
 
-- [salix::demo::basic::All](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/basic/All.rsc): combines all previous (basic) demos; demonstrates nesting of components.
+- [salix::demo::basic::All](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/basic/All.rsc): combines all previous (basic) demos; demonstrates combining different Salix applications into a single app.
 
 - [salix::demo::shop::Shop](https://github.com/cwi-swat/salix/blob/master/src/salix/demo/shop/Shop.rsc): a simple shop application (adapted from the [Mobx shop demo](https://www.mendix.com/tech-blog/making-react-reactive-pursuit-high-performing-easily-maintainable-react-apps/)).
 
@@ -292,8 +285,8 @@ If the standard handlers are not sufficient, you can also define your own, by de
 The reverse is also needed: turning a handle received from the client into the corresponding message as produced by the handler function. This is performed by interpreting the type of the result (represented as a string). Such a result is then converted to a message on the server. For instance, the result of `targetValue` is parsed using the following function:
 
 ```rascal
-    Msg parseMsg("string", Handle h, map[str,str] p) 
-      = applyMaps(h, decode(h, #Msg(str))(p["value"]));
+    Msg parseMsg(str appId, "string", Handle h, map[str,str] p) 
+      = applyMaps(appId, h, decode(appId, h, #Msg(str))(p["value"]));
 ```
 
 The function `parseMsg` receives three parameters: first the type of the result (used to dispatch the parse function); second, the `Handle` as received from the client, and third the map of request data that was received from the client.  The `decode` function is used to decode the handle into a function `Msg(str)`, which is then applied to the request parameter `value` to obtain a message. The function `applyMaps` then transforms the resulting message according to the mappers that were active at the time this handle was produced. You should always apply this function, otherwise mapping (see above) won't work.  
@@ -313,7 +306,7 @@ TBD
 #### Why are HTML nodes and commands dealt with implicitly?
 
 Salix view functions are defined as `void(&T)`, and update functions have type `&T(Msg, &T)`. 
-In the first case, HTML nodes are implicitly constructued; in the second case, commands are implicitly collected. 
+In the first case, HTML nodes are implicitly constructed; in the second case, commands are implicitly collected. 
 
 As mentioned above, the style of view functions, IMHO, leads to a better programming experience in Rascal, since it allows the use of ordinary control-flow constructs when programming views. In a purely functional, expression-oriented style, it would mean to simulate such control-flow using inline `c ? t : e` conditionals or comprehensions; the use of comprehensions puts the conditions at the end (which can be awkward), and requires visually distracting brackets or parentheses, suggesting nestings that are not there (e.g., nested lists will be flattened away).  
  
