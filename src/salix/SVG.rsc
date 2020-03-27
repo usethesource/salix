@@ -121,7 +121,7 @@ void colorProfile(value vals...) = build(vals, _colorProfile);
 void cursor(value vals...) = build(vals, _cursor);
 void \filter(value vals...) = build(vals, _filter);
 void script(value vals...) = build(vals, _script);
-void style(value vals...) = build(vals, _style);
+//void style(value vals...) = build(vals, _style);
 void view(value vals...) = build(vals, _view);
   
 // basics  
@@ -647,5 +647,5 @@ Attr onFocusOut(Msg msg) = simpleOn("focusout", msg);
 Attr onMouseDown(Msg msg) = simpleOn("mousedown", msg);
 Attr onMouseMove(Msg msg) = simpleOn("mousemove", msg);
 Attr onMouseOut(Msg msg) = simpleOn("mouseout", msg);
-Attr onMouseOver(Msg msg) = simpleOn("mouseover", msg);
+Attr svgOnMouseOver(Msg msg) = simpleOn("mouseover", msg);
 Attr onMouseUp(Msg msg) = simpleOn("mouseup", msg);

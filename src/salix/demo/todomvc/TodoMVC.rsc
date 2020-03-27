@@ -30,9 +30,15 @@ alias Model = tuple[list[Entry] entries, str field, int uid, str visibility];
 
 alias Entry = tuple[str description, bool completed, bool editing, int id];
 
+SalixApp[Model] todoMVCApp(str id = "todoMVC") = makeApp(id, emptyModel, view, update); 
+ 
 
 App[Model] todoMVC() 
-  = app(emptyModel, view, update, |http://localhost:9180/salix/demo/todomvc/todomvc.html|, |project://salix/src|);
+  = webApp(
+      todoMVCApp(), 
+      |project://salix/src/salix/demo/todomvc/todomvc.html|, 
+      |project://salix/src|
+    );
   
 Model emptyModel() = <[], "", 0, "All">;
 
@@ -129,8 +135,12 @@ void viewInput(str task) {
   });
 }
 
-Attr onEnter(Msg msg) 
-  = event("keydown", handler("theKeyCode", encode(msg), args = ("keyCode": 13)));
+Attr onEnter(Msg msg) = onKeyDown(Msg (int key) {
+  if (key == 13) {
+    return msg;
+  }
+  return noOp();
+});
 
 // VIEW ALL ENTRIES
 

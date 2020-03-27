@@ -16,7 +16,7 @@ import String;
 
 alias Model = tuple[str txt, bool deleted];
 
-App[str] theApp() = app(init, view, update, |http://localhost:7000|, |project://salix/src|);
+App[str] theApp() = app(init, view, update, |http://localhost:7000/salix/tests/index.html|, |project://salix/src|);
 
 Model init() = <"0", false>;
 

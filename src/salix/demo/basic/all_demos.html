@@ -9,14 +9,31 @@
 <script src="/salix/lib/simple.js"></script>
 <script src="/salix/lib/salix-cm.js"></script>
 <script src="/salix/salix.js"></script>
+
 <script>
-  var salix = new Salix();
-  $(document).ready(salix.start);
+  var celsiusApp = new Salix("celsiusApp");
+  $(document).ready(celsiusApp.start);
+  
+  var counterApp = new Salix("counterApp");
+  $(document).ready(counterApp.start);
+  
+  var clockApp = new Salix("clockApp");
+  $(document).ready(clockApp.start);
+
+  var cmApp = new Salix("codeMirrorExample");
+  registerCodeMirror(cmApp);
+  $(document).ready(cmApp.start);
+  
+  var randomApp = new Salix("randomApp");
+  $(document).ready(randomApp.start);
 </script>
 <body>
 <div class="container">
-  <div id="root">
-  </div>
+  <div id="celsiusApp"></div>
+  <div id="counterApp"></div>
+  <div id="clockApp"></div>  
+  <div id="codeMirrorExample"></div>
+  <div id="randomApp"></div>  
 </div>
 </body>
 

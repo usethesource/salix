@@ -33,8 +33,13 @@ alias MoreCSS = lrel[str,str](Tree);
 
 lrel[str,str] noMore(Tree t) = [];
 
+// TODO: don't do more CSS, but have map[loc, lrel[str,str]] or something
+// to have general semantic styling
+// also have a map links map[loc, tuple[str class, str href]];
+// and insert <a class="class" href="href">...</a>
+
 void highlightToHtml(Tree t, void(list[value]) container = pre, map[str,lrel[str,str]] cats = cat2styles, 
-   int tabSize = 2, MoreCSS more = noMore) {
+  int tabSize = 2, MoreCSS more = noMore) {
   container([() {
     str pending = highlightRec(t, "", cats, tabSize, more);
     if (pending != "") {

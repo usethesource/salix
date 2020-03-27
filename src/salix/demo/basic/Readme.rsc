@@ -12,20 +12,25 @@ import salix::App;
 import salix::Core;
 import salix::HTML;
 
-import String;
-import IO;
-
 
 alias Model = int;
 
 Model init() = 0;
 
 
-App[Model] readmeApp()
-  = app(init, view, update, |http://localhost:7500/salix/demo/basic/index.html|, |project://salix/src|
-        subs = counterSubs);
+//App[Model] readmeApp()
+//  = app(init, view, update, |http://localhost:7500/salix/demo/basic/index.html|, |project://salix/src|
+//        subs = counterSubs);
 
-list[Sub] counterSubs(Model m) = [timeEvery(tick, 5000)];
+App[Model] readmeApp() 
+  = webApp(
+      makeApp(init, view, update, subs = counterSubs), 
+      "readme",
+      |project://salix/src/salix/demo/basic/index.html|, 
+      |project://salix/src|
+    );
+
+list[Sub] counterSubs(Model _) = [timeEvery(tick, 5000)];
 
 data Msg
   = inc()

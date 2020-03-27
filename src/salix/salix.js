@@ -9,7 +9,7 @@
  *  - Tijs van der Storm - storm@cwi.nl - CWI
  */
 
-function Salix(aRootId) {
+function Salix(aRootId, host) {
 	var rootId = aRootId || 'root';
 
 	// 'native 'dom elements
@@ -25,8 +25,13 @@ function Salix(aRootId) {
 	// queue of pending commands, events, subscription events
 	var queue = [];
 	
+	function makeURL(msg) {
+	    return (host || '') + '/' + rootId + '/' + msg;
+	}
+	
+	
 	function start() {
-		$.get('/init', {}, step).always(doSome);
+		$.get(makeURL('init'), {}, step).always(doSome);
 	}
 	
 	function root() {
@@ -44,7 +49,6 @@ function Salix(aRootId) {
 		queue.push(event);
 	}
 	
-	
 	function doSome() {
 		if (!renderRequested) {
 			while (queue.length > 0) {
@@ -55,8 +59,7 @@ function Salix(aRootId) {
 					continue;
 				}
 				renderRequested = true;
-				
-				$.get('/msg', event.message, step).fail(function () {
+				$.get(makeURL('msg'), event.message, step).fail(function () {
 					renderRequested = false;
 					window.requestAnimationFrame(doSome);
 					document.body.style.cursor = 'auto';

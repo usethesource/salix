@@ -15,82 +15,136 @@ import salix::Patch;
 
 import util::Webserver;
 import util::Reflective;
+import util::Maybe;
 import IO;
 import String;
-import Map;
-import List;
-
-private loc libRoot = getModuleLocation("salix::App").parent.parent;
 
 data Msg;
 
-@doc{The basic App type:
+@doc{The basic Web App type for use within Rascal:
 - serve to start serving the application
 - stop to shutdown the server}
-alias App[&T] = tuple[void() serve, void() stop];
+alias App[&T] = Content;
 
-@doc{Construct an App over model type &T, providing a view, a model update,
-a http loc to serve the app to, and a location to resolve static files.
-The keyword param root identifies the root element in the html document.}
-App[&T] app(&T() init, void(&T) view, &T(Msg, &T) update, loc http, loc static, 
-            Subs[&T] subs = noSubs, str root = "root", Parser parser = parseMsg) { 
+@doc{SalixRequest and SalixResponse are HTTP independent types that model
+the basic workflow of Salix.}
+data SalixRequest
+  = begin()
+  | message(map[str, str] params)
+  ;
+  
+data SalixResponse
+  = next(list[Cmd] cmds, list[Sub] subs, Patch patch)
+  ;
+  
+@doc{A function type to describe a basic SalixApp without committing to a 
+particular HTTP server yet. The second argument represents the scope this
+app should operate on, which is the DOM element with that string as id.
+This allows using one web server to serve/multiplex different Salix apps
+on a single page.}
+alias SalixApp[&T] = tuple[str id, SalixResponse (SalixRequest) rr];
 
-  Node asRoot(Node h) = h[attrs=h.attrs + ("id": root)];
+@doc{Construct a SalixApp over model type &T, providing a view, a model update,
+and optionally a list of subscriptions, and a possibly extended parser for
+handling messages originating from wrapped "native" elements.}
+SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, Subs[&T] subs = noSubs, Parser parser = parseMsg) {
+   
+  Node asRoot(Node h) = h[attrs=h.attrs + ("id": appId)];
 
   Node currentView = empty();
   
-  &T currentModel;
-  
-  Response transition(list[Cmd] cmds, &T newModel ) {
+  Maybe[&T] currentModel = nothing();
+   
+  SalixResponse transition(list[Cmd] cmds, &T newModel) {
 
-    list[Sub] mySubs = subs(newModel);
+    list[Sub] mySubs = subs(appId, newModel);
     
-    Node newView = asRoot(render(newModel, view));
+    Node newView = asRoot(render(appId, newModel, view));
     Patch myPatch = diff(currentView, newView);
 
     //iprintln(myPatch);
     currentView = newView;
-    currentModel = newModel;
+    currentModel = just(newModel);
     
-    return response(("commands": cmds, "subs": mySubs, "patch": myPatch));
+    return next(cmds, mySubs, myPatch);
   }
 
 
-  Response _handle(Request req) {
+  SalixResponse reply(SalixRequest req) {
     // initially, just render the view, for the initial model.
-
-    if (get("/init") := req) {
-      currentView = empty();
-      <cmds, model> = initialize(init, view);
-      return transition(cmds, model);
-    }
-    
-    
-    // if receiving an (encoded) message
-    if (get("/msg") := req) {
-      //println("Parsing request: <req.parameters>");
-      Msg msg = params2msg(req.parameters, parser);
-      <cmds, newModel> = execute(msg, update, currentModel);
-      return transition(cmds, newModel);
-    }
-    
-    // everything else is considered static files.
-    if (get(p:/\.<ext:[^.]*>$/) := req, ext in mimeTypes) {
-      if (exists(libRoot + p)) {
-        return fileResponse(libRoot + p, mimeTypes[ext], ());
+    switch (req) {
+      case begin(): {
+        currentView = empty();
+        <cmds, model> = initialize(appId, init, view);
+        return transition(cmds, model);
+      } 
+      case message(map[str,str] params): {
+        Msg msg = params2msg(appId, params, parser);
+        println("Processing: <appId>/<msg>");
+        <cmds, newModel> = execute(msg, update, currentModel.val);
+        return transition(cmds, newModel);
       }
-      else {
-        return fileResponse(static[path="<static.path>/<p>"], mimeTypes[ext], ());
-      }
+      default: throw "Invalid Salix request <req>";
     }
-    
-    // or not found
-    return response(notFound(), "not handled: <req.path>");
-  }
-
-  return <
-    () { println("Serving at: <http>"); serve(http, _handle); }, 
-    () { shutdown(http); }
-   >;
+  };
+  
+  return <appId, reply>;
 }
 
+App[&T] webApp(SalixApp[&T] app, loc index, loc static) = webApp(app.id, {app}, index, static);
+
+App[&T] webApp(str id, set[SalixApp[&T]] apps, loc index, loc static) {
+  mashup = webApp(id, index, static);
+  for (app <- apps) {
+    mashup.addApp(app);
+  } 
+  
+  return mashup.webApp;
+} 
+
+alias SalixMashup = tuple[App[&T] webApp, void (SalixApp[&T]) addApp];
+
+SalixMashup webApp(str id, loc index, loc static) { 
+  set[SalixApp[&T]] apps = {};
+  
+  void add(SalixApp[&T] app) {
+    apps += app;
+  }
+  
+  Response respondHttp(SalixResponse r)
+    = response(("commands": r.cmds, "subs": r.subs, "patch": r.patch));
+ 
+  Response _handle(Request req) {
+    if (get("/") := req) {
+      return fileResponse(index, mimeTypes["html"], ());
+    } else if (get(p:/\.<ext:[^.]*>$/) := req) {
+      return fileResponse(static[path="<static.path>/<p>"], mimeTypes[ext], ());
+    }
+    
+    list[str] path = split("/", req.path);
+    str curAppId = path[1];
+    
+    if (SalixApp[&T] app <- apps, app.id == curAppId) {
+      if (get("/<app.id>/init") := req) {
+        return respondHttp(app.rr(begin()));
+      } else if (get("/<app.id>/msg") := req) { 
+        return respondHttp(app.rr(message(req.parameters)));
+      } else { 
+        return response(notFound(), "not handled: <req.path>");
+      }
+    } else { 
+      return response(notFound(), "no salix app configured with id `<curAppId>`");
+    } 
+  }
+
+  return <content(id, _handle), add>;
+}
+
+tuple[void () serve, void () stop] standalone(loc host, App[&T] webapp) 
+  = < void () { 
+        util::Webserver::serve(host, webapp.callback); 
+        println("Started serving Salix webapp at <host>");
+      },
+      void () { 
+        util::Webserver::shutdown(host); 
+      } >;

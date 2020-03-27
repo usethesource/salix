@@ -5,12 +5,10 @@ import salix::Node;
 import salix::HTML;
 import salix::App;
 
-
 import salix::demo::ide::StateMachine;
 
 import ParseTree;
 import String;
-
 
 alias Model
   = tuple[
@@ -20,8 +18,14 @@ alias Model
      list[str] events
    ];
 
-App[Model] richTextApp() 
-  = app(init, view, update, |http://localhost:8221|, |project://salix/src|); 
+SalixApp[Model] richTextApp(str id = "rtf") = makeApp(id, init, view, update);
+
+App[Model] richTextWebApp() 
+  = webApp(
+      richTextApp(),
+      |project://salix/src/salix/demo/ide/richtext.html|, 
+      |project://salix/src|
+    ); 
 
    
 Model init()

@@ -15,7 +15,7 @@
 <script>
   google.charts.load('current', {'packages':['corechart']});
   
-  var salix = new Salix();
+  var salix = new Salix("graphDemo");
   google.charts.setOnLoadCallback(function () {
      registerCharts(salix);
      registerDagre(salix);
@@ -41,7 +41,7 @@ text {
 
 </style>
 <div class="container">
-  <div id="root">
+  <div id="graphDemo">
   </div>
 </div>
 </body>

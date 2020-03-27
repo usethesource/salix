@@ -5,12 +5,16 @@ import salix::HTML;
 import salix::Core;
 import salix::lib::UML;
 
-import IO;
-
 alias Model = tuple[str source];
 
+SalixApp[Model] umlApp(str id = "root") = makeApp(id, init, view, update);
 
-App[Model] umlApp() = app(init, view, update, |http://localhost:9120/salix/demo/basic/index.html|, |project://salix/src|); 
+App[Model] umlWebApp() 
+  = webApp(
+      umlApp(),
+      |project://salix/src/salix/demo/basic/index.html|, 
+      |project://salix/src|
+    );
     
 Model init() = <"@startuml\nBob -\> Alice : hello\n@enduml\n">;
 
@@ -22,8 +26,7 @@ public str uml = "@startuml
 'Class09 -- Class10
 '@enduml";
 
-Model update(Msg msg, Model m) = m;
-
+Model update(Msg _, Model m) = m;
 
 void view(Model m) {
   div(() {

@@ -11,12 +11,17 @@ module salix::demo::basic::CodeMirror
 import salix::HTML;
 import salix::App;
 import salix::lib::CodeMirror;
-import IO;
 
 alias Model = tuple[list[Msg] changes, str src];
 
-App[str] cmApp()
-  = app(init, view, update, |http://localhost:9000/salix/demo/basic/index.html|, |project://salix/src|); 
+SalixApp[str] cmApp(str id = "root") = makeApp(id, init, view, update, parser=parseMsg);
+
+App[str] cmWebApp()
+  = webApp(
+      cmApp(), 
+      |project://salix/src/salix/demo/basic/index.html|, 
+      |project://salix/src|
+    );
 
 
 Model init() 

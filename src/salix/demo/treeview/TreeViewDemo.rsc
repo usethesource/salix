@@ -1,18 +1,19 @@
 module salix::demo::treeview::TreeViewDemo
 
-import salix::Core;
 import salix::App;
 import salix::lib::TreeView;
 import salix::HTML;
-import IO;
-
-import lang::json::IO;
 
 alias Model = str;
 
-App[Model] treeViewApp()
-  = app(init, view, update, |http://localhost:7031/salix/demo/treeview/index.html|, |project://salix/src|
-       , parser = parseMsg);
+SalixApp[Model] treeViewApp(str id = "treeViewDemo") = makeApp(id, init, view, update, parser = parseMsg);
+
+App[Model] treeViewWebApp()
+  = webApp(
+      treeViewApp(),
+      |project://salix/src/salix/demo/treeview/index.html|, 
+      |project://salix/src| 
+    );
 
 Model init() = "";
 

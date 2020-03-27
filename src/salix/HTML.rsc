@@ -12,11 +12,10 @@ module salix::HTML
 import salix::Node;
 import salix::Core;
 import List;
-import String;
-import IO;
+import String; 
 
 data Msg;
-
+ 
 @doc{Create a text node.}
 void text(value v) = _text(v);
 
@@ -226,7 +225,7 @@ Node _summary(list[Node] kids, list[Attr] attrs) = element("summary", kids, attr
 Node _menuitem(list[Node] kids, list[Attr] attrs) = element("menuitem", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 Node _menu(list[Node] kids, list[Attr] attrs) = element("menu", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
-Node _shadow(list[Node] kids, list[Attr] attrs) = shadow(kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
+//Node _shadow(list[Node] kids, list[Attr] attrs) = shadow(kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 /*
  * Attributes
@@ -272,7 +271,7 @@ Attr readonly(bool val) = attr("readonly", "<val>");
 Attr required(bool val) = attr("required", "<val>");
 Attr size(int val) = attr("size", "<val>");
 Attr \for(str val) = attr("for", val);
-Attr form(str val) = attr("form", val);
+Attr formm(str val) = attr("form", val);
 Attr max(str val) = attr("max", val);
 Attr min(str val) = attr("min", val);
 Attr step(str val) = attr("step", val);
@@ -358,7 +357,7 @@ Attr onMouseOver(Msg msg) = event("mouseover", succeed(msg));
 Attr onMouseOut(Msg msg) = event("mouseout", succeed(msg));
 Attr onSubmit(Msg msg) = event("submit", succeed(msg));
 Attr onBlur(Msg msg) = event("blur", succeed(msg));
-Attr onSubmit(Msg msg) = event("focus", succeed(msg));
+Attr onFocus(Msg msg) = event("focus", succeed(msg));
 
 Attr onCheck(Msg(bool) f) = event("change", targetChecked(f));
 

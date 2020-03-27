@@ -19,16 +19,21 @@ import salix::lib::Mode;
 import salix::lib::REPL;
 import salix::lib::Charts;
 import salix::lib::UML;
+import salix::lib::Dagre;
 import util::Maybe;
 import ParseTree;
 import String;
 import List;
-import IO;
+import IO; 
 
+SalixApp[IDEModel] ideApp(str id = "ideDemo") = makeApp(id, ideInit, ideView, ideUpdate, parser = parseMsg);
 
-App[IDEModel] ideApp() 
-  = app(ideInit, ideView, ideUpdate, 
-        |http://localhost:8001/salix/demo/ide/index.html|, |project://salix/src|, parser = parseMsg); 
+App[IDEModel] ideWebApp() 
+  = webApp(
+      ideApp(),
+      |project://salix/src/salix/demo/ide/index.html|, 
+      |project://salix/src|
+    ); 
 
 alias IDEModel = tuple[
   str src, 
@@ -140,7 +145,7 @@ tuple[Msg, str] myEval(str command) {
   if (/goto <state:.*>/ := command) {
     return <gotoState(state), "ok">;
   }
-  return <noOp(), "nothing">;
+  return <noOp(), "Not a command \"<command>\", try \"event \<eventName\>\", or \"goto \<stateName\>\"">;
 }
 
 
@@ -148,7 +153,7 @@ alias Next = tuple[Maybe[str] token, Maybe[str] state];
 
 Next transition(str currentState, str event, start[Controller] ctl) {
   Next result = <nothing(), nothing()>;
-  
+  println("transition: <currentState> (<event>)");
   if (salix::demo::ide::StateMachine::State s <- ctl.top.states, "<s.name>" == currentState) { 
     if (Transition t <- s.transitions, "<t.event>" == event) {
       result.state = just("<t.state>");
@@ -166,8 +171,11 @@ IDEModel ideUpdate(Msg msg, IDEModel model) {
   list[str] myComplete(str prefix) = stmComplete(model, prefix);
   
   void doTransition(str event) {
+    println("do trans <event>");
     if (just(start[Controller] ctl) := model.lastParse) {
+       println("ctl <ctl>");
       if (just(str current) := model.currentState) {
+         println("cur <current>");
         Next nxt = transition(current, event, ctl);
         if (just(str nextState) := nxt.state) {
           model.visitCount[nextState]?0 += 1;
@@ -210,7 +218,6 @@ IDEModel ideUpdate(Msg msg, IDEModel model) {
 
     case repl(Msg sub): 
       model.repl = mapCmds(Msg::repl, sub, model.repl, replUpdate(myEval, myComplete, stmHighlight));
-
   }
   
   return model;
@@ -297,18 +304,8 @@ void ideView(IDEModel model) {
    div(class("row"), () {
      div(class("col-md-6"), () {
        if (just(start[Controller] ctl) := model.lastParse) {
-         //dagre("mygraph", rankdir("LR"), width(400), height(400), (N n, E e) {
-         //  for (salix::demo::ide::StateMachine::State s <- ctl.top.states) {
-         //    str name = "<s.name>";
-         //    n(name, shape("ellipse"), () {
-         //     p("State: <name>");
-         //    });
-         //  }
-         //  for (salix::demo::ide::StateMachine::State s <- ctl.top.states, Transition t <- s.transitions) {
-         //    e("<s.name>", "<t.state>"); 
-         //  } 
-         //});
          div(uml2svgNode(ctl2plantuml(ctl, model.currentState)));
+         ;
        }
      }); 
      div(class("col-md-6"), () {
