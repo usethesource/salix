@@ -62,4 +62,40 @@ void view(Model m) {
   });
 }
    
+// Twice
+
+App[TwiceModel] twiceAltWebApp()
+  = webApp(
+      makeApp("root", twiceInit, twiceView, twiceUpdate), 
+      |project://salix/src/salix/demo/basic/index.html|, 
+      |project://salix/src|
+    ); 
+
+data TwiceModel 
+  = twice(Model model1, Model model2);
+
+TwiceModel twiceInit() = twice(init(), init());
+
+data Msg = sub1(Msg msg) | sub2(Msg msg);
+
+TwiceModel twiceUpdate(Msg msg, TwiceModel m) {
+  switch (msg) {
+    case sub1(Msg s):
+      m.model1 = mapCmds(sub1, s, m.model1, update);
+      
+    case sub2(Msg s):
+      m.model2 = mapCmds(sub2, s, m.model2, update);
+  }
+  
+  return m;
+}
+
+void twiceView(TwiceModel m) {
+  div(() {
+    h2("Two times roll a die");
+    mapView(sub1, m.model1, view);
+    mapView(sub2, m.model2, view);
+  });
+}
+
 
