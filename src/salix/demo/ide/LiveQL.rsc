@@ -8,8 +8,8 @@
 
 module salix::demo::ide::LiveQL
 
-import salix::demo::ide::QL;
-import salix::HTML;
+//import salix::demo::ide::QL;
+//import salix::HTML;
 
 
 //void qlView(Form f) {

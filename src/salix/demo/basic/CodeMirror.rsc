@@ -33,7 +33,7 @@ data Msg
 
 Model update(Msg msg, Model model) {
   switch (msg) {
-    case m:myChange(int fl, int fc, int tl, int tc, str txt, str del):
+    case m:myChange(int _, int _, int _, int _, str _, str _):
       model.changes += [m];
   }
   return model;

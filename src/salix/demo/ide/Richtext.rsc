@@ -102,7 +102,7 @@ str doors() =
     '  close =\> closed
     'end";
 
-void richText(Tree t, int l, int c, void(list[value]) container = pre, map[str,lrel[str,str]] cats = cat2styles, int tabSize = 2) {
+void richText(Tree t, int l, int c, map[str,lrel[str,str]] cats = cat2styles, int tabSize = 2) {
   line = 0;
   col = 1;
   div(tabindex(1), onKeyDown(keyPress), () {
@@ -140,7 +140,7 @@ private str richTextRec(Tree t, int cl, int cc, str current, map[str, lrel[str, 
   }
   else {
     switch (t) {
-      case appl(prod(lit(/^<s:[a-zA-Z_0-9]+>$/), _, _), list[Tree] args): {
+      case appl(prod(lit(/^<s:[a-zA-Z_0-9]+>$/), _, _), list[Tree] _): {
         commitPending();
         if (line == cl, cc < col + size(s)) {
           int pos = cc - col;
@@ -156,7 +156,7 @@ private str richTextRec(Tree t, int cl, int cc, str current, map[str, lrel[str, 
         col += size(s);
       }
   
-      case appl(prod(Symbol d, list[Symbol] ss, set[Attr] as), list[Tree] args): {
+      case appl(prod(Symbol _, list[Symbol] _, set[Attr] as), list[Tree] args): {
         if (\tag("category"(str cat)) <- as) {
           commitPending();
           span(class(cat), style(cats[cat]), () {

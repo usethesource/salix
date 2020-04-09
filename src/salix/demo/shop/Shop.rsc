@@ -153,13 +153,13 @@ void articlesView(Model m) {
     button(onClick(newArticle()), "new article");
     ul(() {
       for (int i <- [0..size(m.articles)]) {
-        articleView(m, m.articles[i], i);
+        articleView(m.articles[i], i);
       }
     });
   });
 }
 
-void articleView(Model m, Article a, int i) {
+void articleView(Article a, int i) {
   li(() {
     span(a.name);
     button(onClick(addToCart(i)), "\>\>");
