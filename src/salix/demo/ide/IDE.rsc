@@ -50,13 +50,13 @@ Maybe[start[Controller]] maybeParse(str src) {
   try {
     return just(parse(#start[Controller], src));
   }
-  catch ParseError(loc err): {
+  catch ParseError(loc _): {
     return nothing();
   }
 }  
   
 IDEModel ideInit() {
-  replModel = mapCmds(Msg::repl, REPLModel() { return initRepl("myXterm", "$ "); });
+  replModel = mapCmds(replMsg, REPLModel() { return initRepl("myXterm", "$ "); });
   Mode stmMode = grammar2mode("statemachine", #Controller);
   IDEModel model = <"", nothing(), nothing(), [], "", stmMode, replModel, ()>;
   
@@ -134,7 +134,7 @@ data Msg
   = stmChange(int fromLine, int fromCol, int toLine, int toCol, str text, str removed)
   | fireEvent(str name)
   | gotoState(str name)
-  | repl(Msg msg)
+  | replMsg(Msg msg)
   | noOp()
   ;
 
@@ -201,7 +201,7 @@ IDEModel ideUpdate(Msg msg, IDEModel model) {
       }  
     }
     
-    case repl(parent(gotoState(str state))): {
+    case replMsg(parent(gotoState(str state))): {
        if (just(start[Controller] ctl) := model.lastParse) {
          if (salix::demo::ide::StateMachine::State s <- ctl.top.states, "<s.name>" == state) {
            model.visitCount["<s.name>"]?0 += 1;
@@ -210,14 +210,14 @@ IDEModel ideUpdate(Msg msg, IDEModel model) {
        }
      }
     
-    case repl(parent(fireEvent(str event))): 
+    case replMsg(parent(fireEvent(str event))): 
       doTransition(event);
       
     case fireEvent(str event): 
       doTransition(event);
 
-    case repl(Msg sub): 
-      model.repl = mapCmds(Msg::repl, sub, model.repl, replUpdate(myEval, myComplete, stmHighlight));
+    case replMsg(Msg sub): 
+      model.repl = mapCmds(replMsg, sub, model.repl, replUpdate(myEval, myComplete, stmHighlight));
   }
   
   return model;
@@ -230,7 +230,7 @@ list[str] mySplit(str sep, str s) {
   return [s];
 }
 
-str updateSrc(str src, int fromLine, int fromCol, int toLine, int toCol, str text, str removed) {
+str updateSrc(str src, int fromLine, int fromCol, int _, int _, str text, str removed) {
   list[str] lines = mySplit("\n", src);
   int from = ( 0 | it + size(l) + 1 | str l <- lines[..fromLine] ) + fromCol;
   int to = from + size(removed);
@@ -295,7 +295,7 @@ void ideView(IDEModel model) {
               }
             });
             h4("Command line");
-            repl(Msg::repl, model.repl, model.repl.id, cursorBlink(true), cols(30), rows(10));
+            repl(replMsg, model.repl, model.repl.id, cursorBlink(true), cols(30), rows(10));
           });
        }
      });
@@ -312,11 +312,11 @@ void ideView(IDEModel model) {
         h4("Analytics");
         
         chart("myChart", "BarChart", legend("left"), title("Visits to States"), width(300), height(300), (C col, R row) {
-           col("string", ColAttr::label("State"));
-           col("number", ColAttr::label("#Visits"));
+           col("string", [ColAttr::label("State")]);
+           col("number", [ColAttr::label("#Visits")]);
            list[str] cols = sort([ k | k <- model.visitCount ]);
            for (str c <- cols) {
-             row((Ce cell) { cell(c); cell(model.visitCount[c]); });
+             row((Ce cell) { cell(c, []); cell(model.visitCount[c], []); });
            } 
         });  
       });
