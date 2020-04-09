@@ -130,13 +130,13 @@ private str richTextRec(Tree t, int cl, int cc, str current, map[str, lrel[str, 
       text(current);
     }
     current = "";
-  }
+  } 
   
-  if (t is transition) {
-    button(onClick(triggerEvent("<t.event>")), "<t>");
+  if (Transition tr := t) {
+    button(onClick(triggerEvent("<tr.event>")), "<t>");
     //int lines = ( 0 | it + 1 | /\n/ := "<t>" );
     // TODO: may contain newlines (we now assume it's on one line)
-    col += size("<t>");
+    col += size("<tr>");
   }
   else {
     switch (t) {
@@ -197,7 +197,7 @@ private str richTextRec(Tree t, int cl, int cc, str current, map[str, lrel[str, 
       
       case amb(set[Tree] alts): {
         if (Tree a <- alts) {
-          current = richTextRec(a, cl, cc, current, cats);
+          current = richTextRec(a, cl, cc, current, cats, tabSize);
         }
       }
     }

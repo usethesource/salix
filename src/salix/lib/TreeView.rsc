@@ -5,9 +5,7 @@ module salix::lib::TreeView
 import salix::Node;
 import salix::Core;
 
-import lang::json::IO;
 import List;
-import IO;
 
 
 // Attributes to control state of tree node.

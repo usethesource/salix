@@ -10,7 +10,6 @@ module salix::lib::Highlight
 
 import salix::HTML;
 import ParseTree;
-import IO;
 import String;
 
 public map[str, lrel[str, str]] cat2styles = (
@@ -31,7 +30,7 @@ public map[str, lrel[str, str]] cat2styles = (
 
 alias MoreCSS = lrel[str,str](Tree);
 
-lrel[str,str] noMore(Tree t) = [];
+lrel[str,str] noMore(Tree _) = [];
 
 // TODO: don't do more CSS, but have map[loc, lrel[str,str]] or something
 // to have general semantic styling
@@ -64,12 +63,12 @@ private str highlightRec(Tree t, str current, map[str, lrel[str, str]] cats, int
   }
   
   switch (t) {
-    case appl(prod(lit(/^<s:[a-zA-Z_0-9]+>$/), _, _), list[Tree] args): {
+    case appl(prod(lit(/^<s:[a-zA-Z_0-9]+>$/), _, _), list[Tree] _): {
       commitPending();
       span(class("MetaKeyword"), style(cats["MetaKeyword"]), s);
     }
 
-    case appl(prod(Symbol d, list[Symbol] ss, set[Attr] as), list[Tree] args): {
+    case appl(prod(Symbol _, list[Symbol] _, set[Attr] as), list[Tree] args): {
       if (\tag("category"(str cat)) <- as, cat in cats) {
         commitPending();
         span(class(cat), style(cats[cat] + more(t)), () {
@@ -99,7 +98,7 @@ private str highlightRec(Tree t, str current, map[str, lrel[str, str]] cats, int
     
     case amb(set[Tree] alts): {
       if (Tree a <- alts) {
-        current = highlightRec(a, current, cats, more);
+        current = highlightRec(a, current, cats, tabSize, more);
       }
     }
   
@@ -128,15 +127,15 @@ str highlightToAnsi(Tree t, map[str,str] cats = cat2ansi, int tabsize = 2) {
   str reset = "\u001B[0m";
   
   str highlightArgs(list[Tree] args) 
-    = ("" | it + highlightToAnsi(a, cats, tabsize) | Tree a <- args );
+    = ("" | it + highlightToAnsi(a, cats = cats, tabsize = tabsize) | Tree a <- args );
   
   switch (t) {
     
-    case appl(prod(lit(/^<s:[a-zA-Z_0-9]+>$/), _, _), list[Tree] args): {
+    case appl(prod(lit(/^<s:[a-zA-Z_0-9]+>$/), _, _), list[Tree] _): {
       return "<cats["MetaKeyword"]><s><reset>";
     }
 
-    case appl(prod(Symbol d, list[Symbol] ss, set[Attr] as), list[Tree] args): {
+    case appl(prod(Symbol _, list[Symbol] _, set[Attr] as), list[Tree] args): {
       if (\tag("category"(str cat)) <- as) {
         // categories can't be nested, so just yield the tree.
         return "<cats[cat]><t><reset>";
@@ -149,12 +148,12 @@ str highlightToAnsi(Tree t, map[str,str] cats = cat2ansi, int tabsize = 2) {
     
     case char(int c): { 
       str s = stringChar(c);
-      return  s == "\t" ? ("" | it + " " | _ <- [0..tabSize]) : s;
+      return  s == "\t" ? ("" | it + " " | _ <- [0..tabsize]) : s;
     }
     
     case amb(set[Tree] alts): {
       if (Tree a <- alts) {
-        return highlightToAnsi(a, cats);
+        return highlightToAnsi(a, cats=cats, tabsize = tabsize);
       }
     }
 

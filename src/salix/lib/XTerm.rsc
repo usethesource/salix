@@ -11,6 +11,7 @@ module salix::lib::XTerm
 import salix::Core;
 import salix::Node;
 
+import String;
 
 // http://xtermjs.org/docs/api/Terminal/
 
@@ -72,7 +73,7 @@ Attr onData(Msg(str) str2msg) = event("data", handler("eventData", encode(str2ms
 
 Attr onKey(Msg(str) str2msg) = event("key", handler("keyName", encode(str2msg)));
 
-Attr onOpen(Msg msg) = event("open", succeed(encode(msg)));
+Attr onOpen(Msg msg) = event("open", handler("succeed",encode(msg)));
 
 Attr onRefresh(Msg(int, int) int22msg) = event("refresh", handler("startEnd", encode(int22msg)));
 
@@ -80,8 +81,8 @@ Attr onResize(Msg(int, int) int22msg) = event("resize", handler("colsRows", enco
 
 Attr onScroll(Msg(int) int2msg) = event("scroll", handler("ydisp", encode(int2msg)));
 
-Msg parseMsg("int-int", Handle h, map[str, str] p)
-  = applyMaps(h, decode(h, #Msg(int,int))(toInt(params["value1"]), toInt(params["value2"])));
+Msg parseMsg(str id, "int-int", Handle h, map[str, str] params)
+  = applyMaps(id, h, decode(id, h, #Msg(int,int))(toInt(params["value1"]), toInt(params["value2"])));
 
 
 

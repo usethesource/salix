@@ -35,24 +35,24 @@ void view(Model m) {
     h3("Tree view demo");
     h5("Selected: <m>");
     
-    treeView(onNodeSelected(Msg::selected), (T tnode) {
-      tnode("Parent 1", () {
-        tnode("Child 1", () {
-          tnode("Grandchild 1");
-          tnode("Grandchild 2");
-        });
-        tnode("Child 2", selected());
-     });
-     tnode("Parent 2", color("red"));
-     tnode("Parent 3");
-     tnode("Parent 4");
-     tnode("Parent 5");
+    treeView(onNodeSelected(Msg::selected), [(T tnode) {
+      tnode("Parent 1", [() {
+        tnode("Child 1", [() {
+          tnode("Grandchild 1",[]);
+          tnode("Grandchild 2",[]);
+        }]);
+        tnode("Child 2", [selected()]);
+     }]);
+     tnode("Parent 2", [color("red")]);
+     tnode("Parent 3", []);
+     tnode("Parent 4", []);
+     tnode("Parent 5", []);
      if (/1$/ := m) {
-       tnode("Another one because 1!!!");
+       tnode("Another one because 1!!!", []);
      }
      if (/2$/ := m) {
-       tnode("Another one because 2!!!");
+       tnode("Another one because 2!!!", []);
      }
-   });
+   }]);
  });
 }  

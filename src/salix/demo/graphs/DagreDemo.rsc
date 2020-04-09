@@ -84,7 +84,7 @@ void gview(GModel m) {
     
     dagre("mygraph", rankdir("LR"), width(960), height(600), (N n, E e) {
       for (str x <- m.graph<0> + m.graph<1>) {
-        n(x, shape(m.shape), () { 
+        n(x, [shape(m.shape), () { 
           div(() {
 	          h3("Here\'s node <x>");
 	          p("A paragraph");
@@ -93,10 +93,10 @@ void gview(GModel m) {
             
 	          button(onClick(click(x)), "Click <x>");
 	        });
-        });
+        }]);
       }
       for (<str x, str y> <- m.graph) {
-        e(x, y, lineInterpolate(m.line));
+        e(x, y, [lineInterpolate(m.line)]);
       }
     });    
     
