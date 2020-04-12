@@ -91,13 +91,13 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, Su
 
 @doc{Turn a single Salix App into a web application. The index parameter should point to the local file which holds the index html.
 The static parameter should point to the base directory from where static files should be served}
-App[&T] webApp(SalixApp[&T] app, loc index, loc static) = webApp(app.id, {app}, index, static);
+App[&T] webApp(SalixApp[&T] app, loc index, loc static, map[str,str] headers = ()) = webApp(app.id, {app}, index, static, headers);
 
 @doc{Turn a set of Salix Apps (all identified with unique id's) into a single web application (with its own id). 
 The index parameter should point to the local file which holds the index html.
 The static parameter should point to the base directory from where static files should be served}
-App[&T] webApp(str id, set[SalixApp[&T]] apps, loc index, loc static) {
-  mashup = webApp(id, index, static);
+App[&T] webApp(str id, set[SalixApp[&T]] apps, loc index, loc static, map[str,str] headers) {
+  mashup = webApp(id, index, static, headers);
   for (app <- apps) {
     mashup.addApp(app);
   } 
@@ -111,7 +111,7 @@ alias SalixMashup = tuple[App[&T] webApp, void (SalixApp[&T]) addApp];
 The return type returns both the web app as well as a closure to add new Salix Apps.
 The index parameter should point to the local file which holds the index html.
 The static parameter should point to the base directory from where static files should be served}
-SalixMashup webApp(str id, loc index, loc static) { 
+SalixMashup webApp(str id, loc index, loc static, map[str,str] headers) { 
   set[SalixApp[&T]] apps = {};
   
   void add(SalixApp[&T] app) {
@@ -119,13 +119,13 @@ SalixMashup webApp(str id, loc index, loc static) {
   }
   
   Response respondHttp(SalixResponse r)
-    = response(("commands": r.cmds, "subs": r.subs, "patch": r.patch));
+    = response(("commands": r.cmds, "subs": r.subs, "patch": r.patch), header = headers);
  
   Response _handle(Request req) {
     if (get("/") := req) {
-      return fileResponse(index, mimeTypes["html"], ());
+      return fileResponse(index, mimeTypes["html"], headers);
     } else if (get(p:/\.<ext:[^.]*>$/) := req) {
-      return fileResponse(static[path="<static.path>/<p>"], mimeTypes[ext], ());
+      return fileResponse(static[path="<static.path>/<p>"], mimeTypes[ext], headers);
     }
     
     list[str] path = split("/", req.path);
