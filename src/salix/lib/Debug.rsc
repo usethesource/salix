@@ -11,7 +11,6 @@ module salix::lib::Debug
 import salix::HTML;
 import salix::App;
 import salix::Core;
-import salix::Node; // for null()...
 
 import List;
 
@@ -26,16 +25,22 @@ data Msg
   | goto(int version)
   ;
 
-App[DebugModel[&T]] debug(&T() model, 
+App[DebugModel[&T]] debug(str appId,
+                          &T() model, 
                           void(DebugModel[&T]) view, // // can't wrap view implicitly, because it'll lead to closures... 
-                          &T(Msg, &T) upd, loc http, loc static,
-                          Subs[&T] subs = noSubs, str root = "root")
-  = app(wrapModel(model, upd), view, debugUpdate, http, static,
-        subs = wrapSubs(subs), root = root); 
+                          &T(Msg, &T) upd, 
+                          loc index, 
+                          loc static,
+                          Subs[&T] subs = noSubs)
+  = webApp(
+      makeApp(appId, wrapModel(model, upd), view, debugUpdate, subs = wrapSubs(subs)), 
+      index, 
+      static
+    ); 
 
 
 Subs[DebugModel[&T]] wrapSubs(Subs[&T] subs) 
-  = list[Sub](DebugModel[&T] m) { return mapSubs(Msg::sub, m.models[m.current], subs); };
+  = list[Sub](str appId, DebugModel[&T] m) { return mapSubs(appId, Msg::sub, m.models[m.current], subs); };
 
 DebugModel[&T]() wrapModel(&T() model, &T(Msg, &T) upd) 
   = DebugModel[&T]() {

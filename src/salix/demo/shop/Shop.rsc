@@ -62,7 +62,7 @@ data Msg
   ;
 
 private int _id = -1;
-int nextId() { return _id += 1; }
+int nextId() { _id += 1; return _id; }
 
 Msg(str) editName(int idx) = Msg(str s) { return editName(idx, s); };
 Msg(str) editPrice(int idx) = Msg(str s) { return editPrice(idx, s); };
@@ -99,7 +99,8 @@ Model update(Msg msg, Model m) {
         m.cart = delete(m.cart, idx); 
       }
       else {
-        m.cart[idx] = e.amount -= 1;
+        e.amount -= 1;
+        m.cart[idx] = e;
       }
     }
     
@@ -152,13 +153,13 @@ void articlesView(Model m) {
     button(onClick(newArticle()), "new article");
     ul(() {
       for (int i <- [0..size(m.articles)]) {
-        articleView(m, m.articles[i], i);
+        articleView(m.articles[i], i);
       }
     });
   });
 }
 
-void articleView(Model m, Article a, int i) {
+void articleView(Article a, int i) {
   li(() {
     span(a.name);
     button(onClick(addToCart(i)), "\>\>");

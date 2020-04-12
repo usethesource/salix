@@ -102,7 +102,7 @@ str doors() =
     '  close =\> closed
     'end";
 
-void richText(Tree t, int l, int c, void(list[value]) container = pre, map[str,lrel[str,str]] cats = cat2styles, int tabSize = 2) {
+void richText(Tree t, int l, int c, map[str,lrel[str,str]] cats = cat2styles, int tabSize = 2) {
   line = 0;
   col = 1;
   div(tabindex(1), onKeyDown(keyPress), () {
@@ -130,17 +130,17 @@ private str richTextRec(Tree t, int cl, int cc, str current, map[str, lrel[str, 
       text(current);
     }
     current = "";
-  }
+  } 
   
-  if (t is transition) {
-    button(onClick(triggerEvent("<t.event>")), "<t>");
+  if (Transition tr := t) {
+    button(onClick(triggerEvent("<tr.event>")), "<t>");
     //int lines = ( 0 | it + 1 | /\n/ := "<t>" );
     // TODO: may contain newlines (we now assume it's on one line)
-    col += size("<t>");
+    col += size("<tr>");
   }
   else {
     switch (t) {
-      case appl(prod(lit(/^<s:[a-zA-Z_0-9]+>$/), _, _), list[Tree] args): {
+      case appl(prod(lit(/^<s:[a-zA-Z_0-9]+>$/), _, _), list[Tree] _): {
         commitPending();
         if (line == cl, cc < col + size(s)) {
           int pos = cc - col;
@@ -156,7 +156,7 @@ private str richTextRec(Tree t, int cl, int cc, str current, map[str, lrel[str, 
         col += size(s);
       }
   
-      case appl(prod(Symbol d, list[Symbol] ss, set[Attr] as), list[Tree] args): {
+      case appl(prod(Symbol _, list[Symbol] _, set[Attr] as), list[Tree] args): {
         if (\tag("category"(str cat)) <- as) {
           commitPending();
           span(class(cat), style(cats[cat]), () {
@@ -197,7 +197,7 @@ private str richTextRec(Tree t, int cl, int cc, str current, map[str, lrel[str, 
       
       case amb(set[Tree] alts): {
         if (Tree a <- alts) {
-          current = richTextRec(a, cl, cc, current, cats);
+          current = richTextRec(a, cl, cc, current, cats, tabSize);
         }
       }
     }

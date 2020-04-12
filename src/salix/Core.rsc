@@ -314,8 +314,8 @@ private &T withMapper(Msg(Msg) f, &T() block) {
 
 // bug: if same name as other mapped, if calling the other
 // it can call this one...
-list[Sub] mapSubs(Msg(Msg) f, &T t, list[Sub](&T) subs) 
-  = withMapper(f, list[Sub]() { return subs(t); });
+list[Sub] mapSubs(str appId, Msg(Msg) f, &T t, list[Sub](str, &T) subs) 
+  = withMapper(f, list[Sub]() { return subs(appId, t); });
 
 &T mapCmds(Msg(Msg) f, Msg msg, &T t, &T(Msg, &T) upd) 
   = withMapper(f, &T() { return upd(msg, t); });

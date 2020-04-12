@@ -15,7 +15,6 @@ import salix::HTML;
 
 import util::Maybe;
 import List;
-import IO;
 import String;
 
 
@@ -134,5 +133,5 @@ void repl(Msg(Msg) f, REPLModel m, str id, value vals...)
 
 // repl view generator (helper)
 void(REPLModel) repl(str id, value vals...) 
-  =  void(REPLModel m) { xterm(id, [onData(xtermData)] + vals); }; 
+  =  void(REPLModel _) { xterm(id, [onData(xtermData)] + vals); }; 
 

@@ -10,6 +10,7 @@ module salix::SVG
 
 import salix::Node;
 import salix::Core;
+import salix::HTML;
 
 data Msg;
 
@@ -23,7 +24,7 @@ void foreignObject(value vals...) = build(vals, _foreignObject);
 void svg(value vals...) = build(vals, _svg);
 void animate(value vals...) = build(vals, _animate);
 void animateColor(value vals...) = build(vals, _animateColor);
-void animateMotion(value vals...) = build(vals, _animateMotion);
+void animateMotion(value vals...) = build(vals, _animateMotion); 
 void animateTransform(value vals...) = build(vals, _animateTransform);
 void mpath(value vals...) = build(vals, _mpath);
 void \set(value vals...) = build(vals, _set);
@@ -34,7 +35,7 @@ void a(value vals...) = build(vals, _a);
 void defs(value vals...) = build(vals, _defs);
 void g(value vals...) = build(vals, _g);
 void marker(value vals...) = build(vals, _marker);
-void mask(value vals...) = build(vals, _mask);
+void maskEl(value vals...) = build(vals, _mask);
 void pattern(value vals...) = build(vals, _pattern);
 void \switch(value vals...) = build(vals, _switch);
 void symbol(value vals...) = build(vals, _symbol);
@@ -43,7 +44,7 @@ void symbol(value vals...) = build(vals, _symbol);
 
 void desc(value vals...) = build(vals, _desc);
 void metadata(value vals...) = build(vals, _metadata);
-void title(value vals...) = build(vals, _title);
+void titleEl(value vals...) = build(vals, _title);
 
 // Filter primitive elements
 
@@ -88,7 +89,7 @@ void circle(value vals...) = build(vals, _circle);
 void ellipse(value vals...) = build(vals, _ellipse);
 void image(value vals...) = build(vals, _image);
 void line(value vals...) = build(vals, _line);
-void path(value vals...) = build(vals, _path);
+void pathEl(value vals...) = build(vals, _path);
 void polygon(value vals...) = build(vals, _polygon);
 
 void polyline(value vals...) = build(vals, _polyline);
@@ -108,7 +109,7 @@ void altGlyph(value vals...) = build(vals, _altGlyph);
 void altGlyphDef(value vals...) = build(vals, _altGlyphDef);
 void altGlyphItem(value vals...) = build(vals, _altGlyphItem);
 void glyph(value vals...) = build(vals, _glyph);
-void glyphRef(value vals...) = build(vals, _glyphRef);
+void glyphRefEl(value vals...) = build(vals, _glyphRef);
 void textPath(value vals...) = build(vals, _textPath);
 void text_(value vals...) = build(vals, _text_);
 void tref(value vals...) = build(vals, _tref);
@@ -116,10 +117,10 @@ void tspan(value vals...) = build(vals, _tspan);
 
 // Uncategorized elements
 
-void clipPath(value vals...) = build(vals, _clipPath);
-void colorProfile(value vals...) = build(vals, _colorProfile);
-void cursor(value vals...) = build(vals, _cursor);
-void \filter(value vals...) = build(vals, _filter);
+void clipPathEl(value vals...) = build(vals, _clipPath);
+void colorProfileEl(value vals...) = build(vals, _colorProfile);
+void cursorEl(value vals...) = build(vals, _cursor);
+void \filterEl(value vals...) = build(vals, _filter);
 void script(value vals...) = build(vals, _script);
 //void style(value vals...) = build(vals, _style);
 void view(value vals...) = build(vals, _view);
@@ -542,16 +543,17 @@ Attr x(str val) = attr("x", val);
 Attr xHeight(str val) = attr("x-height", val);
 Attr x1(str val) = attr("x1", val);
 Attr x2(str val) = attr("x2", val);
-Attr xChannelSelector(str val) = attr("xChannelSelector", val);Attr xlinkActuate(str val) = attributeNS("http://www.w3.org/1999/xlink", "xlink:actuate", val);
-Attr xlinkArcrole(str val) = attrNS("http://www.w3.org/1999/xlink", "xlink:arcrole", val);
-Attr xlinkHref(str val) = attrNS("http://www.w3.org/1999/xlink", "xlink:href", val);
-Attr xlinkRole(str val) = attrNS("http://www.w3.org/1999/xlink", "xlink:role", val);
-Attr xlinkShow(str val) = attrNS("http://www.w3.org/1999/xlink", "xlink:show", val);
-Attr xlinkTitle(str val) = attrNS("http://www.w3.org/1999/xlink", "xlink:title", val);
-Attr xlinkType(str val) = attrNS("http://www.w3.org/1999/xlink", "xlink:type", val);
-Attr xmlBase(str val) = attrNS("http://www.w3.org/XML/1998/namespace", "xml:base", val);
-Attr xmlLang(str val) = attrNS("http://www.w3.org/XML/1998/namespace", "xml:lang", val);
-Attr xmlSpace(str val) = attrNS("http://www.w3.org/XML/1998/namespace", "xml:space", val);Attr y(str val) = attr("y", val);
+Attr xChannelSelector(str val) = attr("xChannelSelector", val);
+//Attr xlinkActuate(str val) = attributeNS("http://www.w3.org/1999/xlink", "xlink:actuate", val);
+//Attr xlinkArcrole(str val) = attrNS("http://www.w3.org/1999/xlink", "xlink:arcrole", val);
+//Attr xlinkHref(str val) = attrNS("http://www.w3.org/1999/xlink", "xlink:href", val);
+//Attr xlinkRole(str val) = attrNS("http://www.w3.org/1999/xlink", "xlink:role", val);
+//Attr xlinkShow(str val) = attrNS("http://www.w3.org/1999/xlink", "xlink:show", val);
+//Attr xlinkTitle(str val) = attrNS("http://www.w3.org/1999/xlink", "xlink:title", val);
+//Attr xlinkType(str val) = attrNS("http://www.w3.org/1999/xlink", "xlink:type", val);
+//Attr xmlBase(str val) = attrNS("http://www.w3.org/XML/1998/namespace", "xml:base", val);
+//Attr xmlLang(str val) = attrNS("http://www.w3.org/XML/1998/namespace", "xml:lang", val);
+//Attr xmlSpace(str val) = attrNS("http://www.w3.org/XML/1998/namespace", "xml:space", val);Attr y(str val) = attr("y", val);
 Attr y1(str val) = attr("y1", val);
 Attr y2(str val) = attr("y2", val);
 Attr yChannelSelector(str val) = attr("yChannelSelector", val);
@@ -639,13 +641,8 @@ Attr onUnload(Msg msg) = simpleOn("unload", msg);
 Attr onZoom(Msg msg) = simpleOn("zoom", msg);
 
 // GRAPHICAL
-
+// See salix::HTML for more event handler functions
 Attr onActivate(Msg msg) = simpleOn("activate", msg);
-Attr onClick(Msg msg) = simpleOn("click", msg);
 Attr onFocusIn(Msg msg) = simpleOn("focusin", msg);
 Attr onFocusOut(Msg msg) = simpleOn("focusout", msg);
-Attr onMouseDown(Msg msg) = simpleOn("mousedown", msg);
 Attr onMouseMove(Msg msg) = simpleOn("mousemove", msg);
-Attr onMouseOut(Msg msg) = simpleOn("mouseout", msg);
-Attr svgOnMouseOver(Msg msg) = simpleOn("mouseover", msg);
-Attr onMouseUp(Msg msg) = simpleOn("mouseup", msg);

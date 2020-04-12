@@ -11,8 +11,7 @@ module salix::Patch
 import salix::Node;
 import Map;
 import List;
-import Node;
-import String;
+import String; 
 
 @doc{Patch are positioned at pos in the parent element where
 they originate. This allows sparse/shallow traversal during
@@ -55,13 +54,13 @@ Node apply(Patch p, Node html) {
   return html;
 }
   
-Node apply(setText(str txt), txt(_)) = txt(txt);
+Node apply(setText(str _txt), txt(_)) = txt(_txt);
 Node apply(replace(Node html), _) = html;
 Node apply(appendNode(Node html), Node e) = e[kids=e.kids + [html]];
 Node apply(removeNode(), Node e) = e[kids = e.kids[..-1]];
 Node apply(removeAttr(str name), Node html) = html[attrs=delete(html.attrs, name)];
 Node apply(removeProp(str name), Node html) = html[props=delete(html.props, name)];
-Node apply(removeEvent(str event), Node html) = html[events=delete(html.events, name)];
+Node apply(removeEvent(str event), Node html) = html[events=delete(html.events, event)];
 Node apply(setAttr(str name, str val), Node html) = html[attrs = html.attrs + (name: val)];
 Node apply(setProp(str name, str val), Node html) = html[props = html.props + (name: val)];
 Node apply(setEvent(str event, Hnd h), Node html) = html[events = html.events + (event: h)];

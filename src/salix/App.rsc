@@ -45,7 +45,7 @@ alias SalixApp[&T] = tuple[str id, SalixResponse (SalixRequest) rr];
 @doc{Construct a SalixApp over model type &T, providing a view, a model update,
 and optionally a list of subscriptions, and a possibly extended parser for
 handling messages originating from wrapped "native" elements.}
-SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, Subs[&T] subs = noSubs, Parser parser = parseMsg) {
+SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, Subs[&T] subs = noSubs, Parser parser = parseMsg, bool debug = false) {
    
   Node asRoot(Node h) = h[attrs=h.attrs + ("id": appId)];
 
@@ -66,7 +66,7 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, Su
     
     return next(cmds, mySubs, myPatch);
   }
-
+ 
 
   SalixResponse reply(SalixRequest req) {
     // initially, just render the view, for the initial model.
@@ -78,7 +78,11 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, Su
       } 
       case message(map[str,str] params): {
         Msg msg = params2msg(appId, params, parser);
-        println("Processing: <appId>/<msg>");
+        
+        if (debug) {
+          println("Processing: <appId>/<msg>");
+        }
+        
         <cmds, newModel> = execute(appId, msg, update, currentModel.val);
         return transition(cmds, newModel);
       }

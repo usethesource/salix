@@ -8,11 +8,6 @@
 
 module salix::Node
 
-import List;
-import String;
-import IO;
-
-
 // TODO: make attrs/props/events kw params to save memory
 // TODO: make attrs map[str, Attribute] to deal with namespaces
 

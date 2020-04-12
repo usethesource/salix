@@ -5,7 +5,6 @@ import salix::HTML;
 import salix::Node;
 
 import List;
-import IO;
 
 // SVG *attributes* from salix::SVG can be given to the dagre function and will be put on the SVG container
 // The following props given to the dagre function will be interpreted as props for Dagre graph layout algo.
