@@ -31,8 +31,8 @@ SalixApp[IDEModel] ideApp(str id = "ideDemo") = makeApp(id, ideInit, ideView, id
 App[IDEModel] ideWebApp() 
   = webApp(
       ideApp(),
-      |project://salix/src/salix/demo/ide/index.html|, 
-      |project://salix/src|
+      index = |project://salix/src/salix/demo/ide/index.html|, 
+      static = |project://salix/src|
     ); 
 
 alias IDEModel = tuple[

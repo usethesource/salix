@@ -12,8 +12,8 @@ SalixApp[Model] umlApp(str id = "root") = makeApp(id, init, view, update);
 App[Model] umlWebApp() 
   = webApp(
       umlApp(),
-      |project://salix/src/salix/demo/basic/index.html|, 
-      |project://salix/src|
+      index = |project://salix/src/salix/demo/basic/index.html|, 
+      static = |project://salix/src|
     );
     
 Model init() = <"@startuml\nBob -\> Alice : hello\n@enduml\n">;

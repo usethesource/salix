@@ -24,8 +24,8 @@ SalixApp[Model] readmeApp(str appId = "root")
 App[Model] readmeWebApp() 
   = webApp(
       readmeApp(),
-      |project://salix/src/salix/demo/basic/index.html|, 
-      |project://salix/src|
+      index  = |project://salix/src/salix/demo/basic/index.html|, 
+      static = |project://salix/src|
     );
 
 list[Sub] counterSubs(str appId, Model _) = [timeEvery(appId, tick, 5000)];

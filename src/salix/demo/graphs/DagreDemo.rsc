@@ -15,8 +15,8 @@ SalixApp[GModel] graphApp(str id = "graphDemo") = makeApp(id, ginit, gview, gupd
 App[GModel] graphWebApp() 
   = webApp(
       graphApp(), 
-      |project://salix/src/salix/demo/graphs/index.html|, 
-      |project://salix/src|
+      index = |project://salix/src/salix/demo/graphs/index.html|, 
+      static = |project://salix/src|
     );
 
 GModel ginit() = <0, {<"a", "b">, <"b", "c">, <"a", "c">}, "cardinal", "rect", "", 19.30>;

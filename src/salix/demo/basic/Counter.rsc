@@ -20,8 +20,8 @@ SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, view, update);
 App[Model] counterWebApp()
   = webApp(
       counterApp(),
-      |project://salix/src/salix/demo/basic/index.html|, 
-      |project://salix/src|
+      index = |project://salix/src/salix/demo/basic/index.html|, 
+      static = |project://salix/src|
     );
 
 data Msg

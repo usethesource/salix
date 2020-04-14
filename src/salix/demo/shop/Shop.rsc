@@ -44,8 +44,8 @@ SalixApp[Model] shopApp(str id = "shopDemo") = makeApp(id, init, shopDemoView, u
 App[Model] shopWebApp()
   = webApp(
       shopApp(), 
-      |project://salix/src/salix/demo/shop/shop.html|, 
-      |project://salix/src|
+      index = |project://salix/src/salix/demo/shop/shop.html|, 
+      static = |project://salix/src|
     ); 
 
 data Msg
