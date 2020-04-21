@@ -23,8 +23,8 @@ SalixApp[Model] richTextApp(str id = "rtf") = makeApp(id, init, view, update);
 App[Model] richTextWebApp() 
   = webApp(
       richTextApp(),
-      index = |project://salix/src/salix/demo/ide/richtext.html|, 
-      static = |project://salix/src|
+      |project://salix/src/salix/demo/ide/richtext.html|, 
+      |project://salix/src|
     ); 
 
    

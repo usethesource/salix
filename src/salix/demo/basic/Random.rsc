@@ -25,8 +25,8 @@ SalixApp[Model] randomApp(str id = "root") = makeApp(id, init, view, update);
 App[Model] randomWebApp() 
   = webApp(
       randomApp(),
-      index = |project://salix/src/salix/demo/basic/index.html|, 
-      static = |project://salix/src|
+      |project://salix/src/salix/demo/basic/index.html|, 
+      |project://salix/src|
     );
 
 // Twice

@@ -95,7 +95,7 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, Su
 
 @doc{Turn a single Salix App into a web application. The index parameter should point to the local file which holds the index html.
 The static parameter should point to the base directory from where static files should be served}
-App[&T] webApp(SalixApp[&T] app, loc index = |tmp:///|, loc static = |tmp:///|, map[str,str] headers = ()) = webApp(app.id, {app}, index, static, headers = headers);
+App[&T] webApp(SalixApp[&T] app, loc index, loc static, map[str,str] headers = ()) = webApp(app.id, {app}, index, static, headers = headers);
 
 @doc{Turn a set of Salix Apps (all identified with unique id's) into a single web application (with its own id). 
 The index parameter should point to the local file which holds the index html.

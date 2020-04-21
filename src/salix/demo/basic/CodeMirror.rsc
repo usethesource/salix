@@ -19,8 +19,8 @@ SalixApp[str] cmApp(str id = "root") = makeApp(id, init, view, update, parser=pa
 App[str] cmWebApp()
   = webApp(
       cmApp(), 
-      index = |project://salix/src/salix/demo/basic/index.html|, 
-      static = |project://salix/src|
+      |project://salix/src/salix/demo/basic/index.html|, 
+      |project://salix/src|
     );
 
 

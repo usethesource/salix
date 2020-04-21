@@ -12,8 +12,8 @@ SalixApp[DataTable] chartsApp(str id = "chartsApp") = makeApp(id, init, view, up
 App[DataTable] chartsWebApp() 
   = webApp(
       chartsApp(),
-      index = |project://salix/src/salix/demo/charts/index.html|, 
-      static = |project://salix/src|
+      |project://salix/src/salix/demo/charts/index.html|, 
+      |project://salix/src|
     );
 
 Model init() = 19.30;

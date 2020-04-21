@@ -26,8 +26,8 @@ SalixApp[Model] celsiusApp(str id = "root") = makeApp(id, init, view, update);
 App[Model] celsiusWebApp() 
   = webApp(
       celsiusApp(),
-      index = |project://salix/src/salix/demo/basic/index.html|, 
-      static = |project://salix/src|
+      |project://salix/src/salix/demo/basic/index.html|, 
+      |project://salix/src|
     ); 
 
 Model init() = 37.0;
