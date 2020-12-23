@@ -99,7 +99,7 @@ private &T(&V) _partial(str id, list[value] key, &T(&V) closure) {
   = _partial(id, [f, u0, u1, u2], &T(&V v) { return f(u0, u1, u2, v); });
    
 &T(&V) partial(str id, &T(&U0, &U1, &U2, &U3, &V) f, &U0 u0, &U1 u1, &U2 u2, &U3 u3) 
-  = _partial(id, [f, u0, u1, u2], &T(&V v) { return f(u0, u1, u2, u3, v); }); 
+  = _partial(id, [f, u0, u1, u2, u3], &T(&V v) { return f(u0, u1, u2, u3, v); }); 
 
 
 // retrieve the actual function corresponding to a handle identity.
