@@ -13,6 +13,7 @@ import salix::Patch;
 import Node;
 import List;
 import util::Math;
+import IO;
 
 bool sanity(Node h1, Node h2) = apply(diff(h1, h2), h1) == h2;
 
@@ -35,10 +36,10 @@ Patch diff(Node old, Node new, int idx) {
   }
   
   if (old is native, new is native) {
-    edits = diffMap(old.props, new.props, setProp, removeProp)
-      + diffMap(old.attrs, new.attrs, setAttr, removeAttr)
-      + diffMap(old.events, new.events, setEvent, removeEvent)
-      + diffMap(old.extra, new.extra, setExtra, removeExtra);
+    edits = diffMap(#str, old.props, new.props, setProp, removeProp)
+      + diffMap(#str, old.attrs, new.attrs, setAttr, removeAttr)
+      + diffEventMap(old.events, new.events)
+      + diffMap(#value, old.extra, new.extra, setExtra, removeExtra);
     if (old.id != new.id) {
       edits += setProp("id", new.id);
     }
@@ -50,9 +51,9 @@ Patch diff(Node old, Node new, int idx) {
   }
 
   // same kind of elements
-  edits = diffMap(old.attrs, new.attrs, setAttr, removeAttr)
-    + diffMap(old.props, new.props, setProp, removeProp)  
-    + diffMap(old.events, new.events, setEvent, removeEvent);
+  edits = diffMap(#str, old.attrs, new.attrs, setAttr, removeAttr)
+    + diffMap(#str, old.props, new.props, setProp, removeProp)  
+    + diffEventMap(old.events, new.events);
   
   return diffKids(old.kids, new.kids, patch(idx, edits = edits));
 }
@@ -76,8 +77,25 @@ Patch diffKids(list[Node] oldKids, list[Node] newKids, Patch myPatch) {
 }
 
 
-list[Edit] diffMap(map[str, &T] old, map[str, &T] new, Edit(str, &T) upd, Edit(str) del) {
-  edits = for (k <- old) {
+// something goes wrong with parameterized function type and binding them to constructors.
+list[Edit] diffEventMap(map[str, Hnd] old, map[str, Hnd] new) {
+  edits = for (str k <- old) {
+    if (k in new) {
+      if (new[k] != old[k]) {
+        append setEvent(k, new[k]);
+      }
+    }
+    else {
+      append removeEvent(k);
+    }
+  }
+  edits += [ setEvent(k, new[k]) | k <- new, k notin old ];
+  return edits;
+} 
+
+
+list[Edit] diffMap(type[&T] typ, map[str, &T] old, map[str, &T] new, Edit(str, &T) upd, Edit(str) del) {
+  edits = for (str k <- old) {
     if (k in new) {
       if (new[k] != old[k]) {
         append upd(k, new[k]);
