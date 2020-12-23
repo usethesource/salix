@@ -45,7 +45,8 @@ alias SalixApp[&T] = tuple[str id, SalixResponse (SalixRequest) rr];
 @doc{Construct a SalixApp over model type &T, providing a view, a model update,
 and optionally a list of subscriptions, and a possibly extended parser for
 handling messages originating from wrapped "native" elements.}
-SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, Subs[&T] subs = noSubs, Parser parser = parseMsg, bool debug = false) {
+SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, 
+  Subs[&T] subs = list[Sub](str _, &T _) {return [];}, Parser parser = parseMsg, bool debug = false) {
    
   Node asRoot(Node h) = h[attrs=h.attrs + ("id": appId)];
 
@@ -60,7 +61,6 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, Su
     Node newView = asRoot(render(appId, newModel, view));
     Patch myPatch = diff(currentView, newView);
 
-    //iprintln(myPatch);
     currentView = newView;
     currentModel = just(newModel);
     
