@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -10,7 +9,7 @@
 
 	<artifactId>salix</artifactId>
 	<groupId>org.rascalmpl</groupId>
-	<version>0.1.0-SNAPSHOT</version>
+	<version>0.1.0</version>
 	<packaging>eclipse-plugin</packaging>
 
   <repositories>  
@@ -23,7 +22,8 @@
 
 	<scm>
 		<developerConnection>scm:git:https://github.com/cwi-swat/salix.git</developerConnection>			
-	</scm>
+	  <tag>v0.1.0</tag>
+  </scm>
 
 	<build>
 		<sourceDirectory>src</sourceDirectory>
@@ -39,6 +39,38 @@
 		      <include>META-INF/RASCAL.MF</include>
 		    </includes>
 		  </resource>
-		</resources>
+              </resources>
+              <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-scm-plugin</artifactId>
+                <version>${scm-plugin-version}</version>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <goals>
+                            <goal>add</goal>
+                            <goal>checkin</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>**/target/**,**/bin/**</excludes>
+                            <includes>**/META-INF/MANIFEST.MF,**/feature.xml,**/*.product,**/category.xml</includes>
+                            <message>Changing the version to reflect the pom versions for the release</message>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.3</version>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
+                    <preparationGoals>org.eclipse.tycho:tycho-versions-plugin:${tycho-version}:update-eclipse-metadata org.apache.maven.plugins:maven-scm-plugin:${scm-plugin-version}:add org.apache.maven.plugins:maven-scm-plugin:${scm-plugin-version}:checkin</preparationGoals>
+                    <completionGoals>org.eclipse.tycho:tycho-versions-plugin:${tycho-version}:update-eclipse-metadata org.apache.maven.plugins:maven-scm-plugin:${scm-plugin-version}:add org.apache.maven.plugins:maven-scm-plugin:${scm-plugin-version}:checkin</completionGoals>
+                </configuration>
+            </plugin>
+              </plugins>
 	</build>
 </project>
