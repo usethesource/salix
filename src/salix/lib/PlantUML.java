@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-import org.rascalmpl.interpreter.utils.RuntimeExceptionFactory;
+import org.rascalmpl.exceptions.RuntimeExceptionFactory;
 
 import io.usethesource.vallang.IString;
 import io.usethesource.vallang.IValueFactory;
@@ -23,15 +23,13 @@ public class PlantUML {
 	public IString uml2svg(IString src) {
 		String source = src.getValue();
 		SourceStringReader reader = new SourceStringReader(source);
-		final ByteArrayOutputStream os = new ByteArrayOutputStream();
-		// Write the first image to "os"
-		try {
-			String img = reader.outputImage(os, new FileFormatOption(FileFormat.SVG)).getDescription();
-			System.out.println(img);
-			os.close();
-			return vf.string(new String(os.toByteArray(), Charset.forName("UTF-8")));
 
-		} catch (IOException e) {
+		try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+			String img = reader.generateImage(os, new FileFormatOption(FileFormat.SVG));
+			System.out.println(img);
+			return vf.string(new String(os.toByteArray(), Charset.forName("UTF-8")));
+		} 
+		catch (IOException e) {
 			throw RuntimeExceptionFactory.io(vf.string(e.getMessage()), null, null);
 		}
 	}

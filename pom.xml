@@ -1,81 +1,132 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>io.usethesource</groupId>
-		<artifactId>pom_parent</artifactId>
-		<version>0.3.5</version>
-	</parent>
+        <groupId>org.rascalmpl</groupId>
+        <artifactId>salix</artifactId>
+        <version>0.2.0-SNAPSHOT</version>
+        <packaging>jar</packaging>
 
-	<artifactId>salix</artifactId>
-	<groupId>org.rascalmpl</groupId>
-	<version>0.2.0-SNAPSHOT</version>
-	<packaging>eclipse-plugin</packaging>
+        <scm>
+            <developerConnection>scm:git:ssh://git@github.com/cwi-swat/flybytes.git</developerConnection>
+        </scm>
 
-  <repositories>  
-    <repository>
-      <id>releases</id>
-      <name>usethesource.io releases</name>
-      <url>https://nexus.usethesource.io/content/repositories/releases/</url>
-    </repository>
-  </repositories>
+        <!-- dependency resolution configuration (usethesource) -->
+        <repositories>
+            <repository>
+                <id>usethesource</id>
+                <url>https://releases.usethesource.io/maven/</url>
+            </repository>
+        </repositories>
+        <pluginRepositories>
+            <pluginRepository>
+                <id>usethesource</id>
+                <url>https://releases.usethesource.io/maven/</url>
+            </pluginRepository>
+        </pluginRepositories>
 
-	<scm>
-		<developerConnection>scm:git:https://github.com/cwi-swat/salix.git</developerConnection>			
-	  <tag>v0.1.0</tag>
-  </scm>
-    <properties>
-        <maven.deploy.skip>true</maven.deploy.skip>
-        <scm-plugin-version>1.9.5</scm-plugin-version>
-        <tycho-version>1.4.0</tycho-version>
-    </properties>
 
+        <properties>
+            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+            <maven.compiler.target>1.8</maven.compiler.target>
+            <maven.compiler.source>1.8</maven.compiler.source>
+        </properties>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<resources>
-		  <resource>
-		    <directory>src</directory>
-		  </resource>			
-		  <resource>
-		    <directory>.</directory>
-		    <filtering>false</filtering>
-		    <includes>
-		      <include>plugin.xml</include>
-		      <include>META-INF/RASCAL.MF</include>
-		    </includes>
-		  </resource>
-              </resources>
-              <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-scm-plugin</artifactId>
-                <version>${scm-plugin-version}</version>
-                <executions>
-                    <execution>
-                        <id>default-cli</id>
-                        <goals>
-                            <goal>add</goal>
-                            <goal>checkin</goal>
-                        </goals>
-                        <configuration>
-                            <excludes>**/target/**,**/bin/**</excludes>
-                            <includes>**/META-INF/MANIFEST.MF,**/feature.xml,**/*.product,**/category.xml</includes>
-                            <message>Changing the version to reflect the pom versions for the release</message>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
-                <configuration>
-                    <autoVersionSubmodules>true</autoVersionSubmodules>
-                    <tagNameFormat>v@{project.version}</tagNameFormat>
-                    <preparationGoals>org.eclipse.tycho:tycho-versions-plugin:${tycho-version}:update-eclipse-metadata org.apache.maven.plugins:maven-scm-plugin:${scm-plugin-version}:add org.apache.maven.plugins:maven-scm-plugin:${scm-plugin-version}:checkin</preparationGoals>
-                    <completionGoals>org.eclipse.tycho:tycho-versions-plugin:${tycho-version}:update-eclipse-metadata org.apache.maven.plugins:maven-scm-plugin:${scm-plugin-version}:add org.apache.maven.plugins:maven-scm-plugin:${scm-plugin-version}:checkin</completionGoals>
-                </configuration>
-            </plugin>
-              </plugins>
+			<resource>
+				<directory>src</directory>
+				<excludes>
+					<exclude>**/*.java</exclude>
+					<exclude>**/*.class</exclude>
+				</excludes>
+			</resource>
+			<resource>
+				<directory>.</directory>
+				<filtering>false</filtering>
+				<includes>
+					<include>META-INF/RASCAL.MF</include>
+					<include>src/**/*.rsc</include>
+				</includes>
+			</resource>
+		</resources>
+		<testSourceDirectory>src</testSourceDirectory>
+
+		<plugins>
+			<plugin>
+				<groupId>org.rascalmpl</groupId>
+				<artifactId>rascal-maven-plugin</artifactId>
+				<version>0.4.5-RC3</version>
+                                <configuration>
+                                     <errorsAsWarnings>true</errorsAsWarnings>
+					<bin>${project.build.outputDirectory}</bin>
+					<srcs>
+						<src>${project.basedir}/src</src>
+					</srcs>
+				</configuration>
+				<executions>
+					<execution>
+						<id>compile</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>package</id>
+						<phase>pre-package</phase>
+						<goals>
+							<goal>package</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.0.0-M3</version>
+				<executions>
+					<execution>
+						<id>test</id>
+						<phase>test</phase>
+						<configuration>
+							<argLine>
+								-ea
+								-Xmx2G
+								-Xss128m
+								-Dfile.encoding=UTF-8
+							</argLine>
+							<includes>
+								<include>**/*Tests.java</include>
+							</includes>
+							<testSourceDirectory>${basedir}/src/</testSourceDirectory>
+						</configuration>
+						<goals>
+							<goal>test</goal>
+						</goals>
+					</execution>
+				</executions>
+
+			</plugin>
+		</plugins>
 	</build>
+
+        <dependencies>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.12</version>
+            </dependency>
+            <dependency>
+                <groupId>org.rascalmpl</groupId>
+                <artifactId>rascal</artifactId>
+                <version>0.19.4-RC2</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.plantuml</groupId>
+                <artifactId>plantuml</artifactId>
+                <version>8059</version>
+            </dependency>
+        </dependencies>
 </project>

@@ -13,7 +13,6 @@ import salix::Patch;
 import Node;
 import List;
 import util::Math;
-import IO;
 
 bool sanity(Node h1, Node h2) = apply(diff(h1, h2), h1) == h2;
 
@@ -94,7 +93,7 @@ list[Edit] diffEventMap(map[str, Hnd] old, map[str, Hnd] new) {
 } 
 
 
-list[Edit] diffMap(type[&T] typ, map[str, &T] old, map[str, &T] new, Edit(str, &T) upd, Edit(str) del) {
+list[Edit] diffMap(type[&T] _, map[str, &T] old, map[str, &T] new, Edit(str, &T) upd, Edit(str) del) {
   edits = for (str k <- old) {
     if (k in new) {
       if (new[k] != old[k]) {
