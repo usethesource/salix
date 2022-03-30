@@ -14,6 +14,9 @@ import salix::Node;
 import salix::lib::Mode;
 import String;
 
+Cmd updateCodeMirror(Msg f, str id, str txt)
+  = command("updateCodeMirror", encode(f), args = ("id": id, "text": txt));
+
 Attr onChange(Msg(int, int, int, int, str, str) ch2msg)
   = event("change", handler("codeMirrorChange", encode(ch2msg)));
 

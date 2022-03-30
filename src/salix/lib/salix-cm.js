@@ -218,5 +218,13 @@ function registerCodeMirror(salix) {
 		// TODO
 	}
 	
+	salix.Commands.updateCodeMirror = function (args) {
+	  var id = args.id;
+	  var txt = args.text;
+	  codeMirrors[id].getDoc().setValue(txt);
+	  return {type: 'nothing'};
+	};
+	
+	
 	salix.registerNative('codeMirror', codeMirror);
 };
