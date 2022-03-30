@@ -24,6 +24,12 @@ void text(value v) = _text(v);
 to interpret the list of values; build will call the
 second argument (_h1 etc.) to construct the actual
 Node values.}
+
+void html(value vals...) = build(vals, _html);
+void head(value vals...) = build(vals, _head);
+void script(value vals...) = build(vals, _script);
+void link(value vals...) = build(vals, _link);
+
 void h1(value vals...) = build(vals, _h1);
 void h2(value vals...) = build(vals, _h2);
 void h3(value vals...) = build(vals, _h3);
@@ -125,6 +131,12 @@ void menu(value vals...) = build(vals, _menu);
 
 // Todo: remove this indirection, and just have
 // Node(list[Node], list[Attr]) _element(str, ..);
+
+Node _html(list[Node] kids, list[Attr] attrs) = element("html", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
+Node _head(list[Node] kids, list[Attr] attrs) = element("head", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
+Node _script(list[Node] kids, list[Attr] attrs) = element("script", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
+Node _link(list[Node] kids, list[Attr] attrs) = element("link", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
+
 
 Node _h1(list[Node] kids, list[Attr] attrs) = element("h1", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 Node _h2(list[Node] kids, list[Attr] attrs) = element("h2", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
