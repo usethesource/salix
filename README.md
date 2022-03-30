@@ -115,7 +115,7 @@ Wait, we forgot one thing. Here's the minimally required `index.html`  file need
 Salix currently requires JQuery to do Ajax calls. 
 Both the Salix javascript object and the `div` that will hold the apps content must have the same name as the given id. In this case it is "counterApp".
 
-### Nesting Multiple Salix Applications
+### Nesting Components by Mapping
 
 Applications encapsulate their own models and sets of messages. 
 Nesting multiple application (aka multiple `SalixApp`) is straightforward. 
@@ -126,35 +126,45 @@ Here's how to implement this in Salix:
 
 ```rascal
     import Counter;
-    import salix::App;
-
-    App[Model] twiceWebApp() 
-      = webApp(
-          "twiceApp",
-          {counterApp(appId = "counter1"), counterApp(appId = "counter2")},
-          |file:///.../twice.html|, 
-          |file:///...|
-        );        
+    import salix::HTML;
+    
+    // combine two counter models
+    alias ModelTwice = tuple[Model counter1, Model counter2];
+    
+    // extend Msg
+    data Msg = sub1(Msg msg) | sub2(Msg m);
+    
+    // update
+    ModelTwice updateTwice(Msg msg, ModelTwice model) {
+      switch (msg) {
+        case sub1(Msg m): model.counter1 = update(m, model.counter1);
+        case sub2(Msg m): model.counter2 = update(m, model.counter2);
+      }
+      return model;
+    }
+    
+    // define the view
+    void viewTwice(ModelTwice model) {
+      div(() {
+        mapView(sub1, model.counter1, view);
+        mapView(sub2, model.counter2, view);
+      });
+    } 
 ```
-We create the counter app twice but each is bound to a unique identifier using the `appId` keyword parameter.
 
-The only thing we need now is the "twice" html file containg both versions of the app. Mind the id's!
+The important bit here is that the `view` function of the counter app is embedded twice, via the special `mapView` function. It takes as its first argument a function of type `Msg(Msg)` (i.e., a message transformer), a model as its second argument, and a view (of type `void(&T)`) as its last argument. In this case we provide the `sub1` and `sub2` constructors as message transformers. The function `mapView` now ensures that whenever a message is received that originates from the first counter it is wrapped in `sub1`, and that any message from the second counter is wrapped in `sub2`. For instance, `inc()` from the first counter will be wrapped as `sub1(inc())` and passed to `updateTwice` who will route it to `update` on `m.counter1`. Same for the second counter.
+
+If we didn't use mapping here, the function `updateTwice` could directly interpret `inc()` and `dec()`, but it wouldn't know which counter model to update! Alternatively, however, you shouldn't use mapping if you *want* two views sharing the same model. In this case, there's no need for routing of messages, and the two `view` functions can be simply called twice, on the same model. For instance, like this:
 
 ```rascal
-  <!DOCTYPE html>
-  <html>
-    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-    <script src="<somewhere>/salix.js"></script>
-    <script>
-      $(document).ready(new Salix("counter1").start);
-      $(document).ready(new Salix("counter2").start);
-    </script>
-    <body>
-      <div id="counter1"></div>
-      <div id="counter2"></div>
-    </body>
-  </html>
-```   
+    void viewTwice(Model model) {
+      div(() {
+        view(model);
+        view(model);
+      });
+    }
+```
+
     
 ### Subscriptions
 
@@ -197,6 +207,14 @@ Finally modify the invocation to `app` as follows:
 	SalixApp[Model] counterApp() = makeApp(..., subs = counterSubs);
 ```
 
+If your nested components have subscriptions, you need to map them in the same way that views are mapped, but this time using `mapSubs`. For instance, here's how to map the subscriptions of each counter to combine them into a list of subscriptions of `counterTwice`, assuming the counter app defines its list of subscriptions for a model as `counterSubs(Model m)`:
+
+```rascal
+	list[Sub] subsTwice(ModelTwice m)
+	  = mapSubs(sub1, m.counter1, counterSubs)
+	  + mapSubs(sub2, m.counter2, counterSubs);
+```
+
 ### Commands
 
 Commands are used to trigger side-effects. Instead of simply returning a new model in `update`, this function will now also "do" commands. Commands are values of the type `Cmd`. The helper function `do` can be used to "execute" commands. Whenever you call `do`, however, the command is merely *scheduled* for execution in the runtime (client). The top-level `app` function will collect all commands that have been "done" during `update` (or `init`) and send them over to the client for actual execution.
@@ -225,6 +243,18 @@ Here's how:
 	
 
 We've added a new message, `jitter` with an integer argument. The `update` function is modified so that whenever the counter is incremented, we'll do that, but also produce a command using `do`, in this case the predefined `random` command which will generate a random integer in the provided range. When the resulting random number is sent back it will be wrapped in a `jitter` message. The `update` function uses this message to add "jitter" to the counter value.
+
+Just like views and subscriptions, commands should be mapped whenever components are nested. Here's how `mapCmds` can be used to wrap commands generated by childeren in the `twice` app:
+
+```rascal
+    ModelTwice updateTwice(Msg msg, ModelTwice model) {
+      switch (msg) {
+        case sub1(Msg m): model.counter1 = mapCmds(sub1, m, model.counter1, update);
+        case sub2(Msg m): model.counter2 = mapCmds(sub2, m, model.counter2, update);
+      }
+      return model;
+    }
+```
 
 ### Guide to the modules
 
