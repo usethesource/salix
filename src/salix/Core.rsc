@@ -257,6 +257,10 @@ tuple[list[Cmd], &T] execute(&T() init) {
 @doc{Smart constructors for constructing encoded commands.}
 Cmd random(Msg(int) f, int from, int to)
   = command("random", encode(f), args = ("from": from, "to": to));
+  
+Cmd setFocus(Msg() f, str id)
+  = command("setFocus", encode(f), args = ("id": id));
+
 
 /*
  * Event decoders

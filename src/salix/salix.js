@@ -353,6 +353,11 @@ function Salix(aRootId, host) {
 				var from = args.from;
 				var random = Math.floor(Math.random() * (to - from + 1)) + from;
 				return {type: 'integer', value: random};
+			},
+			setFocus: function (args) {
+			  var id = args.id;
+			  document.getElementById(id).focus();
+			  return {};
 			}
 	};
 	
