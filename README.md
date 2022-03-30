@@ -105,14 +105,13 @@ Wait, we forgot one thing. Here's the minimally required `index.html`  file need
 ```html
 	<!DOCTYPE html>
 	<html>
-	  <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <head>
 	  <script src="<somewhere>/salix.js"></script>
-	  <script>$(document).ready(new Salix("counterApp").start);</script>
+	  <script>document.addEventListener("DOMContentLoaded", new Salix("counterApp").start);</script>
+	 <head>
 	  <body><div id="counterApp"></div></body>
 	</html>
 ```
-
-Salix currently requires JQuery to do Ajax calls. 
 Both the Salix javascript object and the `div` that will hold the apps content must have the same name as the given id. In this case it is "counterApp".
 
 ### Nesting Components by Mapping
