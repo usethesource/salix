@@ -73,37 +73,34 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update,
     // without polluting user-space code with non-compositional ids.
     switchTo(appId); // Note also switchFrom in the finally clause.
 
-    try {
-	    switch (req) {
-	
-	      // initially, just render the view, for the initial model.
-	      case begin(): {
-	        currentView = empty();
-	        <cmds, model> = initialize(init, view);
-	        return transition(cmds, model);
-	      } 
-	
-		  // otherwise parse the message and do transition
-	      case message(map[str,str] params): {
-	        Msg msg = params2msg(params, parser);
-	        
-	        if (debug) {
-	          println("Processing: <appId>/<msg>");
-	        }
-	        
-	        <cmds, newModel> = execute(msg, update, currentModel.val);
-	        return transition(cmds, newModel);
-	      }
-	      default: throw "Invalid Salix request <req>";
-	    }
-	}
-	catch value _: {
-	  ;
-	}
-	finally {
-	  switchFrom(appId);
-	}
-  };
+    switch (req) {
+
+      // initially, just render the view, for the initial model.
+      case begin(): {
+        currentView = empty();
+        <cmds, model> = initialize(init, view);
+        SalixResponse resp = transition(cmds, model);
+        switchFrom(appId);
+        return resp;
+      } 
+
+	  // otherwise parse the message and do transition
+      case message(map[str,str] params): {
+        Msg msg = params2msg(params, parser);
+        
+        if (debug) {
+          println("Processing: <appId>/<msg>");
+        }
+        
+        <cmds, newModel> = execute(msg, update, currentModel.val);
+        SalixResponse resp = transition(cmds, newModel);
+        switchFrom(appId);
+        return resp;
+      }
+      
+      default: throw "Invalid Salix request <req>";
+   }	   
+  }
   
   return <appId, reply>;
 }

@@ -355,7 +355,7 @@ void mapView(Msg(Msg) f, &T t, void(&T) block) {
 // Some debugging utils
 
 void _reset() {
-  state = ();
+  state = <0, (), (), ()>;
   mappers = [];
   stack = [];
 }

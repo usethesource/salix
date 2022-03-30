@@ -12,14 +12,15 @@ import salix::HTML;
 import salix::App;
 import String;
 import List;
+import util::UUID;
 
 // This app is based on: https://www.mendix.com/tech-blog/making-react-reactive-pursuit-high-performing-easily-maintainable-react-apps/
 
 data Article
-  = article(str name, real price, int id, str newName = "", real newPrice = 0.0);
+  = article(str name, real price, loc id, str newName = "", real newPrice = 0.0);
   
 data Entry
-  = entry(int id, int amount);
+  = entry(loc id, int amount);
   
 alias Cart = list[Entry];
 
@@ -31,13 +32,14 @@ alias Model = tuple[
 ];
 
 Model init() = <
-  [Article::article("Funny Bunnies", 17.63, nextId()),
-   Article::article("Awesome React", 23.95, nextId()),
-   Article::article("Second hand Netbook", 50.00, nextId())],
-  [entry(0, 1)],
+  [Article::article("Funny Bunnies", 17.63, bunnyId),
+   Article::article("Awesome React", 23.95, uuid()),
+   Article::article("Second hand Netbook", 50.00, uuid())],
+  [entry(bunnyId, 1)],
   "",
   0.0
->;
+>
+  when loc bunnyId := uuid();
 
 SalixApp[Model] shopApp(str id = "shopDemo") = makeApp(id, init, shopDemoView, update); 
 
@@ -61,13 +63,11 @@ data Msg
   | createLots() // TODO
   ;
 
-private int _id = -1;
-int nextId() { _id += 1; return _id; }
 
 Msg(str) editName(int idx) = Msg(str s) { return editName(idx, s); };
 Msg(str) editPrice(int idx) = Msg(str s) { return editPrice(idx, s); };
 
-Article findArticle(int id, Model m) = [ a | Article a <- m.articles, a.id == id][0];
+Article findArticle(loc id, Model m) = [ a | Article a <- m.articles, a.id == id][0];
 
 Model update(Msg msg, Model m) {
   switch (msg) {
@@ -111,7 +111,7 @@ Model update(Msg msg, Model m) {
       m.newName = name;
 
     case newArticle(): 
-      m.articles += [Article::article(m.newName, m.newPrice, nextId())];
+      m.articles += [Article::article(m.newName, m.newPrice, uuid())];
   }
   
   return m;
