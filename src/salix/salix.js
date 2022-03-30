@@ -25,13 +25,19 @@ function Salix(aRootId, host) {
 	// queue of pending commands, events, subscription events
 	var queue = [];
 	
-	function makeURL(msg) {
-	    return (host || '') + '/' + rootId + '/' + msg;
+	function makeURL(msg, data) {
+	    var base = (host || '') + '/' + rootId + '/' + msg;
+	    if (data) {
+	    	base += '?' + new URLSearchParams(data).toString();
+	    }
+	    return base;
 	}
 	
 	
 	function start() {
-		$.get(makeURL('init'), {}, step).always(doSome);
+	    fetch(makeURL('init'))
+          .then(response => response.json())
+          .then(data => { step(data); doSome(); });
 	}
 	
 	function root() {
@@ -59,11 +65,17 @@ function Salix(aRootId, host) {
 					continue;
 				}
 				renderRequested = true;
-				$.get(makeURL('msg'), event.message, step).fail(function () {
-					renderRequested = false;
-					window.requestAnimationFrame(doSome);
-					document.body.style.cursor = 'auto';
-				}); 
+				fetch(makeURL('msg', event.message))
+				   .then(response => response.json())
+				   .then(data => 
+				       step(data)
+				   )
+				   .catch(function (error) {
+				  	    renderRequested = false;
+					    window.requestAnimationFrame(doSome);
+					    document.body.style.cursor = 'auto';
+				    });
+				
 				break; // process one event at a time
 			}
 		}
