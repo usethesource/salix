@@ -23,7 +23,7 @@ data Msg
   | toggle()
   ;
 
-list[Sub] subs(str id, Model m) = [timeEvery(id, tick, 1000) | m.running ];
+list[Sub] subs(Model m) = [timeEvery(tick, 1000) | m.running ];
 
 Model update(Msg msg, Model t) {
   switch (msg) {

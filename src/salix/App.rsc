@@ -46,7 +46,7 @@ alias SalixApp[&T] = tuple[str id, SalixResponse (SalixRequest) rr];
 and optionally a list of subscriptions, and a possibly extended parser for
 handling messages originating from wrapped "native" elements.}
 SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, 
-  Subs[&T] subs = list[Sub](str _, &T _) {return [];}, Parser parser = parseMsg, bool debug = false) {
+  Subs[&T] subs = list[Sub](&T _) {return [];}, Parser parser = parseMsg, bool debug = false) {
    
   Node asRoot(Node h) = h[attrs=h.attrs + ("id": appId)];
 
@@ -56,9 +56,9 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update,
    
   SalixResponse transition(list[Cmd] cmds, &T newModel) {
 
-    list[Sub] mySubs = subs(appId, newModel);
+    list[Sub] mySubs = subs(newModel);
     
-    Node newView = asRoot(render(appId, newModel, view));
+    Node newView = asRoot(render(newModel, view));
     Patch myPatch = diff(currentView, newView);
 
     currentView = newView;
@@ -69,25 +69,40 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update,
  
 
   SalixResponse reply(SalixRequest req) {
-    // initially, just render the view, for the initial model.
-    switch (req) {
-      case begin(): {
-        currentView = empty();
-        <cmds, model> = initialize(appId, init, view);
-        return transition(cmds, model);
-      } 
-      case message(map[str,str] params): {
-        Msg msg = params2msg(appId, params, parser);
-        
-        if (debug) {
-          println("Processing: <appId>/<msg>");
-        }
-        
-        <cmds, newModel> = execute(appId, msg, update, currentModel.val);
-        return transition(cmds, newModel);
-      }
-      default: throw "Invalid Salix request <req>";
-    }
+    // this makes scoping/multiplexing of Salix apps possible
+    // without polluting user-space code with non-compositional ids.
+    switchTo(appId); // Note also switchFrom in the finally clause.
+
+    try {
+	    switch (req) {
+	
+	      // initially, just render the view, for the initial model.
+	      case begin(): {
+	        currentView = empty();
+	        <cmds, model> = initialize(init, view);
+	        return transition(cmds, model);
+	      } 
+	
+		  // otherwise parse the message and do transition
+	      case message(map[str,str] params): {
+	        Msg msg = params2msg(params, parser);
+	        
+	        if (debug) {
+	          println("Processing: <appId>/<msg>");
+	        }
+	        
+	        <cmds, newModel> = execute(msg, update, currentModel.val);
+	        return transition(cmds, newModel);
+	      }
+	      default: throw "Invalid Salix request <req>";
+	    }
+	}
+	catch value _: {
+	  ;
+	}
+	finally {
+	  switchFrom(appId);
+	}
   };
   
   return <appId, reply>;
@@ -95,61 +110,35 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update,
 
 @doc{Turn a single Salix App into a web application. The index parameter should point to the local file which holds the index html.
 The static parameter should point to the base directory from where static files should be served}
-App[&T] webApp(SalixApp[&T] app, loc index, loc static, map[str,str] headers = ()) = webApp(app.id, {app}, index, static, headers = headers);
-
-@doc{Turn a set of Salix Apps (all identified with unique id's) into a single web application (with its own id). 
-The index parameter should point to the local file which holds the index html.
-The static parameter should point to the base directory from where static files should be served}
-App[&T] webApp(str id, set[SalixApp[&T]] apps, loc index, loc static, map[str,str] headers = ()) {
-  mashup = webApp(id, index, static, headers = headers);
-  for (app <- apps) {
-    mashup.addApp(app);
-  } 
-  
-  return mashup.webApp;
-} 
-
-alias SalixMashup = tuple[App[&T] webApp, void (SalixApp[&T]) addApp];
-
-@doc{Create a web application and add new Salix Apps dynamically to the set of served applications. Initially this is an empty set.
-The return type returns both the web app as well as a closure to add new Salix Apps.
-The index parameter should point to the local file which holds the index html.
-The static parameter should point to the base directory from where static files should be served}
-SalixMashup webApp(str id, loc index, loc static, map[str,str] headers = ()) { 
-  set[SalixApp[&T]] apps = {};
-  
-  void add(SalixApp[&T] app) {
-    apps += app;
-  }
-  
+App[&T] webApp(SalixApp[&T] app, loc index, loc static, map[str,str] headers = ()) {
   Response respondHttp(SalixResponse r)
     = response(("commands": r.cmds, "subs": r.subs, "patch": r.patch), header = headers);
  
   Response _handle(Request req) {
     if (get("/") := req) {
       return fileResponse(index, mimeTypes["html"], headers);
-    } else if (get(p:/\.<ext:[^.]*>$/) := req) {
+    } 
+    
+    if (get(p:/\.<ext:[^.]*>$/) := req) {
       return fileResponse(static[path="<static.path>/<p>"], mimeTypes[ext], headers);
     }
     
     list[str] path = split("/", req.path);
-    str curAppId = path[1];
     
-    if (SalixApp[&T] app <- apps, app.id == curAppId) {
-      if (get("/<app.id>/init") := req) {
-        return respondHttp(app.rr(begin()));
-      } else if (get("/<app.id>/msg") := req) { 
-        return respondHttp(app.rr(message(req.parameters)));
-      } else { 
-        return response(notFound(), "not handled: <req.path>");
-      }
-    } else { 
-      return response(notFound(), "no salix app configured with id `<curAppId>`");
-    } 
+    
+    if (get("/<app.id>/init") := req) {
+      return respondHttp(app.rr(begin()));
+    }
+    if (get("/<app.id>/msg") := req) { 
+      return respondHttp(app.rr(message(req.parameters)));
+    }
+     
+    return response(notFound(), "not handled: <req.path>");
   }
+  
+  return content(app.id, _handle);
+} 
 
-  return <content(id, _handle), add>;
-}
 
 tuple[void () serve, void () stop] standalone(loc host, App[&T] webapp) 
   = < void () { 
