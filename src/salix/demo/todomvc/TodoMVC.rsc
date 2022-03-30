@@ -33,7 +33,7 @@ alias Entry = tuple[str description, bool completed, bool editing, int id];
 SalixApp[Model] todoMVCApp(str id = "todoMVC") = makeApp(id, emptyModel, view, update); 
  
 
-App[Model] todoMVC() 
+App[Model] todoMVCWebApp() 
   = webApp(
       todoMVCApp(), 
       |project://salix/src/salix/demo/todomvc/todomvc.html|, 

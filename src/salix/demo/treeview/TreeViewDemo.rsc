@@ -35,7 +35,7 @@ void view(Model m) {
     h3("Tree view demo");
     h5("Selected: <m>");
     
-    treeView(onNodeSelected(Msg::selected), [(T tnode) {
+    treeView(onNodeSelected(Msg::selected), (T tnode) {
       tnode("Parent 1", [() {
         tnode("Child 1", [() {
           tnode("Grandchild 1",[]);
@@ -53,6 +53,6 @@ void view(Model m) {
      if (/2$/ := m) {
        tnode("Another one because 2!!!", []);
      }
-   }]);
+   });
  });
 }  

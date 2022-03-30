@@ -13,7 +13,7 @@
 <script>
   var salix = new Salix("treeViewDemo");
   registerTreeView(salix);
-  $(document).ready(salix.start);  
+  document.addEventListener("DOMContentLoaded", salix.start)  
 </script>
 <body>
 <div class="container">
