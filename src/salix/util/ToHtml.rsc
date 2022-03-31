@@ -1,22 +1,27 @@
 module salix::util::ToHtml
 
-import lang::html5::DOM;
 import salix::Node;
+import List;
 
 
 Node bareHtml(Node n) {
   return visit(n) {
   	case element(str t, list[Node] kids, map[str,str] as, _, _) => element(t, kids, as, (), ())
-  	case native(_, _, _, _, _, extra = _) => empty() 
+  	case native(_, _, _, _, _, extra = _) => element("div", [], (), (), ()) 
   }
 }
 
-str toHtml(Node n) = toString(_toHtml(n));
+str toHtml(element(str n, list[Node] kids, map[str, str] attrs, _ , _)) 
+  = "\<<n> <attrs2str(attrs)>\><kids2html(kids)>\</<n>\>";
 
-value _toHtml(element(str n, list[Node] kids, map[str, str] attrs, _ , _)) 
-  = html5node(n, [ _toHtml(k) | Node k <- kids, !(k is empty), !(k is native) ] 
-      + [ html5attr(a, attrs[a]) | str a <- attrs ]);
+str toHtml(txt(str s)) = s;
+  
+str kids2html(list[Node] kids)
+  = ( "" | it + toHtml(k) | Node k <- kids );
+
+str attrs2str(map[str, str] attrs)
+  = intercalate(" ", [ "<a>=\"<attrs[a]>\"" | str a <- attrs ]);  
+  
       
-value _toHtml(txt(str s)) = s;
 
 

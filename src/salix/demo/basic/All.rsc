@@ -40,7 +40,7 @@ data Msg
   ;
 
 SalixApp[AllModel] allDemosApp(str id = "root") 
-  = makeApp(id, initAll, withIndex("All", viewAll), editAll
+  = makeApp(id, initAll, withIndex("All", id, viewAll), editAll
            , subs = allSubs, parser = parseMsg);
        
        

@@ -7,16 +7,16 @@ import salix::lib::Extension;
 import String;
 
 
-void(&T) withIndex(str myTitle, void(&T) view, list[Extension] exts = [], list[str] css = [], list[str] scripts = []) {
+void(&T) withIndex(str myTitle, str myId, void(&T) view, list[Extension] exts = [], list[str] css = [], list[str] scripts = []) {
   return void(&T model) {
-     index(myTitle, () {
+     index(myTitle, myId, () {
        view(model);
      }, exts=exts, css=css, scripts=scripts);
   };
 }
 
 
-void index(str myTitle, void() block, list[Extension] exts = [], list[str] css = [], list[str] scripts = []) {
+void index(str myTitle, str myId, void() block, list[Extension] exts = [], list[str] css = [], list[str] scripts = []) {
   html(() {
     head(() {
       title_(myTitle);
@@ -46,7 +46,7 @@ void index(str myTitle, void() block, list[Extension] exts = [], list[str] css =
       }
       
       script("document.addEventListener(\"DOMContentLoaded\", function() {
-             '  const app = new Salix();
+             '  const app = new Salix(\"<myId>\");
              '  <for (Extension e <- exts) {>
              '  register<capitalize(e.name)>(app);
              '  <}>

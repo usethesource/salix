@@ -9,7 +9,7 @@ import salix::util::UML;
 alias Model = tuple[str source];
 
 SalixApp[Model] umlApp(str id = "root") 
-  = makeApp(id, init, withIndex("UML", view), update);
+  = makeApp(id, init, withIndex("UML", id, view), update);
 
 App[Model] umlWebApp() 
   = webApp(

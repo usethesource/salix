@@ -24,7 +24,7 @@ Model init() {
 }
 
 SalixApp[Model] loopApp(str id = "root") 
-  = makeApp(id, init, withIndex("Loop", view), update); 
+  = makeApp(id, init, withIndex("Loop", id, view), update); 
 
 App[Model] loopWebApp() 
   = webApp(

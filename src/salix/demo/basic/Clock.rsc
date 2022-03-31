@@ -35,7 +35,7 @@ Model update(Msg msg, Model t) {
 }
 
 SalixApp[Model] clockApp(str id = "root") 
-  = makeApp(id, init, withIndex("Clock", view), update, subs=subs);
+  = makeApp(id, init, withIndex("Clock", id, view), update, subs=subs);
 
 App[Model] clockWebApp() 
   = webApp(

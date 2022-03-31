@@ -2,15 +2,16 @@ module salix::demo::graphs::DagreDemo
 
 import salix::App;
 import salix::HTML;
+import salix::Index;
 import salix::lib::dagre::Dagre;
-import salix::demo::charts::ChartDemo;
 import util::Math;
 import Set;
 import List;
 
 alias GModel = tuple[int clicks, rel[str, str] graph, str line, str shape, str word, real gold];
 
-SalixApp[GModel] graphApp(str id = "graphDemo") = makeApp(id, ginit, gview, gupdate); 
+SalixApp[GModel] graphApp(str id = "graphDemo") 
+  = makeApp(id, ginit, withIndex("Graph", id, gview, exts=[dagre()]), gupdate); 
 
 App[GModel] graphWebApp() 
   = webApp(
@@ -59,7 +60,23 @@ GModel gupdate(Msg msg, GModel m) {
 // http://stackoverflow.com/questions/26348038/svg-foreignobjects-draw-over-all-other-elements-in-chrome?rq=1
 
 void gview(GModel m) {
-  div(() {
+ style_(id("css"), "
+	'text {
+	'  font-weight: 300;
+	'  font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serf;
+	'  font-size: 14px;
+	'}
+	'.node {
+	'  stroke: #333;
+	'  fill: #fff;
+	'  stroke-width: 1.5px;
+	'}
+	'.edgePath path {
+	'  stroke: #333;
+	'  stroke-width: 1.5px;
+	'}");
+
+  div(class("container"), () {
     
     h2("Dagre graph demo with embedded HTML");
     
@@ -88,9 +105,7 @@ void gview(GModel m) {
           div(() {
 	          h3("Here\'s node <x>");
 	          p("A paragraph");
-	          
-	          salix::demo::charts::ChartDemo::view(m.gold, w = 100, h = 80);
-            
+	                      
 	          button(onClick(click(x)), "Click <x>");
 	        });
         }]);

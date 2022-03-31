@@ -9,7 +9,7 @@
  *  - Tijs van der Storm - storm@cwi.nl - CWI
  */
 
-function registerTreeView(salix) {
+function registerTreeview(salix) {
 	
 	function node2stateMap(nodes, map) {
 		for (var i = 0; i < nodes.length; i++) {

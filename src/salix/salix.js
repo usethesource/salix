@@ -9,9 +9,8 @@
  *  - Tijs van der Storm - storm@cwi.nl - CWI
  */
 
-function Salix(aRootId, host) {
-	var rootId = aRootId || 'root';
-
+function Salix(appId, host) {
+	
 	// 'native 'dom elements
 	var builders = {};
 
@@ -26,7 +25,7 @@ function Salix(aRootId, host) {
 	var queue = [];
 	
 	function makeURL(msg, data) {
-	    var base = (host || '') + '/' + rootId + '/' + msg;
+	    var base = (host || '') + '/' + appId + '/' + msg;
 	    if (data) {
 	    	base += '?' + new URLSearchParams(data).toString();
 	    }
@@ -41,8 +40,7 @@ function Salix(aRootId, host) {
 	}
 	
 	function root() {
-		//return document.getElementById(rootId);
-		return document.documentElement;
+		return document.body;
 	}
 
 		

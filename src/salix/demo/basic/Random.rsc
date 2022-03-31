@@ -21,7 +21,7 @@ data Msg
   ;
 
 SalixApp[Model] randomApp(str id = "root") 
-  = makeApp(id, init, withIndex("Random", view), update);
+  = makeApp(id, init, withIndex("Random", id, view), update);
 
 // Single
 App[Model] randomWebApp() 

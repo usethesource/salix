@@ -15,7 +15,7 @@ Extension treeview() = <"treeview", [
   js("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"),
   js("/salix/lib/treeview/bootstrap-treeview.min.js"),
   css("/salix/lib/treeview/bootstrap-treeview.min.css"),
-  js("/salix/lib/salix-treeview.js")
+  js("/salix/lib//treeview/salix-treeview.js")
 ]>;
 
 

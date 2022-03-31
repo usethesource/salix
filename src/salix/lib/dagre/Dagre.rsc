@@ -10,9 +10,13 @@ import List;
 
 
 Extension dagre() = <"dagre", [
+  css("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"),
+  js("http://code.jquery.com/jquery-1.11.0.min.js"),
+  js("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"),
+
   js("http://d3js.org/d3.v3.min.js"),
   js("/salix/lib/dagre/dagre-d3.js"),
-  js("/salix/lib/salix-dagre.js")
+  js("/salix/lib/dagre/salix-dagre.js")
 ]>;
 
 

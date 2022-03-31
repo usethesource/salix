@@ -23,7 +23,7 @@ data Msg
   ;
 
 SalixApp[Model] celsiusApp(str id = "root") 
-  = makeApp(id, init, withIndex("C2F", view), update);
+  = makeApp(id, init, withIndex("C2F", id, view), update);
 
 App[Model] celsiusWebApp() 
   = webApp(

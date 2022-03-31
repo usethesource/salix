@@ -30,6 +30,7 @@ void head(value vals...) = build(vals, _head);
 void script(value vals...) = build(vals, _script);
 void link(value vals...) = build(vals, _link);
 void title_(value vals...) = build(vals, __title);
+void style_(value vals...) = build(vals, __style);
 
 void h1(value vals...) = build(vals, _h1);
 void h2(value vals...) = build(vals, _h2);
@@ -138,6 +139,7 @@ Node _head(list[Node] kids, list[Attr] attrs) = element("head", kids, attrsOf(at
 Node _script(list[Node] kids, list[Attr] attrs) = element("script", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 Node _link(list[Node] kids, list[Attr] attrs) = element("link", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 Node __title(list[Node] kids, list[Attr] attrs) = element("title", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
+Node __style(list[Node] kids, list[Attr] attrs) = element("style", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
 
 
 Node _h1(list[Node] kids, list[Attr] attrs) = element("h1", kids, attrsOf(attrs), propsOf(attrs), eventsOf(attrs));
