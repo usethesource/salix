@@ -8,7 +8,7 @@
 
 module salix::lib::xterm::REPL
 
-import salix::lib::XTerm;
+import salix::lib::xterm::XTerm;
 import salix::App;
 import salix::Core;
 import salix::HTML;

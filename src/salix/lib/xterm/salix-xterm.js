@@ -9,7 +9,7 @@
  *  - Tijs van der Storm - storm@cwi.nl - CWI
  */
 
-function registerXTerm(salix) {
+function registerXterm(salix) {
 	
 	var xterms = {};
 	
