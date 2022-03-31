@@ -16,7 +16,8 @@ alias Model = tuple[int count];
 
 Model init() = <0>;
 
-SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, view, update);
+SalixApp[Model] counterApp(str id = "root") 
+  = makeApp(id, init, withIndex("Counter", view), update);
 
 App[Model] counterWebApp()
   = webApp(
@@ -39,18 +40,12 @@ Model update(Msg msg, Model m) {
 }
 
 void view(Model m) {
-  index("Counter app", "counter", () {
-	  div(() {
-	    
-	    h2("My first counter app in Rascal");
-	    
-	    button(onClick(inc()), "+");
-	    
-	    div("<m.count>");
-	    
-	    button(onClick(dec()), "-");
-	
-	  });
-  });
+  h2("My first counter app in Rascal");
+
+  button(onClick(inc()), "+");
+
+  div("<m.count>");
+
+  button(onClick(dec()), "-");	
 }
 

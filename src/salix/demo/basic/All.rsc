@@ -12,7 +12,9 @@ module salix::demo::basic::All
 import salix::HTML;
 import salix::App;
 import salix::Core; 
+import salix::Index;
 import salix::util::Debug;
+import salix::Index;
 import IO;
 
 import salix::demo::basic::Celsius;
@@ -38,7 +40,8 @@ data Msg
   ;
 
 SalixApp[AllModel] allDemosApp(str id = "root") 
-  = makeApp(id, initAll, viewAll, editAll, subs = allSubs, parser = parseMsg);
+  = makeApp(id, initAll, withIndex("All", viewAll), editAll
+           , subs = allSubs, parser = parseMsg);
        
        
 App[AllModel] allDemosWebApp() 
@@ -67,12 +70,10 @@ void myDebugView(DebugModel[AllModel] m) {
 }
   
 void viewAll(AllModel m) {
-  div(() {
-     mapView(Msg::celsius, m.celsius, salix::demo::basic::Celsius::view);
-     mapView(Msg::counter, m.counter, salix::demo::basic::Counter::view);
-     mapView(Msg::random, m.random, salix::demo::basic::Random::twiceView);
-     mapView(Msg::clock, m.clock, salix::demo::basic::Clock::view);
-  });
+  mapView(Msg::celsius, m.celsius, salix::demo::basic::Celsius::view);
+  mapView(Msg::counter, m.counter, salix::demo::basic::Counter::view);
+  mapView(Msg::random, m.random, salix::demo::basic::Random::twiceView);
+  mapView(Msg::clock, m.clock, salix::demo::basic::Clock::view);
 }
 
 AllModel editAll(Msg msg, AllModel m) {

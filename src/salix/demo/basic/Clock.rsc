@@ -13,6 +13,7 @@ import salix::HTML;
 import salix::App;
 import salix::Core;
 import util::Math;
+import salix::Index;
 
 alias Model = tuple[int time, bool running];
 
@@ -34,7 +35,7 @@ Model update(Msg msg, Model t) {
 }
 
 SalixApp[Model] clockApp(str id = "root") 
-  = makeApp(id, init, view, update, subs=subs);
+  = makeApp(id, init, withIndex("Clock", view), update, subs=subs);
 
 App[Model] clockWebApp() 
   = webApp(
@@ -44,10 +45,8 @@ App[Model] clockWebApp()
     );
 
 void view(Model m) {
-  div(() {
-    h2("Clock using SVG");
-    clock(m);
-  });
+  h2("Clock using SVG");
+  clock(m);
 }
 
 void clock(Model m) {

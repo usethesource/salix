@@ -10,6 +10,7 @@ module salix::demo::basic::Celsius
 
 import salix::App;
 import salix::HTML;
+import salix::Index;
 import String;
 import util::Math;
 
@@ -21,7 +22,8 @@ data Msg
   | f(str f)
   ;
 
-SalixApp[Model] celsiusApp(str id = "root") = makeApp(id, init, view, update);
+SalixApp[Model] celsiusApp(str id = "root") 
+  = makeApp(id, init, withIndex("C2F", view), update);
 
 App[Model] celsiusWebApp() 
   = webApp(
@@ -32,8 +34,7 @@ App[Model] celsiusWebApp()
 
 Model init() = 37.0;
 
-void view(Model m) { 
-  div(() {
+void view(Model m) {   
     h2("Celsius to fahrenheit converter");
     p(() {
       text("C: "); 
@@ -43,7 +44,6 @@ void view(Model m) {
       text("F: ");
       input(\value("<round(toF(m))>"),\type("number"), onInput(f));
     });
-  });
 }
 
 

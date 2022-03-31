@@ -11,6 +11,7 @@ module salix::demo::basic::Loop
 import salix::App;
 import salix::Core;
 import salix::HTML;
+import salix::Index;
 
 import String;
 import List;
@@ -22,7 +23,8 @@ Model init() {
   return <100, []>;
 }
 
-SalixApp[Model] loopApp(str id = "root") = makeApp(id, init, view, update); 
+SalixApp[Model] loopApp(str id = "root") 
+  = makeApp(id, init, withIndex("Loop", view), update); 
 
 App[Model] loopWebApp() 
   = webApp(
@@ -58,11 +60,9 @@ Model update(Msg msg, Model m) {
 }
 
 void view(Model m) {
-  div(() {
-     text("Count: ");
-     input(\type("text"), \value("<m.count>"), onInput(updateCount));
-     for (int i <- [0..size(m.numbers)]) {
-       p("<i>: <m.numbers[i]>");
-     }
-  });
+ text("Count: ");
+ input(\type("text"), \value("<m.count>"), onInput(updateCount));
+ for (int i <- [0..size(m.numbers)]) {
+   p("<i>: <m.numbers[i]>");
+ }
 }

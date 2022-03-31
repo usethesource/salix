@@ -11,6 +11,7 @@ module salix::demo::basic::Random
 import salix::HTML;
 import salix::Core;
 import salix::App;
+import salix::Index;
 
 alias Model = tuple[int dieFace];
 
@@ -19,22 +20,14 @@ data Msg
   | newFace(int face)
   ;
 
-SalixApp[Model] randomApp(str id = "root") = makeApp(id, init, view, update);
+SalixApp[Model] randomApp(str id = "root") 
+  = makeApp(id, init, withIndex("Random", view), update);
 
 // Single
 App[Model] randomWebApp() 
   = webApp(
       randomApp(),
       |project://salix/src/salix/demo/basic/index.html|, 
-      |project://salix/src|
-    );
-
-// Twice
-App[Model] twiceWebApp() 
-  = webApp(
-      "twiceApp",
-      {randomApp(id = "random1"), randomApp(id = "random2")},
-      |project://salix/src/salix/demo/basic/twice.html|, 
       |project://salix/src|
     );
 
@@ -56,17 +49,15 @@ Model update(Msg msg, Model m) {
 }
 
 void view(Model m) {
-  div(() {
-     button(onClick(roll()), "Roll");
-     text(m.dieFace);
-  });
+ button(onClick(roll()), "Roll");
+ text(m.dieFace);
 }
    
 // Twice
 
-App[TwiceModel] twiceAltWebApp()
+App[TwiceModel] twiceWebApp()
   = webApp(
-      makeApp("root", twiceInit, twiceView, twiceUpdate), 
+      makeApp("root", twiceInit, withIndex("Twice", twiceView), twiceUpdate), 
       |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     ); 
@@ -91,11 +82,9 @@ TwiceModel twiceUpdate(Msg msg, TwiceModel m) {
 }
 
 void twiceView(TwiceModel m) {
-  div(() {
-    h2("Two times roll a die");
-    mapView(sub1, m.model1, view);
-    mapView(sub2, m.model2, view);
-  });
+  h2("Two times roll a die");
+  mapView(sub1, m.model1, view);
+  mapView(sub2, m.model2, view);
 }
 
 

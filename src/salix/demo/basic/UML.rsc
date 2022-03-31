@@ -3,11 +3,13 @@ module salix::demo::basic::UML
 import salix::App;
 import salix::HTML;
 import salix::Core;
+import salix::Index;
 import salix::util::UML;
 
 alias Model = tuple[str source];
 
-SalixApp[Model] umlApp(str id = "root") = makeApp(id, init, view, update);
+SalixApp[Model] umlApp(str id = "root") 
+  = makeApp(id, init, withIndex("UML", view), update);
 
 App[Model] umlWebApp() 
   = webApp(
@@ -29,10 +31,8 @@ public str uml = "@startuml
 Model update(Msg _, Model m) = m;
 
 void view(Model m) {
-  div(() {
-    h2("PlantUML integration");
-    pre(m.source);
-    div(uml2svgNode(m.source));
-    div(uml2svgNode(uml));
-  });
+  h2("PlantUML integration");
+  pre(m.source);
+  div(uml2svgNode(m.source));
+  div(uml2svgNode(uml));
 }
