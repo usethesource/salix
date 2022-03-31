@@ -45,7 +45,13 @@ void index(str myTitle, void() block, list[Extension] exts = [], list[str] css =
         src += "register<capitalize(e.name)>(app);\n";
       }
       
-      script(src + "document.addEventListener(\"DOMContentLoaded\", app.start);\n");
+      script("document.addEventListener(\"DOMContentLoaded\", function() {
+             '  const app = new Salix();
+             '  <for (Extension e <- exts) {>
+             '  register<capitalize(e.name)>(app);
+             '  <}>
+             '  app.start();
+             '});");
     });
     
     body(block);

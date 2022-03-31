@@ -16,6 +16,7 @@ import String;
 import salix::lib::Extension;
 
 Extension codemirror() = <"codemirror", [
+  css("/salix/lib/codemirror/codemirror.css"),
   js("/salix/lib/codemirror/codemirror.js"),
   js("/salix/lib/codemirror/javascript.js"),
   js("/salix/lib/codemirror/simple.js"),  

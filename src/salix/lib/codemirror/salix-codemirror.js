@@ -9,7 +9,7 @@
  *  - Tijs van der Storm - storm@cwi.nl - CWI
  */
 
-function registerCodeMirror(salix) {
+function registerCodemirror(salix) {
 	
 	var codeMirrors = {};
 	

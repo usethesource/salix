@@ -13,7 +13,7 @@ import salix::Node;
 import salix::Core;
 import salix::Diff;
 import salix::Patch;
-import salix::util::Bootstrap;
+import salix::util::ToHtml;
 
 import util::Webserver;
 import util::Maybe;
@@ -28,12 +28,14 @@ alias App[&T] = Content;
 @doc{SalixRequest and SalixResponse are HTTP independent types that model
 the basic workflow of Salix.}
 data SalixRequest
-  = begin()
+  = boot()
+  | begin()
   | message(map[str, str] params)
   ;
   
 data SalixResponse
   = next(list[Cmd] cmds, list[Sub] subs, Patch patch)
+  | document(Node doc)
   ;
   
 @doc{A function type to describe a basic SalixApp without committing to a 
@@ -49,8 +51,6 @@ handling messages originating from wrapped "native" elements.}
 SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update, 
   Subs[&T] subs = list[Sub](&T _) {return [];}, Parser parser = parseMsg, bool debug = false) {
    
-  Node asRoot(Node h) = h[attrs=h.attrs + ("id": appId)];
-
   Node currentView = empty();
   
   Maybe[&T] currentModel = nothing();
@@ -59,7 +59,7 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update,
 
     list[Sub] mySubs = subs(newModel);
     
-    Node newView = asRoot(render(newModel, view));
+    Node newView = render(newModel, view);
     Patch myPatch = diff(currentView, newView);
 
     currentView = newView;
@@ -68,39 +68,56 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update,
     return next(cmds, mySubs, myPatch);
   }
  
+  // commands that are generated in boot() phase,
+  // but only interpreted on init phase.
+  list[Cmd] initCommands = [];
+ 
 
   SalixResponse reply(SalixRequest req) {
     // this makes scoping/multiplexing of Salix apps possible
     // without polluting user-space code with non-compositional ids.
     switchTo(appId); // Note also switchFrom after every handling of a request.
-
+    
+    SalixResponse resp;
+    
     switch (req) {
+      
+      // pre-initially, render the document
+      case boot(): {
+        <initCmds, model> = initialize(init, view);
+        currentModel = just(model);
+        
+        // ugly, but needed: the init event has to have the effect
+        // that the events/properties are correctly set. We cannot
+        // set then here, because they don't have a textual HTML
+        // representation. 
+        currentView = bareHtml(render(model, view));
+        
+        resp = document(currentView);
+      }
 
       // initially, just render the view, for the initial model.
       case begin(): {
-        currentView = empty();
-        <cmds, model> = initialize(init, view);
-        SalixResponse resp = transition(cmds, model);
-        switchFrom(appId);
-        return resp;
+        resp = transition(initCommands, currentModel.val);
       } 
 
 	  // otherwise parse the message and do transition
       case message(map[str,str] params): {
         Msg msg = params2msg(params, parser);
         
-        if (debug) {
+        //if (debug) {
           println("Processing: <appId>/<msg>");
-        }
+        //}
         
         <cmds, newModel> = execute(msg, update, currentModel.val);
-        SalixResponse resp = transition(cmds, newModel);
-        switchFrom(appId);
-        return resp;
+        resp = transition(cmds, newModel);
       }
       
       default: throw "Invalid Salix request <req>";
    }	   
+   
+   switchFrom(appId);
+   return resp;
   }
   
   return <appId, reply>;
@@ -114,8 +131,8 @@ App[&T] webApp(SalixApp[&T] app, loc index, loc static, map[str,str] headers = (
  
   Response _handle(Request req) {
     if (get("/") := req) {
-      return response(bootstrap());
-      //return fileResponse(index, mimeTypes["html"], headers);
+      SalixResponse doc = app.rr(boot());
+      return response(toHtml(doc.doc));
     } 
     
     if (get(p:/\.<ext:[^.]*>$/) := req) {
