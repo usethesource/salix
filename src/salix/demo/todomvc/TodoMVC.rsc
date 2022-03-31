@@ -12,6 +12,7 @@ import salix::HTML;
 import salix::Node;
 import salix::Core;
 import salix::App;
+import salix::Index;
 
 import List;
 
@@ -30,7 +31,8 @@ alias Model = tuple[list[Entry] entries, str field, int uid, str visibility];
 
 alias Entry = tuple[str description, bool completed, bool editing, int id];
 
-SalixApp[Model] todoMVCApp(str id = "todoMVC") = makeApp(id, emptyModel, view, update); 
+SalixApp[Model] todoMVCApp(str id = "todoMVC") 
+  = makeApp(id, emptyModel, withIndex("TodoMVC", id, view, css = ["/salix/demo/todomvc/style.css"]), update); 
  
 
 App[Model] todoMVCWebApp() 
