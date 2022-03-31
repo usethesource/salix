@@ -10,6 +10,8 @@ module salix::demo::shop::Shop
 
 import salix::HTML;
 import salix::App;
+import salix::Index;
+
 import String;
 import List;
 import util::UUID;
@@ -41,7 +43,8 @@ Model init() = <
 >
   when loc bunnyId := uuid();
 
-SalixApp[Model] shopApp(str id = "shopDemo") = makeApp(id, init, shopDemoView, update); 
+SalixApp[Model] shopApp(str id = "shopDemo") 
+  = makeApp(id, init, withIndex("Shop", id, shopDemoView, css = ["/salix/demo/shop/test.css"]), update); 
 
 App[Model] shopWebApp()
   = webApp(
@@ -119,11 +122,11 @@ Model update(Msg msg, Model m) {
 
 
 void shopDemoView(Model m) {
-  div(() {
     div(id("header"), () {
       h1("Salix shopping cart demo");
     });  
     table(() {
+     tbody(() {
       tr(() {
         td(colspan(2), () {
           button(onClick(updateSome()), "update some items");
