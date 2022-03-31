@@ -1,6 +1,6 @@
 module salix::demo::charts::ChartDemo
 
-import salix::lib::Charts;
+import salix::lib::charts::Charts;
 import salix::HTML;
 import salix::Core;
 import salix::App;

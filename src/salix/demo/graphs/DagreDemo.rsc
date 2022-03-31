@@ -2,7 +2,7 @@ module salix::demo::graphs::DagreDemo
 
 import salix::App;
 import salix::HTML;
-import salix::lib::Dagre;
+import salix::lib::dagre::Dagre;
 import salix::demo::charts::ChartDemo;
 import util::Math;
 import Set;

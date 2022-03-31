@@ -37,5 +37,5 @@ private salix::Node::Node node2node(lang::xml::DOM::Node n) {
   }
 }
 
-@javaClass{salix.lib.PlantUML}
+@javaClass{salix.util.PlantUML}
 java str uml2svg(str src);

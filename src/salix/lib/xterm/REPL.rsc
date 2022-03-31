@@ -6,7 +6,7 @@
 }
 @contributor{Tijs van der Storm - storm@cwi.nl - CWI}
 
-module salix::lib::REPL
+module salix::lib::xterm::REPL
 
 import salix::lib::XTerm;
 import salix::App;

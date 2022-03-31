@@ -3,7 +3,7 @@ module salix::demo::basic::UML
 import salix::App;
 import salix::HTML;
 import salix::Core;
-import salix::lib::UML;
+import salix::util::UML;
 
 alias Model = tuple[str source];
 

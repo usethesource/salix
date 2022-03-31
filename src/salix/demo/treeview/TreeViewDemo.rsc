@@ -1,7 +1,7 @@
 module salix::demo::treeview::TreeViewDemo
 
 import salix::App;
-import salix::lib::TreeView;
+import salix::lib::treeview::TreeView;
 import salix::HTML;
 
 alias Model = str;

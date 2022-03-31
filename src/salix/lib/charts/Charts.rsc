@@ -1,4 +1,4 @@
-module salix::lib::Charts
+module salix::lib::charts::Charts
 
 import salix::Node;
 import salix::Core;

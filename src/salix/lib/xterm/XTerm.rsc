@@ -6,7 +6,7 @@
 }
 @contributor{Tijs van der Storm - storm@cwi.nl - CWI}
 
-module salix::lib::XTerm
+module salix::lib::xterm::XTerm
 
 import salix::Core;
 import salix::Node;

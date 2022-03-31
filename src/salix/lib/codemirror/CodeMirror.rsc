@@ -6,7 +6,7 @@
 }
 @contributor{Tijs van der Storm - storm@cwi.nl - CWI}
 
-module salix::lib::CodeMirror
+module salix::lib::codemirror::CodeMirror
 
 import salix::HTML;
 import salix::Core;

@@ -12,7 +12,7 @@ module salix::demo::basic::All
 import salix::HTML;
 import salix::App;
 import salix::Core; 
-import salix::lib::Debug;
+import salix::util::Debug;
 import IO;
 
 import salix::demo::basic::Celsius;

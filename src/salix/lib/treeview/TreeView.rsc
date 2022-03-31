@@ -1,4 +1,4 @@
-module salix::lib::TreeView
+module salix::lib::treeview::TreeView
 
 //https://github.com/jonmiles/bootstrap-treeview
 

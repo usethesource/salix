@@ -1,4 +1,4 @@
-module salix::lib::Dagre
+module salix::lib::dagre::Dagre
 
 import salix::Core;
 import salix::HTML;

@@ -10,7 +10,7 @@ module salix::demo::basic::CodeMirror
 
 import salix::HTML;
 import salix::App;
-import salix::lib::CodeMirror;
+import salix::lib::codemirror::CodeMirror;
 
 alias Model = tuple[list[Msg] changes, str src];
 
