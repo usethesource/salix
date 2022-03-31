@@ -12,8 +12,6 @@
 <script>
   var chartsApp = new Salix("chartsApp");
   
-  google.charts.load('current', {'packages':['corechart']});
-  google.charts.setOnLoadCallback(function () {
   registerCharts(chartsApp);
   
   $(document).ready(chartsApp.start);  

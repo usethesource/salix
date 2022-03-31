@@ -80,5 +80,10 @@ function registerCharts(salix) {
 		return div;
 	}
 	
-	salix.registerNative('charts', myCharts);
+	// The following assumes: <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	
+	google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(function () {
+      salix.registerNative('charts', myCharts);
+    });
 };

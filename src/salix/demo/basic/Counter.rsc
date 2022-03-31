@@ -10,6 +10,7 @@ module salix::demo::basic::Counter
 
 import salix::App;
 import salix::HTML;
+import salix::Index;
 
 alias Model = tuple[int count];
 
@@ -38,16 +39,18 @@ Model update(Msg msg, Model m) {
 }
 
 void view(Model m) {
-  div(() {
-    
-    h2("My first counter app in Rascal");
-    
-    button(onClick(inc()), "+");
-    
-    div("<m.count>");
-    
-    button(onClick(dec()), "-");
-
+  index("Counter app", "counter", () {
+	  div(() {
+	    
+	    h2("My first counter app in Rascal");
+	    
+	    button(onClick(inc()), "+");
+	    
+	    div("<m.count>");
+	    
+	    button(onClick(dec()), "-");
+	
+	  });
   });
 }
 

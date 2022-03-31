@@ -2,6 +2,14 @@ module salix::lib::charts::Charts
 
 import salix::Node;
 import salix::Core;
+import salix::lib::Extension;
+
+
+Extension charts() = <"charts", [
+  js("https://www.gstatic.com/charts/loader.js"),
+  js("salix/lib/charts/salix-charts.js")
+]>;
+
 
 private data DataTable
   = gtable(list[Column] columns, list[Row] rows);

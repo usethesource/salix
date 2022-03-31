@@ -11,8 +11,18 @@ module salix::lib::codemirror::CodeMirror
 import salix::HTML;
 import salix::Core;
 import salix::Node;
-import salix::lib::Mode;
+import salix::util::Mode;
 import String;
+import salix::lib::Extension;
+
+Extension codemirror() = <"codemirror", [
+  js("/salix/lib/codemirror/codemirror.js"),
+  js("/salix/lib/codemirror/javascript.js"),
+  js("/salix/lib/codemirror/simple.js"),  
+  js("/salix/lib/codemirror/salix-codemirror.js")
+]>;
+
+
 
 Cmd updateCodeMirror(Msg f, str id, str txt)
   = command("updateCodeMirror", encode(f), args = ("id": id, "text": txt));

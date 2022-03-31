@@ -41,7 +41,8 @@ function Salix(aRootId, host) {
 	}
 	
 	function root() {
-		return document.getElementById(rootId);
+		//return document.getElementById(rootId);
+		return document.documentElement;
 	}
 
 		

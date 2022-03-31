@@ -4,7 +4,18 @@ import salix::Core;
 import salix::HTML;
 import salix::Node;
 
+import salix::lib::Extension;
+
 import List;
+
+
+Extension dagre() = <"dagre", [
+  js("http://d3js.org/d3.v3.min.js"),
+  js("/salix/lib/dagre/dagre-d3.js"),
+  js("/salix/lib/salix-dagre.js")
+]>;
+
+
 
 // SVG *attributes* from salix::SVG can be given to the dagre function and will be put on the SVG container
 // The following props given to the dagre function will be interpreted as props for Dagre graph layout algo.

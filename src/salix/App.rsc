@@ -13,6 +13,7 @@ import salix::Node;
 import salix::Core;
 import salix::Diff;
 import salix::Patch;
+import salix::util::Bootstrap;
 
 import util::Webserver;
 import util::Maybe;
@@ -71,7 +72,7 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update,
   SalixResponse reply(SalixRequest req) {
     // this makes scoping/multiplexing of Salix apps possible
     // without polluting user-space code with non-compositional ids.
-    switchTo(appId); // Note also switchFrom in the finally clause.
+    switchTo(appId); // Note also switchFrom after every handling of a request.
 
     switch (req) {
 
@@ -113,7 +114,8 @@ App[&T] webApp(SalixApp[&T] app, loc index, loc static, map[str,str] headers = (
  
   Response _handle(Request req) {
     if (get("/") := req) {
-      return fileResponse(index, mimeTypes["html"], headers);
+      return response(bootstrap());
+      //return fileResponse(index, mimeTypes["html"], headers);
     } 
     
     if (get(p:/\.<ext:[^.]*>$/) := req) {

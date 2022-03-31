@@ -13,6 +13,15 @@ import salix::Node;
 
 import String;
 
+import salix::lib::Extension;
+
+Extension xterm() = <"xterm", [
+  css("/salix/lib/xterm/xterm.css"),
+  js("/salix/lib/xterm/xterm.js"),
+  js("/salix/lib/xterm/fit.js"),
+  js("/salix/lib/xterm/salix-xterm.js")
+]>;
+
 // http://xtermjs.org/docs/api/Terminal/
 
 Cmd blur(Msg f, str id) = command("blur", encode(f), args = ("id": id));

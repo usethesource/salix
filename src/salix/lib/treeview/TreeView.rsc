@@ -7,6 +7,17 @@ import salix::Core;
 
 import List;
 
+import salix::lib::Extension;
+
+Extension treeview() = <"treeview", [
+  css("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"),
+  js("http://code.jquery.com/jquery-1.11.0.min.js"),
+  js("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"),
+  js("/salix/lib/treeview/bootstrap-treeview.min.js"),
+  css("/salix/lib/treeview/bootstrap-treeview.min.css"),
+  js("/salix/lib/salix-treeview.js")
+]>;
+
 
 // Attributes to control state of tree node.
 // TODO: these could be passed back upon events.
