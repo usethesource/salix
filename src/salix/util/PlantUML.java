@@ -1,4 +1,4 @@
-package salix.lib;
+package salix.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

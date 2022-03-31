@@ -6,7 +6,7 @@
 }
 @contributor{Tijs van der Storm - storm@cwi.nl - CWI}
 
-module salix::lib::Debug
+module salix::util::Debug
 
 import salix::HTML;
 import salix::App;

@@ -1,4 +1,4 @@
-module salix::lib::UML
+module salix::util::UML
 
 import lang::xml::DOM;
 import salix::Node;

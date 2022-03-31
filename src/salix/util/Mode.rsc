@@ -6,7 +6,7 @@
 }
 @contributor{Tijs van der Storm - storm@cwi.nl - CWI}
 
-module salix::lib::Mode
+module salix::util::Mode
 
 import Type;
 import ParseTree;

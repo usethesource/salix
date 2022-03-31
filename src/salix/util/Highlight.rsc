@@ -6,7 +6,7 @@
 }
 @contributor{Tijs van der Storm - storm@cwi.nl - CWI}
 
-module salix::lib::Highlight
+module salix::util::Highlight
 
 import salix::HTML;
 import ParseTree;
