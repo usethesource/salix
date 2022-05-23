@@ -12,21 +12,30 @@ import salix::App;
 import salix::HTML;
 import salix::Node;
 import salix::Core;
+import salix::Index;
+
 import salix::demo::ide::StateMachine;
+
 import salix::lib::codemirror::CodeMirror;
 import salix::lib::xterm::XTerm;
-import salix::util::Mode;
 import salix::lib::xterm::REPL;
-import salix::lib::charts::Charts;
+//import salix::lib::charts::Charts;
+//import salix::lib::dagre::Dagre;
+
 import salix::util::UML;
-import salix::lib::dagre::Dagre;
+import salix::util::Mode;
+
+
 import util::Maybe;
 import ParseTree;
 import String;
 import List;
 import IO; 
 
-SalixApp[IDEModel] ideApp(str id = "ideDemo") = makeApp(id, ideInit, ideView, ideUpdate, parser = parseMsg);
+SalixApp[IDEModel] ideApp(str id = "ideDemo") 
+  = makeApp(id, ideInit, 
+      withIndex("IDE", id, ideView, exts=[codemirror()]), 
+      ideUpdate, parser = parseMsg);
 
 App[IDEModel] ideWebApp() 
   = webApp(
@@ -294,8 +303,8 @@ void ideView(IDEModel model) {
                 });   
               }
             });
-            h4("Command line");
-            repl(replMsg, model.repl, model.repl.id, cursorBlink(true), cols(30), rows(10));
+            //h4("Command line");
+            //repl(replMsg, model.repl, model.repl.id, cursorBlink(true), cols(30), rows(10));
           });
        }
      });
@@ -309,16 +318,7 @@ void ideView(IDEModel model) {
        }
      }); 
      div(class("col-md-6"), () {
-        h4("Analytics");
         
-        chart("myChart", "BarChart", legend("left"), title("Visits to States"), width(300), height(300), (C col, R row) {
-           col("string", [ColAttr::label("State")]);
-           col("number", [ColAttr::label("#Visits")]);
-           list[str] cols = sort([ k | k <- model.visitCount ]);
-           for (str c <- cols) {
-             row((Ce cell) { cell(c, []); cell(model.visitCount[c], []); });
-           } 
-        });  
       });
     });
     

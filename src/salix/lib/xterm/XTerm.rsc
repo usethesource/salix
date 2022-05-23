@@ -90,8 +90,8 @@ Attr onResize(Msg(int, int) int22msg) = event("resize", handler("colsRows", enco
 
 Attr onScroll(Msg(int) int2msg) = event("scroll", handler("ydisp", encode(int2msg)));
 
-Msg parseMsg(str id, "int-int", Handle h, map[str, str] params)
-  = applyMaps(id, h, decode(id, h, #Msg(int,int))(toInt(params["value1"]), toInt(params["value2"])));
+Msg parseMsg("int-int", Handle h, map[str, str] params)
+  = applyMaps(h, decode(h, #Msg(int,int))(toInt(params["value1"]), toInt(params["value2"])));
 
 
 
