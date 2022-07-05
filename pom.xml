@@ -3,12 +3,12 @@
 
         <groupId>org.rascalmpl</groupId>
         <artifactId>salix</artifactId>
-        <version>0.2.0</version>
+        <version>0.2.1-SNAPSHOT</version>
         <packaging>jar</packaging>
 
         <scm>
             <developerConnection>scm:git:ssh://git@github.com/cwi-swat/flybytes.git</developerConnection>
-          <tag>v0.2.0</tag>
+          <tag>HEAD</tag>
   </scm>
 
         <!-- dependency resolution configuration (usethesource) -->
