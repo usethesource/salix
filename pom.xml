@@ -57,7 +57,7 @@
 			<plugin>
 				<groupId>org.rascalmpl</groupId>
 				<artifactId>rascal-maven-plugin</artifactId>
-				<version>0.4.5-RC3</version>
+				<version>0.7.2</version>
                                 <configuration>
                                      <errorsAsWarnings>true</errorsAsWarnings>
 					<bin>${project.build.outputDirectory}</bin>
@@ -121,7 +121,7 @@
             <dependency>
                 <groupId>org.rascalmpl</groupId>
                 <artifactId>rascal</artifactId>
-                <version>0.19.4-RC2</version>
+                <version>0.23.2</version>
             </dependency>
             <dependency>
                 <groupId>net.sourceforge.plantuml</groupId>
