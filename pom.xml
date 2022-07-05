@@ -52,8 +52,17 @@
 		</resources>
 		<testSourceDirectory>src</testSourceDirectory>
 
-		<plugins>
-			<plugin>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.8.0</version>
+                        <configuration>
+                            <compilerArgument>-parameters</compilerArgument> <!-- make sure parameters are compiled by name into the jar -->
+                            <release>11</release>
+                        </configuration>
+                    </plugin>
+                    <plugin>
 				<groupId>org.rascalmpl</groupId>
 				<artifactId>rascal-maven-plugin</artifactId>
 				<version>0.7.2</version>
