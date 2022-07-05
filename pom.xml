@@ -3,12 +3,12 @@
 
         <groupId>org.rascalmpl</groupId>
         <artifactId>salix</artifactId>
-        <version>0.2.4</version>
+        <version>0.2.5-SNAPSHOT</version>
         <packaging>jar</packaging>
 
         <scm>
             <developerConnection>scm:git:ssh://git@github.com/usethesource/salix.git</developerConnection>
-          <tag>v0.2.4</tag>
+          <tag>HEAD</tag>
   </scm>
 
         <!-- dependency resolution configuration (usethesource) -->
