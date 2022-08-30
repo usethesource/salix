@@ -49,7 +49,6 @@ SalixApp[Model] shopApp(str id = "shopDemo")
 App[Model] shopWebApp()
   = webApp(
       shopApp(), 
-      |project://salix/src/salix/demo/shop/shop.html|, 
       |project://salix/src|
     ); 
 

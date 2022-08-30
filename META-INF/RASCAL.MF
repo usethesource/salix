@@ -1,4 +1,4 @@
 Manifest-Version: 0.0.1
 Source: src
 Project-Name: salix
-Require-Libraries: 
+Require-Libraries: |lib://plantuml|

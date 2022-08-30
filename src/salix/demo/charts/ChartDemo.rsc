@@ -14,7 +14,6 @@ SalixApp[DataTable] chartsApp(str id = "chartsApp")
 App[DataTable] chartsWebApp() 
   = webApp(
       chartsApp(),
-      |project://salix/src/salix/demo/charts/index.html|, 
       |project://salix/src|
     );
 

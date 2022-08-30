@@ -38,7 +38,6 @@ SalixApp[Model] todoMVCApp(str id = "todoMVC")
 App[Model] todoMVCWebApp() 
   = webApp(
       todoMVCApp(), 
-      |project://salix/src/salix/demo/todomvc/todomvc.html|, 
       |project://salix/src|
     );
   

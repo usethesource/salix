@@ -40,7 +40,6 @@ SalixApp[IDEModel] ideApp(str id = "ideDemo")
 App[IDEModel] ideWebApp() 
   = webApp(
       ideApp(),
-      |project://salix/src/salix/demo/ide/index.html|, 
       |project://salix/src|
     ); 
 

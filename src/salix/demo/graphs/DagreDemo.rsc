@@ -16,7 +16,6 @@ SalixApp[GModel] graphApp(str id = "graphDemo")
 App[GModel] graphWebApp() 
   = webApp(
       graphApp(), 
-      |project://salix/src/salix/demo/graphs/index.html|, 
       |project://salix/src|
     );
 

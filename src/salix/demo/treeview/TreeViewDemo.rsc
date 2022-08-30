@@ -13,7 +13,6 @@ SalixApp[Model] treeViewApp(str id = "treeViewDemo")
 App[Model] treeViewWebApp()
   = webApp(
       treeViewApp(),
-      |project://salix/src/salix/demo/treeview/index.html|, 
       |project://salix/src| 
     );
 
