@@ -29,7 +29,6 @@ SalixApp[Model] loopApp(str id = "root")
 App[Model] loopWebApp() 
   = webApp(
       loopApp(), 
-      |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     );
 

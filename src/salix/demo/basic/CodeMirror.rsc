@@ -22,7 +22,6 @@ SalixApp[str] cmApp(str id = "root")
 App[str] cmWebApp()
   = webApp(
       cmApp(), 
-      |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     );
 

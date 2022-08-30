@@ -40,7 +40,6 @@ SalixApp[Model] clockApp(str id = "root")
 App[Model] clockWebApp() 
   = webApp(
       clockApp(),
-      |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     );
 

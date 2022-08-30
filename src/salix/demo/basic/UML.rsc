@@ -14,7 +14,6 @@ SalixApp[Model] umlApp(str id = "root")
 App[Model] umlWebApp() 
   = webApp(
       umlApp(),
-      |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     );
     

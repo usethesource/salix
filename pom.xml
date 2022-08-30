@@ -48,6 +48,8 @@
 				<includes>
 					<include>META-INF/RASCAL.MF</include>
 					<include>src/**/*.rsc</include>
+					<include>src/**/*.css</include>
+					<include>src/**/*.js</include>
 				</includes>
 			</resource>
 		</resources>

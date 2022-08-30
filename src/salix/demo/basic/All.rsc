@@ -47,7 +47,6 @@ SalixApp[AllModel] allDemosApp(str id = "root")
 App[AllModel] allDemosWebApp() 
   = webApp(
       allDemosApp(), 
-      |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     ); 
        

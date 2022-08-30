@@ -13,6 +13,7 @@ import salix::HTML;
 import salix::Index;
 import String;
 import util::Math;
+import Exception;
 
 
 alias Model = real;
@@ -28,7 +29,6 @@ SalixApp[Model] celsiusApp(str id = "root")
 App[Model] celsiusWebApp() 
   = webApp(
       celsiusApp(),
-      |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     ); 
 

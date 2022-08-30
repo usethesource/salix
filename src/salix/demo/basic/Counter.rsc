@@ -22,7 +22,6 @@ SalixApp[Model] counterApp(str id = "root")
 App[Model] counterWebApp()
   = webApp(
       counterApp(),
-      |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     );
 

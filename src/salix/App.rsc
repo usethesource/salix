@@ -89,7 +89,7 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update,
         
         // ugly, but needed: the init event has to have the effect
         // that the events/properties are correctly set. We cannot
-        // set then here, because they don't have a textual HTML
+        // set them here, because they don't have a textual HTML
         // representation. 
         currentView = bareHtml(render(model, view));
         
@@ -125,7 +125,7 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update,
 
 @doc{Turn a single Salix App into a web application. The index parameter should point to the local file which holds the index html.
 The static parameter should point to the base directory from where static files should be served}
-App[&T] webApp(SalixApp[&T] app, loc index, loc static, map[str,str] headers = ()) {
+App[&T] webApp(SalixApp[&T] app, loc static, map[str,str] headers = ()) {
   Response respondHttp(SalixResponse r)
     = response(("commands": r.cmds, "subs": r.subs, "patch": r.patch), header = headers);
  
@@ -134,7 +134,11 @@ App[&T] webApp(SalixApp[&T] app, loc index, loc static, map[str,str] headers = (
       SalixResponse doc = app.rr(boot());
       return response(toHtml(doc.doc));
     } 
-    
+
+    if (get(p:/^\/salix/) := req) {
+      return response(|lib://salix/<p>|);
+    }
+
     if (get(p:/\.<ext:[^.]*>$/) := req) {
       return fileResponse(static[path="<static.path>/<p>"], mimeTypes[ext], headers);
     }

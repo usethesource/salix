@@ -27,7 +27,6 @@ SalixApp[Model] randomApp(str id = "root")
 App[Model] randomWebApp() 
   = webApp(
       randomApp(),
-      |project://salix/src/salix/demo/basic/index.html|, 
       |project://salix/src|
     );
 
@@ -57,8 +56,7 @@ void view(Model m) {
 
 App[TwiceModel] twiceWebApp()
   = webApp(
-      makeApp("root", twiceInit, withIndex("Twice", twiceView), twiceUpdate), 
-      |project://salix/src/salix/demo/basic/index.html|, 
+      makeApp("root", twiceInit, withIndex("Twice", "root", twiceView), twiceUpdate), 
       |project://salix/src|
     ); 
 
