@@ -135,8 +135,18 @@ App[&T] webApp(SalixApp[&T] app, loc static, map[str,str] headers = ()) {
       return response(toHtml(doc.doc));
     } 
 
-    if (get(p:/^\/salix/) := req) {
-      return response(|lib://salix/<p>|);
+    if (get(/^\/salix\/<rest:.*?>\.<ext:[^.]*>$/) := req) {
+      loc l = |project://salix/src/salix/<rest>.<ext>|;
+      println("l = <l>");
+      if (!exists(l)) {
+         l = |target://salix/salix<rest>.<ext>|;
+         println("l = <l>");
+         if (!exists(l)) {
+            l = |lib://salix/salix/<rest>.<ext>|;
+         }
+      }
+      println("Responding with salix asset: <l>");
+      return fileResponse(l, mimeTypes[ext], headers);
     }
 
     if (get(p:/\.<ext:[^.]*>$/) := req) {
