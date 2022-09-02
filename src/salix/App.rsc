@@ -143,6 +143,10 @@ App[&T] webApp(SalixApp[&T] app, loc static, map[str,str] headers = ()) {
          println("l = <l>");
          if (!exists(l)) {
             l = |lib://salix/salix/<rest>.<ext>|;
+            if (!exists(l)) {
+               println("WARNING: could not find <l>");
+               return response("Could not find: <l>");
+            }
          }
       }
       println("Responding with salix asset: <l>");
