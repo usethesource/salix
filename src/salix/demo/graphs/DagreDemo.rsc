@@ -49,9 +49,6 @@ GModel gupdate(Msg msg, GModel m) {
     case changeShape(str x):
       m.shape = x;
     
-    // just copying it hear to not have to do mapping
-    case incGold(): m.gold += 1.0;
-    case decGold(): m.gold -= 1.0;
   }
   return m;
 }
