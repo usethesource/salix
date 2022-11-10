@@ -290,5 +290,6 @@ void ideView(IDEModel model) {
        }
      });
    });
-   
+
+  });   
 }
