@@ -22,7 +22,6 @@ import salix::lib::xterm::REPL;
 //import salix::lib::charts::Charts;
 //import salix::lib::dagre::Dagre;
 
-import salix::util::UML;
 import salix::util::Mode;
 
 
@@ -79,23 +78,6 @@ IDEModel ideInit() {
   return model;
 }
 
-str ctl2plantuml(start[Controller] ctl, Maybe[str] currentState) {
-  list[str] states = [ "<s.name>" | salix::demo::ide::StateMachine::State s <- ctl.top.states ];
-  
-  list[str] trans = [ "<s.name> --\> <t.state> : <t.event>" |
-     salix::demo::ide::StateMachine::State s <- ctl.top.states,
-     Transition t <- s.transitions ];
-     
-  bool isActive(str s) = s == cur
-    when just(str cur) := currentState;
-  
-  return 
-    "@startuml
-    '<intercalate("\n", [ "<s> : <isActive(s) ? "active" :"">" | s <- states ])>
-    '[*] -\> <states[0]>
-    '<intercalate("\n", trans)>
-    '@enduml";
-}
 
 list[str] stmComplete(IDEModel model, str prefix) {
   list[str] cs = [];
@@ -309,17 +291,4 @@ void ideView(IDEModel model) {
      });
    });
    
-   div(class("row"), () {
-     div(class("col-md-6"), () {
-       if (just(start[Controller] ctl) := model.lastParse) {
-         div(uml2svgNode(ctl2plantuml(ctl, model.currentState)));
-         ;
-       }
-     }); 
-     div(class("col-md-6"), () {
-        
-      });
-    });
-    
-  });
 }

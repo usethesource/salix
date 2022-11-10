@@ -39,7 +39,7 @@
 				<directory>src</directory>
 				<excludes>
 					<exclude>**/*.java</exclude>
-					<exclude>**/*.class</exclude>
+					<!-- <exclude>**/*.class</exclude> -->
 				</excludes>
 			</resource>
 			<resource>
@@ -124,11 +124,6 @@
                 <groupId>org.rascalmpl</groupId>
                 <artifactId>rascal</artifactId>
                 <version>0.19.4-RC2</version>
-            </dependency>
-            <dependency>
-                <groupId>net.sourceforge.plantuml</groupId>
-                <artifactId>plantuml</artifactId>
-                <version>8059</version>
             </dependency>
         </dependencies>
 </project>

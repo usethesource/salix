@@ -172,7 +172,7 @@ function registerXterm(salix) {
 
 				case 'removeProp':
 					if (key === 'cursorBlink') {
-						cm.setOption(key, false);
+						term.setOption(key, false);
 					}
 					// else do nothing
 					break;
