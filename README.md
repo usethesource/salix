@@ -1,5 +1,5 @@
 
-⚠️ The salix project now lives here at [salix-core](https://github.com/usethesource/salix-core) 
+⚠️ The salix project now lives elsewhere at [salix-core](https://github.com/usethesource/salix-core) . The current project is not maintained anymore.
 
 ## Salix: Elm-style Web GUIs in Rascal (work in progress)
 
